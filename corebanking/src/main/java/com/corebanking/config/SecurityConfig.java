@@ -4,6 +4,7 @@ import com.corebanking.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,11 +14,14 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableWebSecurity
-@RequiredArgsConstructor
+
+@EnableMethodSecurity // (၁) Controller က @PreAuthorize တွေ အလုပ်လုပ်စေရန်
+@RequiredArgsConstructor // (၂) JwtAuthFilter ကို Inject လုပ်နိုင်ရန်
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter; // Member 1 ၏ Filter ကို Inject လုပ်ခြင်း
+    // (၃) မင်းရေးထားတဲ့ JwtAuthFilter ကို လှမ်းခေါ်ပါ
+    private final JwtAuthFilter jwtAuthFilter;
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -37,7 +41,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/accounts/**").authenticated() // Add this line
                 .anyRequest().authenticated()
             )
-            // Member 1 ၏ JwtAuthFilter ကို Filter Chain တွင် ထည့်သွင်းခြင်း
+
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
