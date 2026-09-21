@@ -15,6 +15,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 
+@EnableWebSecurity
+
 @EnableMethodSecurity // (၁) Controller က @PreAuthorize တွေ အလုပ်လုပ်စေရန်
 @RequiredArgsConstructor // (၂) JwtAuthFilter ကို Inject လုပ်နိုင်ရန်
 public class SecurityConfig {
@@ -31,14 +33,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // REST API (Postman) အတွက် CSRF ကို ပိတ်ထားပါသည်
             .csrf(csrf -> csrf.disable())
+            
+            // Session မသိမ်းဆည်းဘဲ Stateless အဖြစ် သတ်မှတ်ပါသည်
             .sessionManagement(session -> 
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
+            
+            // Endpoint များ၏ ခွင့်ပြုချက် သတ်မှတ်ခြင်း
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // Login endpoint ကို ခွင့်ပြုခြင်း
-                .requestMatchers("/api/customers/**").authenticated() // Customer APIs များသည် Token မဖြစ်မနေ လိုအပ်သည်
-                .requestMatchers("/api/accounts/**").authenticated() // Add this line
+                // Member 2 ၏ Customer API ကို Token မပါဘဲ စမ်းသပ်နိုင်ရန် လမ်းဖွင့်ပေးခြင်း
+                .requestMatchers("/api/customers/**").permitAll()
+                // Auth endpoint များကိုလည်း ခွင့်ပြုထားခြင်း
+                .requestMatchers("/api/auth/**").permitAll()
+                // ကျန်ရှိသော အခြား API များကိုသာ Login တောင်းဆိုခြင်း
                 .anyRequest().authenticated()
             )
 
