@@ -1,6 +1,7 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../../../lib/redux";
 import { submitP2PTransfer, resetTransferState } from "../store/transferSlice";
+import { fetchMyAccounts } from "../../customer-account/accounts/accountsSlice";
 import type { P2PTransferRequest } from "../types/transfer.types";
 import {
   Loader2,
@@ -233,9 +234,11 @@ function FormStep({
         </label>
         <input
           type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           list="recent-destinations"
           value={destinationAccount}
-          onChange={(e) => setDestinationAccount(e.target.value)}
+          onChange={(e) => setDestinationAccount(e.target.value.replace(/\D/g, ""))}
           placeholder="Enter recipient account number"
           className="w-full px-4 py-3 border-2 border-gray-100 rounded-2xl text-sm font-medium text-gray-800 placeholder-gray-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-gray-50"
           maxLength={34}
@@ -532,8 +535,9 @@ export const P2PTransferForm = () => {
     }
   }, [accounts, sourceAccount]);
 
-  // Load recent accounts
+  // Load recent accounts & ensure latest account balances on mount
   useEffect(() => {
+    dispatch(fetchMyAccounts());
     const saved = localStorage.getItem("recentDestinations");
     if (saved) setRecentAccounts(JSON.parse(saved));
     return () => { dispatch(resetTransferState()); };
@@ -558,8 +562,9 @@ export const P2PTransferForm = () => {
     setValidationError("");
     if (!sourceAccount) return setValidationError("Please select a source account.");
     if (!destinationAccount.trim()) return setValidationError("Please enter a destination account number.");
+    if (!/^\d+$/.test(destinationAccount)) return setValidationError("Destination account number must contain only numbers.");
     if (sourceAccount === destinationAccount) return setValidationError("Source and destination accounts cannot be the same.");
-    if (!amount || Number(amount) < 10000) return setValidationError("Minimum transfer amount is 10,000 MMK.");
+    if (!amount || Number(amount) < 1) return setValidationError("Minimum transfer amount is 1 MMK.");
     setStep("review");
   };
 
@@ -578,6 +583,7 @@ export const P2PTransferForm = () => {
     dispatch(submitP2PTransfer(payload)).then((res: any) => {
       if (res.meta.requestStatus === "fulfilled") {
         saveDestination(destinationAccount);
+        dispatch(fetchMyAccounts());
       }
     });
   };
@@ -591,6 +597,7 @@ export const P2PTransferForm = () => {
     setValidationError("");
     setShowPinModal(false);
     dispatch(resetTransferState());
+    dispatch(fetchMyAccounts());
   };
 
   /* ---------------------------------------------------------------------- */

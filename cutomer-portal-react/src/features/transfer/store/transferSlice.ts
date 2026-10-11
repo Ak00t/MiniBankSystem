@@ -23,7 +23,7 @@ export const submitP2PTransfer = createAsyncThunk(
       const response = await executeP2PTransfer(data);
       return response;
     } catch (error: any) {
-      // Backend က ပြန်ပို့မယ့် Error Message ကို ယူပါမယ်
+      
       return rejectWithValue(
         error.response?.data?.message || 'Transfer failed. Please try again later.'
       );

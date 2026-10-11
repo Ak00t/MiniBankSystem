@@ -1,6 +1,7 @@
-﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getMyAccounts } from '../api/customerAccountApi';
 import type { CustomerAccount } from '../types/accountTypes';
+import { submitP2PTransfer } from '../../transfer/store/transferSlice';
 
 interface AccountsState {
   accounts: CustomerAccount[];
@@ -51,6 +52,22 @@ const accountsSlice = createSlice({
       .addCase(fetchMyAccounts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      .addCase(submitP2PTransfer.fulfilled, (state, action) => {
+        const { sourceAccountNumber, totalDebitedAmount } = action.payload;
+        const sourceAcc = state.accounts.find(
+          (a) => a.accountNumber === sourceAccountNumber
+        );
+        if (sourceAcc) {
+          sourceAcc.availableBalance = Math.max(
+            0,
+            (Number(sourceAcc.availableBalance) || 0) - Number(totalDebitedAmount)
+          );
+          sourceAcc.currentBalance = Math.max(
+            0,
+            (Number(sourceAcc.currentBalance) || 0) - Number(totalDebitedAmount)
+          );
+        }
       });
   },
 });
