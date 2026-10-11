@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerProfileUpdateDTO {
+public class CusProfileUpdateDTO {
 
 
     private String address;

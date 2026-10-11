@@ -7,13 +7,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class DashboardAccountDTO {
+public class CusAccountResponseDTO {
 
     private String accountNumber;
 
@@ -27,7 +28,17 @@ public class DashboardAccountDTO {
 
     private BigDecimal availableBalance;
 
+    private BigDecimal minimumBalance;
+
+    private BigDecimal dailyTransferLimit;
+
     private String status;
 
     private Boolean jointAccount;
+
+    private Integer requiredApprovals;
+
+    private LocalDateTime openedAt;
+
+    private LocalDateTime closedAt;
 }

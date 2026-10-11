@@ -1,7 +1,7 @@
 package com.corebanking.service;
 
-import com.corebanking.dto.CustomerProfileResponseDTO;
-import com.corebanking.dto.CustomerProfileUpdateDTO;
+import com.corebanking.dto.CusProfileResponseDTO;
+import com.corebanking.dto.CusProfileUpdateDTO;
 import com.corebanking.entity.CompanyInfo;
 import com.corebanking.entity.Customers;
 import com.corebanking.entity.PersonalInfo;
@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class CustomerProfileService {
+public class CusProfileService {
 
     private final CustomerRepository customerRepository;
     private final PersonalInfoRepository personalInfoRepository;
@@ -29,7 +29,7 @@ public class CustomerProfileService {
     private final CloudinaryService cloudinaryService;
 
     @Transactional(readOnly = true)
-    public CustomerProfileResponseDTO getMyProfile() {
+    public CusProfileResponseDTO getMyProfile() {
 
         UUID customerId = getAuthenticatedCustomerId();
 
@@ -54,8 +54,8 @@ public class CustomerProfileService {
     }
 
     @Transactional
-    public CustomerProfileResponseDTO updateMyProfile(
-            CustomerProfileUpdateDTO dto) {
+    public CusProfileResponseDTO updateMyProfile(
+            CusProfileUpdateDTO dto) {
 
         UUID customerId = getAuthenticatedCustomerId();
 
@@ -102,7 +102,7 @@ public class CustomerProfileService {
     }
 
     @Transactional
-    public CustomerProfileResponseDTO updateProfileImage(
+    public CusProfileResponseDTO updateProfileImage(
             MultipartFile file) {
 
         UUID customerId = getAuthenticatedCustomerId();
@@ -145,7 +145,7 @@ public class CustomerProfileService {
 
     private void updatePersonalAddress(
             PersonalInfo personalInfo,
-            CustomerProfileUpdateDTO dto) {
+            CusProfileUpdateDTO dto) {
 
         if (dto.getAddress() != null) {
             personalInfo.setAddress(dto.getAddress());
@@ -170,7 +170,7 @@ public class CustomerProfileService {
 
     private void updateCompanyAddress(
             CompanyInfo companyInfo,
-            CustomerProfileUpdateDTO dto) {
+            CusProfileUpdateDTO dto) {
 
         if (dto.getAddress() != null) {
             companyInfo.setAddress(dto.getAddress());
@@ -193,13 +193,13 @@ public class CustomerProfileService {
         }
     }
 
-    private CustomerProfileResponseDTO mapToResponse(
+    private CusProfileResponseDTO mapToResponse(
             Customers customer,
             PersonalInfo personalInfo,
             CompanyInfo companyInfo) {
 
-        CustomerProfileResponseDTO dto =
-                CustomerProfileResponseDTO.builder()
+        CusProfileResponseDTO dto =
+                CusProfileResponseDTO.builder()
                         .customerCode(
                                 customer.getCustomerCode()
                         )
