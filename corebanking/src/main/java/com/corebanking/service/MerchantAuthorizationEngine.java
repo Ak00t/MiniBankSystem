@@ -46,9 +46,8 @@ public class MerchantAuthorizationEngine {
             // 2. UX Pre-Check: Read-only balance check using the REAL amount for the selected account
             ledgerFacadePort.validateSufficientFundsAndLimits(request.getCustomerId(), request.getAccountId(), realAmount);
 
-            // 3. Webhook: Server-to-Server Handoff (Group 3 moves the money)
-            // Added customerId to payload so Group 3 can execute the debit
-            gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "AUTHORIZED", request.getCustomerId(), null, null);
+            
+            gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "AUTHORIZED", request.getAccountId(), null, null);
 
             String ledgerReference = "AUTH-SUCCESS-" + request.getPaymentToken();
             
@@ -57,7 +56,7 @@ public class MerchantAuthorizationEngine {
                 .message("Payment authorized successfully")
                 .paymentToken(request.getPaymentToken())
                 .coreLedgerReference(ledgerReference)
-                .amount(realAmount) // CRITICAL: Use the REAL amount verified by the gateway
+                .amount(realAmount) 
                 .currency("MMK")
                 .timestamp(java.time.LocalDateTime.now())
                 .build();
@@ -65,7 +64,7 @@ public class MerchantAuthorizationEngine {
         } catch (com.corebanking.exception.InvalidPinException pinEx) {
             log.error("Payment authorization failed (Invalid PIN) for token {}. Reason: {}", request.getPaymentToken(), pinEx.getMessage());
             try {
-                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", request.getCustomerId(), "INVALID_PIN", pinEx.getMessage());
+                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", null, "INVALID_PIN", pinEx.getMessage());
             } catch (Exception webhookEx) {
                 log.error("Failed to notify Group 3 of security failure: {}", webhookEx.getMessage());
             }
@@ -73,7 +72,7 @@ public class MerchantAuthorizationEngine {
         } catch (com.corebanking.exception.CusAccountLockedException lockEx) {
             log.error("Payment authorization failed (Account Locked) for token {}. Reason: {}", request.getPaymentToken(), lockEx.getMessage());
             try {
-                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", request.getCustomerId(), "ACCOUNT_LOCKED", lockEx.getMessage());
+                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", null, "ACCOUNT_LOCKED", lockEx.getMessage());
             } catch (Exception webhookEx) {
                 log.error("Failed to notify Group 3 of security failure: {}", webhookEx.getMessage());
             }
@@ -81,7 +80,7 @@ public class MerchantAuthorizationEngine {
         } catch (com.corebanking.exception.AccountNotFoundException accEx) {
             log.error("Payment authorization failed (Account Not Found) for token {}. Reason: {}", request.getPaymentToken(), accEx.getMessage());
             try {
-                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", request.getCustomerId(), "ACCOUNT_NOT_FOUND", accEx.getMessage());
+                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", null, "ACCOUNT_NOT_FOUND", accEx.getMessage());
             } catch (Exception webhookEx) {
                 log.error("Failed to notify Group 3 of transaction failure: {}", webhookEx.getMessage());
             }
@@ -89,7 +88,7 @@ public class MerchantAuthorizationEngine {
         } catch (com.corebanking.exception.InsufficientFundsException fundEx) {
             log.error("Payment authorization failed (Insufficient Funds) for token {}. Reason: {}", request.getPaymentToken(), fundEx.getMessage());
             try {
-                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", request.getCustomerId(), "INSUFFICIENT_FUNDS", fundEx.getMessage());
+                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", null, "INSUFFICIENT_FUNDS", fundEx.getMessage());
             } catch (Exception webhookEx) {
                 log.error("Failed to notify Group 3 of transaction failure: {}", webhookEx.getMessage());
             }
@@ -97,7 +96,7 @@ public class MerchantAuthorizationEngine {
         } catch (SecurityException secEx) {
             log.error("Payment authorization failed (Security) for token {}. Reason: {}", request.getPaymentToken(), secEx.getMessage());
             try {
-                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", request.getCustomerId(), "INVALID_PIN", secEx.getMessage());
+                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", null, "INVALID_PIN", secEx.getMessage());
             } catch (Exception webhookEx) {
                 log.error("Failed to notify Group 3 of security failure: {}", webhookEx.getMessage());
             }
@@ -105,7 +104,7 @@ public class MerchantAuthorizationEngine {
         } catch (TransactionException transEx) {
             log.error("Payment authorization failed (Transaction) for token {}. Reason: {}", request.getPaymentToken(), transEx.getMessage());
             try {
-                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", request.getCustomerId(), "TRANSACTION_FAILED", transEx.getMessage());
+                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", null, "TRANSACTION_FAILED", transEx.getMessage());
             } catch (Exception webhookEx) {
                 log.error("Failed to notify Group 3 of transaction failure: {}", webhookEx.getMessage());
             }
@@ -117,7 +116,7 @@ public class MerchantAuthorizationEngine {
         } catch (Exception e) {
             log.error("Payment authorization failed (System) for token {}. Reason: {}", request.getPaymentToken(), e.getMessage());
             try {
-                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", request.getCustomerId(), "SYSTEM_ERROR", "An internal error occurred.");
+                gatewayOutboundPort.dispatchAuthorizationOutcome(request.getPaymentToken(), "FAILED", null, "SYSTEM_ERROR", "An internal error occurred.");
             } catch (Exception webhookEx) {
                 log.error("Failed to notify Group 3 of system failure: {}", webhookEx.getMessage());
             }

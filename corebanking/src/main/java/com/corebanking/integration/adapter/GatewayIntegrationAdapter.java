@@ -42,7 +42,7 @@ public class GatewayIntegrationAdapter implements GatewayOutboundPort {
     }
 
     @Override
-    public void dispatchAuthorizationOutcome(String paymentToken, String transactionStatus, UUID customerId, String errorCode, String errorMessage) {
+    public void dispatchAuthorizationOutcome(String paymentToken, String transactionStatus, String sourceAccountNumber, String errorCode, String errorMessage) {
         log.info("Sending Authorization to Group 3 Gateway for token: {} with status: {}", paymentToken, transactionStatus);
         
         try {
@@ -51,8 +51,8 @@ public class GatewayIntegrationAdapter implements GatewayOutboundPort {
             Map<String, String> request = new HashMap<>();
             request.put("paymentToken", paymentToken);
             request.put("status", transactionStatus);
-            if (customerId != null) {
-                request.put("customerId", customerId.toString());
+            if (sourceAccountNumber != null) {
+                request.put("sourceAccountNumber", sourceAccountNumber);
             }
             if (errorCode != null) {
                 request.put("errorCode", errorCode);

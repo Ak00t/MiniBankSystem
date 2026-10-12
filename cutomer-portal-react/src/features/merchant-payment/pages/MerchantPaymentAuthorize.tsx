@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { hasTokens } from '../../../utils/tokenStorage';
 import { fetchPaymentDetails, fetchCustomerAccounts, authorizePayment } from '../api/merchantPaymentService';
 import type { PaymentDetails, CustomerAccount, PaymentReceipt as ReceiptType } from '../types/merchantPayment';
-import { AccountSelector } from '../components/AccountSelector';
+
 import { PinInput } from '../components/PinInput';
 import { PaymentReceipt } from '../components/PaymentReceipt';
 import { PaymentFailure } from '../components/PaymentFailure';
@@ -112,17 +112,17 @@ export const MerchantPaymentAuthorize: React.FC = () => {
     reset(); // Clear PIN field
   };
 
-  if (loading || !details) {
+  if (loading) {
     return <div className="p-8 text-center text-gray-500 animate-pulse mt-20">Loading Secure Checkout...</div>;
+  }
+
+  // TERMINAL ERRORS: Show the massive Failure Screen for everything EXCEPT "INVALID_PIN"
+  if ((errorMessage && errorCode !== 'INVALID_PIN') || (errorMessage && !accounts.length) || !details) {
+     return <PaymentFailure details={details} errorMessage={errorMessage || 'Failed to load payment details.'} onRetry={handleRetry} />;
   }
 
   if (receipt) {
     return <PaymentReceipt receipt={receipt} details={details} selectedAccount={selectedAccountId} />;
-  }
-
-  // TERMINAL ERRORS: Show the massive Failure Screen for everything EXCEPT "INVALID_PIN"
-  if ((errorMessage && errorCode !== 'INVALID_PIN') || (errorMessage && !accounts.length)) {
-     return <PaymentFailure details={details} errorMessage={errorMessage} onRetry={handleRetry} />;
   }
 
   return (
@@ -155,11 +155,30 @@ export const MerchantPaymentAuthorize: React.FC = () => {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <AccountSelector 
-          accounts={accounts} 
-          selectedAccountId={selectedAccountId} 
-          onSelect={setSelectedAccountId} 
-        />
+        {accounts.length > 0 ? (
+          <div className="mb-6 text-left">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Pay From</label>
+            <div className="w-full py-3 px-4 border border-gray-200 bg-gray-50 rounded-lg text-gray-800 text-base font-medium flex justify-between items-center shadow-sm">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
+                  💳
+                </div>
+                <div>
+                  <div className="text-gray-900">{accounts[0].accountType} Account</div>
+                  <div className="text-gray-500 text-xs font-mono">****{accounts[0].accountNumber.slice(-4)}</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-gray-500 text-xs uppercase tracking-wider mb-0.5">Available</div>
+                <div className="text-gray-900 font-semibold">{accounts[0].availableBalance.toLocaleString()} {accounts[0].currency}</div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg text-sm font-medium border border-red-100">
+            No active CURRENT accounts found to pay from.
+          </div>
+        )}
 
         <PinInput 
           register={register} 
