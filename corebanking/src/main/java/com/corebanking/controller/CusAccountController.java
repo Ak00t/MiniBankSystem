@@ -1,7 +1,7 @@
 package com.corebanking.controller;
 
-import com.corebanking.dto.CustomerAccountResponseDTO;
-import com.corebanking.service.CustomerAccountService;
+import com.corebanking.dto.CusAccountResponseDTO;
+import com.corebanking.service.CusAccountService;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -12,17 +12,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/customer/accounts")
 @RequiredArgsConstructor
-public class CustomerAccountController {
+public class CusAccountController {
 
-    private final CustomerAccountService customerAccountService;
+    private final CusAccountService customerAccountService;
 
     /**
      * Get all accounts belonging to logged-in customer
      */
     @GetMapping
-    public ResponseEntity<List<CustomerAccountResponseDTO>> getMyAccounts() {
+    public ResponseEntity<List<CusAccountResponseDTO>> getMyAccounts() {
 
-        List<CustomerAccountResponseDTO> accounts =
+        List<CusAccountResponseDTO> accounts =
                 customerAccountService.getMyAccounts();
 
         return ResponseEntity.ok(accounts);
@@ -32,10 +32,10 @@ public class CustomerAccountController {
      * Get one account belonging to logged-in customer
      */
     @GetMapping("/{accountNumber}")
-    public ResponseEntity<CustomerAccountResponseDTO> getMyAccount(
+    public ResponseEntity<CusAccountResponseDTO> getMyAccount(
             @PathVariable String accountNumber) {
 
-        CustomerAccountResponseDTO account =
+        CusAccountResponseDTO account =
                 customerAccountService.getMyAccount(accountNumber);
 
         return ResponseEntity.ok(account);

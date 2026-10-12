@@ -1,6 +1,6 @@
 package com.corebanking.service;
 
-import com.corebanking.dto.CustomerAccountResponseDTO;
+import com.corebanking.dto.CusAccountResponseDTO;
 import com.corebanking.entity.Accounts;
 import com.corebanking.repository.AccountRepository;
 
@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class CustomerAccountService {
+public class CusAccountService {
 
     private final AccountRepository accountRepository;
 
@@ -73,7 +73,7 @@ public class CustomerAccountService {
     // GET MY ACCOUNTS
     // =========================================================
 
-    public List<CustomerAccountResponseDTO> getMyAccounts() {
+    public List<CusAccountResponseDTO> getMyAccounts() {
 
         UUID customerId =
                 getAuthenticatedCustomerId();
@@ -93,7 +93,7 @@ public class CustomerAccountService {
     // GET MY ACCOUNT BY ACCOUNT NUMBER
     // =========================================================
 
-    public CustomerAccountResponseDTO getMyAccount(
+    public CusAccountResponseDTO getMyAccount(
             String accountNumber) {
 
         if (accountNumber == null
@@ -141,10 +141,10 @@ public class CustomerAccountService {
     // ENTITY → CUSTOMER RESPONSE DTO
     // =========================================================
 
-    private CustomerAccountResponseDTO mapToResponse(
+    private CusAccountResponseDTO mapToResponse(
             Accounts account) {
 
-        return CustomerAccountResponseDTO.builder()
+        return CusAccountResponseDTO.builder()
 
                 .accountNumber(
                         account.getAccountNumber()
