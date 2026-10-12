@@ -25,6 +25,10 @@ public interface BankTransactionRepository extends JpaRepository<BankTransaction
     // Safer check that ignores status
     boolean existsByExternalReference(String externalReference);
 
+    Optional<BankTransactions> findByTransactionRef(String transactionRef);
+
+    boolean existsByTransactionRef(String transactionRef);
+
     /**
      * Calculates total transferred amount by account for the current day.
      */
