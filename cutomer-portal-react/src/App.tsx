@@ -7,6 +7,7 @@ import MyAccountsPage from "./features/customer-account/accounts/MyaccountPage";
 //import AccountDetailPage from "./features/customer-account/accounts/AccountDetailPage";
 import ProfilePage from "./features/customer-account/profile/ProfilePage";
 import TransferPage from "./features/transfer/pages/TransferPage";
+import BeneficiariesPage from "./features/beneficiaries/pages/BeneficiariesPage";
 import MainLayout from "./components/layout/MainLayout";
 import AccountDetailPage from "./features/customer-account/accounts/AccountDetailPage";
 
@@ -50,6 +51,12 @@ function App() {
         <Route
           path="/transfer"
           element={<TransferPage />}
+        />
+
+        {/* Beneficiaries */}
+        <Route
+          path="/beneficiaries"
+          element={<BeneficiariesPage />}
         />
 
         {/* Account Details */}

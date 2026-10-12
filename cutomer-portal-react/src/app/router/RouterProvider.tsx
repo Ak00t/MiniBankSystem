@@ -36,6 +36,7 @@ import MyAccountsPage from "../../features/customer-account/accounts/MyaccountPa
 import ProfilePage from "../../features/customer-account/profile/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
 import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
+import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
 
 // ======================================================
 // ROUTER
@@ -160,9 +161,14 @@ const router = createBrowserRouter([
           },
 
           {
-        path: "/transfer",
-        element: <P2PTransferForm />,
-      },
+            path: "/transfer",
+            element: <P2PTransferForm />,
+          },
+
+          {
+            path: "/beneficiaries",
+            element: <BeneficiariesPage />,
+          },
 
         ],
 
