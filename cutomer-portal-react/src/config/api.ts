@@ -10,6 +10,10 @@ import {
   clearTokens,
 } from "../utils/tokenStorage";
 
+import {
+  dispatchSessionTimeout,
+} from "../utils/sessionEvents";
+
 
 // ======================================================
 // BASE URL
@@ -22,7 +26,7 @@ const BASE_URL =
 // ======================================================
 // MAIN AXIOS INSTANCE
 // ======================================================
-
+//
 // IMPORTANT:
 //
 // Content-Type ကို globally မသတ်မှတ်ပါ.
@@ -33,6 +37,7 @@ const BASE_URL =
 // FormData / image upload ဖြစ်ရင်
 // browser က multipart/form-data + boundary
 // ကို automatically ထည့်ပေးမယ်.
+// ======================================================
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -62,6 +67,25 @@ interface RetryableRequestConfig
 
 
 // ======================================================
+// API ERROR RESPONSE TYPE
+// ======================================================
+//
+// Backend example:
+//
+// {
+//   "success": false,
+//   "code": "SESSION_EXPIRED",
+//   "message": "Session expired due to inactivity."
+// }
+// ======================================================
+
+interface ApiErrorResponse {
+  code?: string;
+  message?: string;
+}
+
+
+// ======================================================
 // PUBLIC ENDPOINT CHECK
 // ======================================================
 
@@ -73,17 +97,33 @@ const isPublicEndpoint = (
     return false;
   }
 
+
   return (
-    url.includes("/auth/login") ||
-    url.includes("/auth/verify-otp") ||
-    url.includes("/auth/resend-otp") ||
+
+    url.includes(
+      "/auth/login"
+    ) ||
+
+    url.includes(
+      "/auth/verify-otp"
+    ) ||
+
+    url.includes(
+      "/auth/resend-otp"
+    ) ||
+
     url.includes(
       "/auth/first-login/change-password"
     ) ||
+
     url.includes(
       "/auth/first-login/setup-pin"
     ) ||
-    url.includes("/auth/refresh")
+
+    url.includes(
+      "/auth/refresh"
+    )
+
   );
 
 };
@@ -91,6 +131,23 @@ const isPublicEndpoint = (
 
 // ======================================================
 // REQUEST INTERCEPTOR
+// ======================================================
+//
+// Protected API ဖြစ်မှ Access Token attach လုပ်မယ်.
+//
+// Public API:
+// login
+// otp
+// first login
+// refresh
+//
+// Protected API:
+// dashboard
+// accounts
+// profile
+// pin reset
+// keep alive
+// etc.
 // ======================================================
 
 api.interceptors.request.use(
@@ -107,7 +164,9 @@ api.interceptors.request.use(
 
     if (
       accessToken &&
-      !isPublicEndpoint(config.url)
+      !isPublicEndpoint(
+        config.url
+      )
     ) {
 
       config.headers.Authorization =
@@ -123,7 +182,9 @@ api.interceptors.request.use(
 
   (error) => {
 
-    return Promise.reject(error);
+    return Promise.reject(
+      error
+    );
 
   }
 
@@ -133,7 +194,7 @@ api.interceptors.request.use(
 // ======================================================
 // SEPARATE AXIOS CLIENT FOR REFRESH TOKEN
 // ======================================================
-
+//
 // ဒီ client ကို refresh token request အတွက်ပဲသုံးမယ်.
 //
 // Main api interceptor မသုံးတာကြောင့်
@@ -142,6 +203,7 @@ api.interceptors.request.use(
 //
 // Refresh endpoint က JSON request ပဲဖြစ်လို့
 // application/json ကို ဒီနေရာမှာထားလို့ရပါတယ်.
+// ======================================================
 
 const refreshClient =
   axios.create({
@@ -149,7 +211,10 @@ const refreshClient =
     baseURL: BASE_URL,
 
     headers: {
-      "Content-Type": "application/json",
+
+      "Content-Type":
+        "application/json",
+
     },
 
   });
@@ -158,15 +223,17 @@ const refreshClient =
 // ======================================================
 // SINGLE REFRESH LOCK
 // ======================================================
-
+//
 // Protected API requests အများကြီး
 // 401 တစ်ပြိုင်နက်ရလာရင်
 //
 // refresh API ကို request တစ်ခုချင်းစီက
 // ထပ်ခေါ်မနေစေဖို့ shared Promise သုံးထားပါတယ်.
+// ======================================================
 
 let refreshPromise:
-  Promise<string> | null = null;
+  Promise<string> | null =
+    null;
 
 
 // ======================================================
@@ -181,10 +248,12 @@ const refreshAccessToken =
     // Refresh request run နေပြီးသားလား
     // ==================================================
 
-    if (refreshPromise) {
+    if (
+      refreshPromise
+    ) {
 
-      // အသစ်ထပ်မခေါ်ဘဲ
-      // existing refresh request ကို wait လုပ်မယ်.
+      // Existing refresh request ကို
+      // wait လုပ်မယ်.
 
       return refreshPromise;
 
@@ -198,6 +267,7 @@ const refreshAccessToken =
     refreshPromise =
       (async () => {
 
+
         const refreshToken =
           getRefreshToken();
 
@@ -206,7 +276,9 @@ const refreshAccessToken =
         // Refresh Token မရှိ
         // ----------------------------------------------
 
-        if (!refreshToken) {
+        if (
+          !refreshToken
+        ) {
 
           throw new Error(
             "Refresh token is missing."
@@ -223,11 +295,16 @@ const refreshAccessToken =
           await refreshClient.post<
             RefreshTokenResponse
           >(
+
             "/auth/refresh",
+
             {
+
               refreshToken:
                 refreshToken,
+
             }
+
           );
 
 
@@ -269,6 +346,7 @@ const refreshAccessToken =
         //
         // sessionStorage ထဲမှာ
         // new tokens နဲ့ replace လုပ်မယ်.
+        // ==================================================
 
         saveTokens(
           newAccessToken,
@@ -287,11 +365,13 @@ const refreshAccessToken =
 
     } finally {
 
+
       // ==================================================
       // RELEASE SINGLE REFRESH LOCK
       // ==================================================
 
-      refreshPromise = null;
+      refreshPromise =
+        null;
 
     }
 
@@ -303,6 +383,7 @@ const refreshAccessToken =
 // ======================================================
 
 api.interceptors.response.use(
+
 
   // ====================================================
   // SUCCESS RESPONSE
@@ -323,17 +404,25 @@ api.interceptors.response.use(
     error: AxiosError
   ) => {
 
+
     const originalRequest =
       error.config as
-        RetryableRequestConfig | undefined;
+        RetryableRequestConfig
+        | undefined;
 
 
+    // ==================================================
     // Request config မရှိရင်
-    // retry မလုပ်နိုင်.
+    // retry မလုပ်နိုင်
+    // ==================================================
 
-    if (!originalRequest) {
+    if (
+      !originalRequest
+    ) {
 
-      return Promise.reject(error);
+      return Promise.reject(
+        error
+      );
 
     }
 
@@ -346,9 +435,13 @@ api.interceptors.response.use(
     // 401 မဟုတ်ရင် refresh မလုပ်
     // ==================================================
 
-    if (status !== 401) {
+    if (
+      status !== 401
+    ) {
 
-      return Promise.reject(error);
+      return Promise.reject(
+        error
+      );
 
     }
 
@@ -357,12 +450,14 @@ api.interceptors.response.use(
     // PUBLIC AUTH ENDPOINT 401
     // ==================================================
     //
-    // ဥပမာ:
+    // Example:
     //
-    // Wrong password login → 401
+    // Wrong password login
+    // → 401
     //
     // ဒီလို error ကို refresh token နဲ့
     // refresh မလုပ်ရပါ.
+    // ==================================================
 
     if (
       isPublicEndpoint(
@@ -370,7 +465,62 @@ api.interceptors.response.use(
       )
     ) {
 
-      return Promise.reject(error);
+      return Promise.reject(
+        error
+      );
+
+    }
+
+
+    // ==================================================
+    // SESSION EXPIRED DUE TO INACTIVITY
+    // ==================================================
+    //
+    // Backend response:
+    //
+    // 401
+    //
+    // {
+    //   "success": false,
+    //   "code": "SESSION_EXPIRED",
+    //   "message":
+    //     "Session expired due to inactivity."
+    // }
+    //
+    // IMPORTANT:
+    //
+    // ဒီ error ဖြစ်ရင်
+    // Refresh Token မသုံးရပါ.
+    //
+    // Backend က session ကို
+    // idle timeout ကြောင့် revoke လုပ်ပြီးသားဖြစ်တယ်.
+    //
+    // Frontend Timeout Modal ကိုပဲပြမယ်.
+    // ==================================================
+
+    const responseData =
+      error.response?.data as
+        ApiErrorResponse
+        | undefined;
+
+
+    if (
+      responseData?.code ===
+      "SESSION_EXPIRED"
+    ) {
+
+      dispatchSessionTimeout(
+
+        responseData.message ||
+
+        "Your session has expired."
+
+      );
+
+
+      return Promise.reject(
+        error
+      );
 
     }
 
@@ -378,15 +528,24 @@ api.interceptors.response.use(
     // ==================================================
     // ORIGINAL REQUEST RETRIED ALREADY ?
     // ==================================================
+    //
+    // Same request ကို refresh/retry
+    // ထပ်ခါထပ်ခါမလုပ်စေဖို့.
+    // ==================================================
 
-    if (originalRequest._retry) {
+    if (
+      originalRequest._retry
+    ) {
 
-      return Promise.reject(error);
+      return Promise.reject(
+        error
+      );
 
     }
 
 
-    originalRequest._retry = true;
+    originalRequest._retry =
+      true;
 
 
     // ==================================================
@@ -397,14 +556,20 @@ api.interceptors.response.use(
       getRefreshToken();
 
 
-    if (!refreshToken) {
+    if (
+      !refreshToken
+    ) {
 
       clearAuthData();
+
 
       window.location.href =
         "/login";
 
-      return Promise.reject(error);
+
+      return Promise.reject(
+        error
+      );
 
     }
 
@@ -415,6 +580,7 @@ api.interceptors.response.use(
 
     try {
 
+
       const newAccessToken =
         await refreshAccessToken();
 
@@ -424,8 +590,10 @@ api.interceptors.response.use(
       // NEW ACCESS TOKEN ATTACH
       // ==================================================
 
-      originalRequest.headers.Authorization =
-        `Bearer ${newAccessToken}`;
+      originalRequest
+        .headers
+        .Authorization =
+          `Bearer ${newAccessToken}`;
 
 
       // ==================================================
@@ -433,19 +601,24 @@ api.interceptors.response.use(
       // ==================================================
       //
       // Dashboard request ဖြစ်လည်း retry
+      //
       // Accounts request ဖြစ်လည်း retry
+      //
       // Image upload request ဖြစ်လည်း retry
       //
       // FormData ဖြစ်ရင် Content-Type ကို
       // globally force မထားတော့တဲ့အတွက်
       // multipart request ကို handle လုပ်နိုင်မယ်.
+      // ==================================================
 
       return api(
         originalRequest
       );
 
 
-    } catch (refreshError) {
+    } catch (
+      refreshError
+    ) {
 
 
       // ==================================================
@@ -476,24 +649,31 @@ api.interceptors.response.use(
 // CLEAR AUTH DATA
 // ======================================================
 
-const clearAuthData = () => {
-
-  // Access Token + Refresh Token
-
-  clearTokens();
+const clearAuthData =
+  () => {
 
 
-  // Temporary OTP / login flow data
+    // ==================================================
+    // Access Token + Refresh Token
+    // ==================================================
 
-  sessionStorage.removeItem(
-    "challengeGroupId"
-  );
+    clearTokens();
 
-  sessionStorage.removeItem(
-    "maskedEmail"
-  );
 
-};
+    // ==================================================
+    // Temporary OTP / Login Flow Data
+    // ==================================================
+
+    sessionStorage.removeItem(
+      "challengeGroupId"
+    );
+
+
+    sessionStorage.removeItem(
+      "maskedEmail"
+    );
+
+  };
 
 
 // ======================================================
