@@ -17,14 +17,12 @@ interface Props {
 }
 
 const typeColors: Record<string, string> = {
-  TRANSFER: '#2563EB',
   INTERNAL_TRANSFER: '#2563EB',
   OTC_DEPOSIT: '#16a34a',
   OTC_WITHDRAWAL: '#dc2626',
   EXTERNAL_PAYMENT: '#0891b2',
   LEDGER_ADJUSTMENT: '#7c3aed',
   REFUND: '#ea580c',
-  MERCHANT_CHECKOUT: '#d97706',
 };
 
 const DailyLedgerPanel: React.FC<Props> = ({
@@ -220,23 +218,26 @@ const DailyLedgerPanel: React.FC<Props> = ({
             })}
           </svg>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
-            {Object.entries(typeColors).map(([k, v]) => (
-              <span
-                key={k}
-                style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
+            {Array.from(new Set(chartData.map((r) => r.transactionType))).map((type) => {
+              const color = typeColors[type] ?? '#2563EB';
+              return (
                 <span
-                  style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '2px',
-                    backgroundColor: v,
-                    display: 'inline-block',
-                  }}
-                />
-                {k}
-              </span>
-            ))}
+                  key={type}
+                  style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <span
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '2px',
+                      backgroundColor: color,
+                      display: 'inline-block',
+                    }}
+                  />
+                  {type}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
