@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CustomerProfileResponseDTO {
+public class CusProfileResponseDTO {
 
     private String customerCode;
     private String customerType;

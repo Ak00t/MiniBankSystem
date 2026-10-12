@@ -1,5 +1,6 @@
 
 package com.corebanking.service;
+import com.corebanking.dto.AccountLookupResponseDto;
 import com.corebanking.dto.P2PTransferRequestDto;
 import com.corebanking.dto.P2PTransferResponseDto;
 import com.corebanking.entity.*;
@@ -320,6 +321,23 @@ public class P2PTransferService {
                 .currency(txn.getCurrency())
                 .completedAt(txn.getCompletedAt())
                 .description(txn.getDescription())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public AccountLookupResponseDto lookupAccount(String accountNumber) {
+        Accounts account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+
+        String accountName = (account.getCustomer() != null && account.getCustomer().getFullName() != null)
+                ? account.getCustomer().getFullName()
+                : "N/A";
+
+        return AccountLookupResponseDto.builder()
+                .accountNumber(account.getAccountNumber())
+                .accountName(accountName)
+                .accountType(account.getAccountType() != null ? account.getAccountType().name() : null)
+                .status(account.getStatus() != null ? account.getStatus().name() : null)
                 .build();
     }
 }

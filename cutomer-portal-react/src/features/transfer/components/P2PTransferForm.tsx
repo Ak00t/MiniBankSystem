@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "../../../lib/redux";
 import { submitP2PTransfer, resetTransferState } from "../store/transferSlice";
 import { fetchMyAccounts } from "../../customer-account/accounts/accountsSlice";
-import type { P2PTransferRequest } from "../types/transfer.types";
+import { lookupDestinationAccount } from "../services/transferService";
+import type { P2PTransferRequest } from "../types/transferTypes";
 import {
   Loader2,
   AlertCircle,
@@ -164,6 +165,9 @@ interface FormStepProps {
   setSourceAccount: (v: string) => void;
   destinationAccount: string;
   setDestinationAccount: (v: string) => void;
+  recipientName: string;
+  lookupLoading: boolean;
+  lookupError: string;
   amount: string;
   setAmount: (v: string) => void;
   description: string;
@@ -177,6 +181,7 @@ function FormStep({
   accounts, accountsLoading,
   sourceAccount, setSourceAccount,
   destinationAccount, setDestinationAccount,
+  recipientName, lookupLoading, lookupError,
   amount, setAmount,
   description, setDescription,
   validationError, recentAccounts,
@@ -247,7 +252,35 @@ function FormStep({
         <datalist id="recent-destinations">
           {recentAccounts.map((acc, i) => <option key={i} value={acc} />)}
         </datalist>
-        {recentAccounts.length > 0 && (
+
+        {/* Recipient Lookup Feedback */}
+        {lookupLoading && (
+          <div className="flex items-center gap-2 mt-2 px-3.5 py-2 bg-blue-50/80 border border-blue-100 rounded-xl text-xs text-blue-600 font-medium">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span>Checking recipient account...</span>
+          </div>
+        )}
+
+        {!lookupLoading && recipientName && (
+          <div className="mt-2 px-3.5 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 font-medium text-emerald-900">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Recipient: <strong className="font-bold text-emerald-950 text-sm">{recipientName}</strong></span>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md">
+              Verified
+            </span>
+          </div>
+        )}
+
+        {!lookupLoading && lookupError && destinationAccount && (
+          <div className="mt-2 px-3 py-1.5 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-xs text-red-600 font-medium">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>{lookupError}</span>
+          </div>
+        )}
+
+        {!lookupLoading && !recipientName && !lookupError && recentAccounts.length > 0 && (
           <p className="text-xs text-gray-400 mt-1.5 pl-1">
             💡 Type to see recent accounts
           </p>
@@ -330,16 +363,22 @@ function FormStep({
 interface ReviewStepProps {
   sourceAccount: string;
   destinationAccount: string;
+  recipientName: string;
   amount: number;
   description: string;
   onConfirm: () => void;
   onBack: () => void;
 }
 
-function ReviewStep({ sourceAccount, destinationAccount, amount, description, onConfirm, onBack }: ReviewStepProps) {
+function ReviewStep({ sourceAccount, destinationAccount, recipientName, amount, description, onConfirm, onBack }: ReviewStepProps) {
   const rows = [
     { label: "From Account", value: maskAccount(sourceAccount) },
-    { label: "To Account", value: maskAccount(destinationAccount) },
+    {
+      label: "To Account",
+      value: recipientName
+        ? `${maskAccount(destinationAccount)} (${recipientName})`
+        : maskAccount(destinationAccount),
+    },
     { label: "Transfer Amount", value: formatMMK(amount), highlight: true },
     ...(description ? [{ label: "Description", value: description }] : []),
   ];
@@ -405,10 +444,11 @@ function ReviewStep({ sourceAccount, destinationAccount, amount, description, on
 
 interface ReceiptStepProps {
   result: any;
+  recipientName?: string;
   onNewTransfer: () => void;
 }
 
-function ReceiptStep({ result, onNewTransfer }: ReceiptStepProps) {
+function ReceiptStep({ result, recipientName, onNewTransfer }: ReceiptStepProps) {
   const [copied, setCopied] = useState(false);
 
   const completedDate = new Date(result.completedAt).toLocaleString("en-GB", {
@@ -428,7 +468,12 @@ function ReceiptStep({ result, onNewTransfer }: ReceiptStepProps) {
     { label: "Reference ID", value: result.transactionRef, mono: true },
     { label: "Status", value: result.status },
     { label: "From", value: maskAccount(result.sourceAccountNumber) },
-    { label: "To", value: maskAccount(result.destinationAccountNumber) },
+    {
+      label: "To",
+      value: recipientName
+        ? `${maskAccount(result.destinationAccountNumber)} (${recipientName})`
+        : maskAccount(result.destinationAccountNumber),
+    },
     { label: "Date & Time", value: completedDate },
   ];
 
@@ -522,6 +567,9 @@ export const P2PTransferForm = () => {
 
   const [sourceAccount, setSourceAccount] = useState("");
   const [destinationAccount, setDestinationAccount] = useState("");
+  const [recipientName, setRecipientName] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -542,6 +590,37 @@ export const P2PTransferForm = () => {
     if (saved) setRecentAccounts(JSON.parse(saved));
     return () => { dispatch(resetTransferState()); };
   }, [dispatch]);
+
+  // Debounced account lookup when destinationAccount changes
+  useEffect(() => {
+    setRecipientName("");
+    setLookupError("");
+
+    const acc = destinationAccount.trim();
+    if (!acc || acc.length < 5) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setLookupLoading(true);
+        setLookupError("");
+        const res = await lookupDestinationAccount(acc);
+        if (res && res.accountName) {
+          setRecipientName(res.accountName);
+        } else {
+          setLookupError("Account not found");
+        }
+      } catch (err: any) {
+        setRecipientName("");
+        setLookupError(err.response?.data?.message || "Account not found or inactive.");
+      } finally {
+        setLookupLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [destinationAccount]);
 
   // Go to receipt when success
   useEffect(() => {
@@ -564,6 +643,9 @@ export const P2PTransferForm = () => {
     if (!destinationAccount.trim()) return setValidationError("Please enter a destination account number.");
     if (!/^\d+$/.test(destinationAccount)) return setValidationError("Destination account number must contain only numbers.");
     if (sourceAccount === destinationAccount) return setValidationError("Source and destination accounts cannot be the same.");
+    if (lookupLoading) return setValidationError("Verifying destination account, please wait...");
+    if (lookupError) return setValidationError(lookupError);
+    if (!recipientName) return setValidationError("Please enter a valid destination account number.");
     if (!amount || Number(amount) < 1) return setValidationError("Minimum transfer amount is 1 MMK.");
     setStep("review");
   };
@@ -592,6 +674,8 @@ export const P2PTransferForm = () => {
   const handleReset = () => {
     setStep("form");
     setDestinationAccount("");
+    setRecipientName("");
+    setLookupError("");
     setAmount("");
     setDescription("");
     setValidationError("");
@@ -653,6 +737,9 @@ export const P2PTransferForm = () => {
               setSourceAccount={setSourceAccount}
               destinationAccount={destinationAccount}
               setDestinationAccount={setDestinationAccount}
+              recipientName={recipientName}
+              lookupLoading={lookupLoading}
+              lookupError={lookupError}
               amount={amount}
               setAmount={setAmount}
               description={description}
@@ -667,6 +754,7 @@ export const P2PTransferForm = () => {
             <ReviewStep
               sourceAccount={sourceAccount}
               destinationAccount={destinationAccount}
+              recipientName={recipientName}
               amount={Number(amount)}
               description={description}
               onConfirm={() => setShowPinModal(true)}
@@ -675,7 +763,11 @@ export const P2PTransferForm = () => {
           )}
 
           {step === "receipt" && transactionResult && (
-            <ReceiptStep result={transactionResult} onNewTransfer={handleReset} />
+            <ReceiptStep
+              result={transactionResult}
+              recipientName={recipientName}
+              onNewTransfer={handleReset}
+            />
           )}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { P2PTransferRequest, P2PTransferResponse } from '../types/transfer.types';
+import type { P2PTransferRequest, P2PTransferResponse } from '../types/transferTypes';
 import { executeP2PTransfer } from '../services/transferService';
 
 interface TransferState {

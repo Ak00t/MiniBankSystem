@@ -8,6 +8,7 @@ import MyAccountsPage from "./features/customer-account/accounts/MyaccountPage";
 import ProfilePage from "./features/customer-account/profile/ProfilePage";
 import TransferPage from "./features/transfer/pages/TransferPage";
 import MainLayout from "./components/layout/MainLayout";
+import AccountDetailPage from "./features/customer-account/accounts/AccountDetailPage";
 
 function App() {
   return (
@@ -33,6 +34,11 @@ function App() {
         <Route
           path="/accounts"
           element={<MyAccountsPage />}
+        />
+
+        <Route
+          path="/accounts/:accountNumber"
+          element={<AccountDetailPage />}
         />
 
         <Route

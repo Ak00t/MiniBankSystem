@@ -1,7 +1,7 @@
 package com.corebanking.service;
 
-import com.corebanking.dto.DashboardAccountDTO;
-import com.corebanking.dto.DashboardResponseDTO;
+import com.corebanking.dto.CusDashboardAccountDTO;
+import com.corebanking.dto.CusDashboardResponseDTO;
 import com.corebanking.entity.Accounts;
 import com.corebanking.entity.Customers;
 import com.corebanking.repository.AccountRepository;
@@ -20,13 +20,13 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class DashboardService {
+public class CusDashboardService {
 
     private final CustomerRepository customerRepository;
     private final AccountRepository accountRepository;
 
     @Transactional(readOnly = true)
-    public DashboardResponseDTO getDashboard() {
+    public CusDashboardResponseDTO getDashboard() {
 
         // Get logged-in customer ID from Customer JWT
         UUID customerId = getAuthenticatedCustomerId();
@@ -43,14 +43,14 @@ public class DashboardService {
                 accountRepository.findByCustomerCustomerId(customerId);
 
         // Convert account entities to dashboard DTOs
-        List<DashboardAccountDTO> accounts =
+        List<CusDashboardAccountDTO> accounts =
                 accountEntities.stream()
                         .map(this::mapToDashboardAccount)
                         .toList();
 
         // Calculate total available balance
         BigDecimal totalBalance = accounts.stream()
-                .map(DashboardAccountDTO::getAvailableBalance)
+                .map(CusDashboardAccountDTO::getAvailableBalance)
                 .filter(balance -> balance != null)
                 .reduce(
                         BigDecimal.ZERO,
@@ -58,7 +58,7 @@ public class DashboardService {
                 );
 
         // Build dashboard response
-        return DashboardResponseDTO.builder()
+        return CusDashboardResponseDTO.builder()
                 .customerCode(customer.getCustomerCode())
                 .fullName(customer.getFullName())
                 .totalBalance(totalBalance)
@@ -124,10 +124,10 @@ public class DashboardService {
      *
      * No transaction information is included.
      */
-    private DashboardAccountDTO mapToDashboardAccount(
+    private CusDashboardAccountDTO mapToDashboardAccount(
             Accounts account) {
 
-        return DashboardAccountDTO.builder()
+        return CusDashboardAccountDTO.builder()
 
                 .accountNumber(
                         account.getAccountNumber()

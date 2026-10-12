@@ -34,6 +34,7 @@ import MainLayout from "../../components/layout/MainLayout";
 import MyAccountsPage from "../../features/customer-account/accounts/MyaccountPage";
 import ProfilePage from "../../features/customer-account/profile/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
+import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
 
 // ======================================================
 // ROUTER
@@ -125,12 +126,22 @@ const router = createBrowserRouter([
             element: <MyAccountsPage />,
           },
 
-           {
+          {
+            path: "/accounts",
+            element: <MyAccountsPage />,
+          },
+
+          {
+            path: "/accounts/:accountNumber",
+            element: <AccountDetailPage />,
+          },
+
+          {
             path: "/profile",
             element: <ProfilePage />,
           },
 
-            //pin reset pages
+          //pin reset pages
 
           {
             path: "/pin-reset/otp",
