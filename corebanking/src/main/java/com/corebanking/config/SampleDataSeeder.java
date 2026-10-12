@@ -35,6 +35,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Method 3 seeding strategy: a programmatic {@link CommandLineRunner} that inserts
@@ -242,73 +243,161 @@ public class SampleDataSeeder implements CommandLineRunner {
     }
 
     // ------------------------------------------------------------------
-    // SECTION 4: bank_transactions (last 30 days)
+    // SECTION 4: bank_transactions (target: 500 rows over the last 90 days)
+    // Distributed across all 30 ACTIVE accounts with a realistic mix of
+    // types, statuses and amounts. Deterministic via a fixed random seed.
     // ------------------------------------------------------------------
 
+    /** Total transactions generated (5 fixed anchors + 1495 generated rows). */
+    private static final int TARGET_TRANSACTIONS = 1500;
+
+    /** Transaction refs reserved for the fixed anchor rows used elsewhere. */
+    private static final int[] ANCHOR_REFS = {1, 3, 4, 29, 50};
+
     private void seedTransactions(List<Accounts> active, StaffUsers staff, LocalDateTime now) {
-        List<BankTransactions> transactions = new ArrayList<>();
-        int ref = 1;
+        List<BankTransactions> transactions = new ArrayList<>(TARGET_TRANSACTIONS);
 
-        for (int day = 30; day >= 1; day--) {
-            LocalDateTime at = now.minusDays(day);
-            Accounts a = active.get(day % 5);
-            Accounts b = active.get((day + 1) % 5);
-
-            transactions.add(transaction(ref++, TransactionType.INTERNAL_TRANSFER,
-                    TransactionStatus.COMPLETED, a, b,
-                    BigDecimal.valueOf(5000L * day), true, at, staff));
-
-            if (day % 3 == 0) {
-                transactions.add(transaction(ref++, TransactionType.OTC_DEPOSIT,
-                        TransactionStatus.COMPLETED, null, active.get(day % 5),
-                        BigDecimal.valueOf(8000L * day), false, at, staff));
-            }
-            if (day % 4 == 0) {
-                transactions.add(transaction(ref++, TransactionType.OTC_WITHDRAWAL,
-                        TransactionStatus.COMPLETED, active.get(day % 5), null,
-                        BigDecimal.valueOf(3000L * day), true, at, staff));
-            }
-            if (day % 5 == 0) {
-                transactions.add(transaction(ref++, TransactionType.EXTERNAL_PAYMENT,
-                        TransactionStatus.COMPLETED, active.get(day % 5), null,
-                        BigDecimal.valueOf(7500L * day), true, at, staff));
-            }
-            if (day % 7 == 0) {
-                transactions.add(transaction(ref++, TransactionType.LEDGER_ADJUSTMENT,
-                        TransactionStatus.COMPLETED, null, active.get(day % 5),
-                        BigDecimal.valueOf(500L * day), false, at, staff));
-            }
-            if (day % 6 == 0) {
-                transactions.add(transaction(ref++, TransactionType.REFUND,
-                        TransactionStatus.COMPLETED, null, active.get(day % 5),
-                        BigDecimal.valueOf(1500L * day), false, at, staff));
-            }
-        }
-
-        // Non-completed edge cases mirroring the SQL sample.
-        transactions.add(transaction(ref++, TransactionType.INTERNAL_TRANSFER,
-                TransactionStatus.FAILED, active.get(1), active.get(2),
-                BigDecimal.valueOf(4000), true, now.minusDays(26), staff));
-        transactions.add(transaction(ref++, TransactionType.OTC_WITHDRAWAL,
-                TransactionStatus.CANCELLED, active.get(3), null,
-                BigDecimal.valueOf(2000), true, now.minusDays(25), staff));
-        transactions.add(transaction(ref++, TransactionType.EXTERNAL_PAYMENT,
-                TransactionStatus.FAILED, active.get(2), null,
-                BigDecimal.valueOf(11000), true, now.minusDays(19), staff));
-        transactions.add(transaction(ref++, TransactionType.INTERNAL_TRANSFER,
-                TransactionStatus.FAILED, active.get(1), active.get(4),
-                BigDecimal.valueOf(6000), true, now.minusDays(7), staff));
-        transactions.add(transaction(ref++, TransactionType.INTERNAL_TRANSFER,
+        // Fixed anchor rows: referenced by DemoDataSeeder (ledger entries, holds,
+        // approvals, manual transactions) and mirrored by the SQL sample.
+        transactions.add(transaction("REF-T001", TransactionType.INTERNAL_TRANSFER,
+                TransactionStatus.COMPLETED, active.get(0), active.get(1),
+                BigDecimal.valueOf(5000), true, now.minusDays(30), staff));
+        transactions.add(transaction("REF-T003", TransactionType.OTC_DEPOSIT,
+                TransactionStatus.COMPLETED, null, active.get(0),
+                BigDecimal.valueOf(8000), false, now.minusDays(30), staff));
+        transactions.add(transaction("REF-T004", TransactionType.OTC_WITHDRAWAL,
+                TransactionStatus.COMPLETED, active.get(2), null,
+                BigDecimal.valueOf(3000), true, now.minusDays(30), staff));
+        transactions.add(transaction("REF-T029", TransactionType.INTERNAL_TRANSFER,
                 TransactionStatus.PENDING_AUTHORIZATION, active.get(4), active.get(2),
                 BigDecimal.valueOf(25000), true, now.minusDays(13), staff));
-        transactions.add(transaction(ref, TransactionType.EXTERNAL_PAYMENT,
+        transactions.add(transaction("REF-T050", TransactionType.EXTERNAL_PAYMENT,
                 TransactionStatus.PENDING_AUTHORIZATION, active.get(2), null,
                 BigDecimal.valueOf(28000), true, now.minusHours(4), staff));
+
+        TransactionType[] typeMix = weightedTypeMix();
+        Random random = new Random(20260101L);
+
+        for (int ref = 1; transactions.size() < TARGET_TRANSACTIONS; ref++) {
+            if (isAnchorRef(ref)) {
+                continue;
+            }
+
+            TransactionType type = typeMix[random.nextInt(typeMix.length)];
+            TransactionStatus status = randomStatus(type, random);
+            LocalDateTime at = now.minusDays(random.nextInt(90) + 1)
+                    .minusHours(random.nextInt(24))
+                    .minusMinutes(random.nextInt(60));
+
+            int sourceIndex = random.nextInt(active.size());
+            int destinationIndex = random.nextInt(active.size() - 1);
+            if (destinationIndex >= sourceIndex) {
+                destinationIndex++;
+            }
+
+            Accounts source;
+            Accounts destination;
+            boolean chargeFee;
+            BigDecimal amount;
+
+            if (type == TransactionType.OTC_DEPOSIT) {
+                source = null;
+                destination = active.get(sourceIndex);
+                amount = randomAmount(random, 500, 300_000);
+                chargeFee = false;
+            } else if (type == TransactionType.OTC_WITHDRAWAL) {
+                source = active.get(sourceIndex);
+                destination = null;
+                amount = randomAmount(random, 500, 300_000);
+                chargeFee = true;
+            } else if (type == TransactionType.EXTERNAL_PAYMENT) {
+                source = active.get(sourceIndex);
+                destination = null;
+                amount = randomAmount(random, 2_000, 1_000_000);
+                chargeFee = true;
+            } else if (type == TransactionType.REFUND) {
+                source = null;
+                destination = active.get(sourceIndex);
+                amount = randomAmount(random, 500, 50_000);
+                chargeFee = false;
+            } else if (type == TransactionType.LEDGER_ADJUSTMENT) {
+                boolean debit = random.nextBoolean();
+                source = debit ? active.get(sourceIndex) : null;
+                destination = debit ? null : active.get(sourceIndex);
+                amount = randomAmount(random, 100, 20_000);
+                chargeFee = false;
+            } else { // INTERNAL_TRANSFER
+                source = active.get(sourceIndex);
+                destination = active.get(destinationIndex);
+                amount = randomAmount(random, 1_000, 500_000);
+                chargeFee = true;
+            }
+
+            transactions.add(transaction(String.format("REF-T%03d", ref), type, status,
+                    source, destination, amount, chargeFee, at, staff));
+        }
 
         bankTransactionRepository.saveAllAndFlush(transactions);
     }
 
-    private BankTransactions transaction(int ref, TransactionType type, TransactionStatus status,
+    private boolean isAnchorRef(int ref) {
+        for (int anchor : ANCHOR_REFS) {
+            if (anchor == ref) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** ~100 entries weighting the realistic mix of transaction types. */
+    private TransactionType[] weightedTypeMix() {
+        List<TransactionType> mix = new ArrayList<>(100);
+        for (int i = 0; i < 30; i++) mix.add(TransactionType.INTERNAL_TRANSFER);
+        for (int i = 0; i < 17; i++) mix.add(TransactionType.OTC_DEPOSIT);
+        for (int i = 0; i < 17; i++) mix.add(TransactionType.OTC_WITHDRAWAL);
+        for (int i = 0; i < 16; i++) mix.add(TransactionType.EXTERNAL_PAYMENT);
+        for (int i = 0; i < 10; i++) mix.add(TransactionType.REFUND);
+        for (int i = 0; i < 10; i++) mix.add(TransactionType.LEDGER_ADJUSTMENT);
+        return mix.toArray(new TransactionType[0]);
+    }
+
+    /** Type-aware status distribution: the bulk settle, a few fail or stay pending. */
+    private TransactionStatus randomStatus(TransactionType type, Random random) {
+        int roll = random.nextInt(100);
+
+        if (type == TransactionType.INTERNAL_TRANSFER) {
+            if (roll < 82) return TransactionStatus.COMPLETED;
+            if (roll < 88) return TransactionStatus.FAILED;
+            if (roll < 92) return TransactionStatus.CANCELLED;
+            if (roll < 97) return TransactionStatus.PENDING_AUTHORIZATION;
+            return TransactionStatus.REJECTED;
+        }
+        if (type == TransactionType.OTC_DEPOSIT || type == TransactionType.OTC_WITHDRAWAL) {
+            if (roll < 92) return TransactionStatus.COMPLETED;
+            if (roll < 97) return TransactionStatus.CANCELLED;
+            return TransactionStatus.FAILED;
+        }
+        if (type == TransactionType.EXTERNAL_PAYMENT) {
+            if (roll < 80) return TransactionStatus.COMPLETED;
+            if (roll < 87) return TransactionStatus.PENDING_AUTHORIZATION;
+            if (roll < 94) return TransactionStatus.FAILED;
+            return TransactionStatus.CANCELLED;
+        }
+        if (type == TransactionType.REFUND) {
+            return roll < 95 ? TransactionStatus.COMPLETED : TransactionStatus.CANCELLED;
+        }
+        // LEDGER_ADJUSTMENT
+        return roll < 95 ? TransactionStatus.COMPLETED : TransactionStatus.PENDING_AUTHORIZATION;
+    }
+
+    /** Random MMK amount in [min, max] rounded to the nearest 100. */
+    private BigDecimal randomAmount(Random random, long minInclusive, long maxInclusive) {
+        long span = maxInclusive - minInclusive + 1;
+        long value = minInclusive + (long) (random.nextDouble() * span);
+        return BigDecimal.valueOf((value / 100) * 100);
+    }
+
+    private BankTransactions transaction(String transactionRef, TransactionType type, TransactionStatus status,
                                          Accounts source, Accounts destination, BigDecimal amount,
                                          boolean chargeFee, LocalDateTime at, StaffUsers staff) {
         BigDecimal fee = chargeFee
@@ -320,7 +409,7 @@ public class SampleDataSeeder implements CommandLineRunner {
                 || status == TransactionStatus.CANCELLED;
 
         return BankTransactions.builder()
-                .transactionRef(String.format("REF-T%03d", ref))
+                .transactionRef(transactionRef)
                 .transactionType(type)
                 .status(status)
                 .sourceAccount(source)
@@ -331,7 +420,7 @@ public class SampleDataSeeder implements CommandLineRunner {
                 .initiatedByType(InitiatedByType.STAFF)
                 .initiatedByStaff(staff)
                 .channel(TransactionChannel.STAFF_PORTAL)
-                .description(type + " seed #" + ref)
+                .description(type + " seed " + transactionRef)
                 .initiatedAt(at)
                 .authorizedAt(settled ? at : null)
                 .completedAt(completed ? at : null)
