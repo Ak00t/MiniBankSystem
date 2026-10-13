@@ -44,6 +44,8 @@ public class Accounts {
     @Enumerated(EnumType.STRING)
     @Column(name = "account_type", nullable = false, length = 15)
     private AccountType accountType = AccountType.SAVINGS;
+    
+ 
 
     @Column(name = "is_joint_account", nullable = false)
     private boolean isJointAccount = false;
