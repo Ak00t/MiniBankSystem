@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.corebanking.entity.Customers;
-import com.corebanking.entity.OtpChallenges;
+import com.corebanking.entity.OtpChallenge;
 import com.corebanking.entity.enums.OtpPurpose;
 import com.corebanking.entity.enums.OtpStatus;
 import java.time.LocalDateTime;
@@ -19,14 +19,14 @@ import org.springframework.data.repository.query.Param;
 
 import com.corebanking.entity.enums.UpdatedByType;
 public interface CusOtpChallengesRepository
-        extends JpaRepository<OtpChallenges, Long> {
-	List<OtpChallenges> findByCustomerAndPurposeAndStatus(
+        extends JpaRepository<OtpChallenge, Long> {
+	List<OtpChallenge> findByCustomerAndPurposeAndStatus(
             Customers customer,
             OtpPurpose purpose,
             OtpStatus status
     );
 	@EntityGraph(attributePaths = "customer")
-	Optional<OtpChallenges>
+	Optional<OtpChallenge>
 	findTopByChallengeGroupIdAndPurposeOrderByOtpIdDesc(
 	        String challengeGroupId,
 	        OtpPurpose purpose
