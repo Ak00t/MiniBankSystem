@@ -1,12 +1,14 @@
 package com.corebanking.controller;
 
 import com.corebanking.dto.ChangeStaffRoleRequest;
-import com.corebanking.dto.PasswordResetRequest;
+
 import com.corebanking.dto.StaffCreateRequest;
 import com.corebanking.dto.StaffResponse;
 import com.corebanking.dto.StaffUpdateRequest;
 import com.corebanking.service.StaffManagementService;
+import com.corebanking.service.StaffPasswordSetupService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -25,7 +27,7 @@ public class StaffManagementController {
 
 
     private final StaffManagementService staffManagementService;
-
+    private final StaffPasswordSetupService staffPasswordSetupService;
 
     // =====================================================
     // CREATE STAFF
@@ -34,12 +36,16 @@ public class StaffManagementController {
 
     @PostMapping
     public ResponseEntity<StaffResponse> createStaff(
-            @RequestBody StaffCreateRequest request
-    ) {
+            @Valid @RequestBody StaffCreateRequest request) {
 
-        return ResponseEntity.ok(
-                staffManagementService.createStaff(request)
+        StaffResponse response =
+                staffManagementService.createStaff(request);
+
+        staffPasswordSetupService.createSetupLink(
+                response.getStaffId()
         );
+
+        return ResponseEntity.status(201).body(response);
     }
 
 
@@ -102,6 +108,8 @@ public class StaffManagementController {
     public ResponseEntity<StaffResponse> changeRole(
             @PathVariable UUID staffId,
             @RequestBody ChangeStaffRoleRequest request
+            
+            
     ) {
 
         return ResponseEntity.ok(
@@ -137,18 +145,14 @@ public class StaffManagementController {
     // =====================================================
 
     @PostMapping("/{staffId}/reset-password")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> resetPassword(
-            @PathVariable UUID staffId,
-            @RequestBody PasswordResetRequest request
-    ) {
+            @PathVariable UUID staffId) {
 
-        staffManagementService.resetPassword(
-                staffId,
-                request
-        );
+        staffPasswordSetupService.createSetupLink(staffId);
 
         return ResponseEntity.ok(
-                "Password reset successfully"
+            "Password setup link has been sent if email delivery succeeded."
         );
     }
 }

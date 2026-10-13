@@ -5,6 +5,7 @@ import com.corebanking.dto.AnnouncementResponse;
 import com.corebanking.dto.AnnouncementUpdateRequest;
 import com.corebanking.service.AnnouncementService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -32,9 +33,8 @@ public class AnnouncementAdminController {
 
     @PostMapping
     public ResponseEntity<AnnouncementResponse> createAnnouncement(
-            @RequestBody AnnouncementCreateRequest request,
-            Authentication authentication
-    ) {
+            @Valid @RequestBody AnnouncementCreateRequest request,
+            Authentication authentication) {
 
         String username =
                 authentication.getName();
@@ -87,12 +87,10 @@ public class AnnouncementAdminController {
     // =====================================================
 
     @PutMapping("/{id}")
-    public ResponseEntity<AnnouncementResponse>
-    updateAnnouncement(
+    public ResponseEntity<AnnouncementResponse> updateAnnouncement(
             @PathVariable Integer id,
-            @RequestBody AnnouncementUpdateRequest request,
-            Authentication authentication
-    ) {
+            @Valid @RequestBody AnnouncementUpdateRequest request,
+            Authentication authentication) {
 
         String username =
                 authentication.getName();
