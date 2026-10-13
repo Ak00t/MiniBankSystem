@@ -757,27 +757,27 @@ public class CusSessionService {
     }
 
     @Transactional(noRollbackFor = CusSessionExpiredException.class)
-    public AuthSessions validateCorporateAccessSession(Claims claims) {
-        AuthSessions session = validateCorporateBaseSession(claims, "ACCESS");
+    public AuthSession validateCorporateAccessSession(Claims claims) {
+        AuthSession session = validateCorporateBaseSession(claims, "ACCESS");
         return updateSessionActivity(session, UpdatedByType.CORPORATE_USER);
     }
 
     @Transactional(noRollbackFor = CusSessionExpiredException.class)
-    public AuthSessions validateCorporateRefreshSession(Claims claims, String rawRefreshToken) {
+    public AuthSession validateCorporateRefreshSession(Claims claims, String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw new CusAuthenticationException("Refresh token is required.");
         }
-        AuthSessions session = validateCorporateBaseSession(claims, "REFRESH");
+        AuthSession session = validateCorporateBaseSession(claims, "REFRESH");
         validateRefreshTokenHash(session, rawRefreshToken);
         return session;
     }
 
     @Transactional(noRollbackFor = CusSessionExpiredException.class)
-    public AuthSessions validateCorporateAccessSessionForLogout(Claims claims) {
+    public AuthSession validateCorporateAccessSessionForLogout(Claims claims) {
         return validateCorporateBaseSession(claims, "ACCESS");
     }
 
-    private AuthSessions validateCorporateBaseSession(Claims claims, String expectedTokenType) {
+    private AuthSession validateCorporateBaseSession(Claims claims, String expectedTokenType) {
         if (claims == null
                 || !"CORPORATE_USER".equals(claims.get("subjectType", String.class))
                 || !expectedTokenType.equals(claims.get("tokenType", String.class))
@@ -797,7 +797,7 @@ public class CusSessionService {
             throw new CusAuthenticationException("Invalid authentication token.");
         }
         long tokenVersion = ((Number) version).longValue();
-        AuthSessions session = authSessionsRepository.findBySessionUuid(sessionUuid)
+        AuthSession session = authSessionsRepository.findBySessionUuid(sessionUuid)
                 .orElseThrow(() -> new CusAuthenticationException("Authentication session is invalid."));
         CorporateUser user = session.getCorporateUser();
         if (session.getSubjectType() != SessionSubjectType.CORPORATE_USER
@@ -822,7 +822,7 @@ public class CusSessionService {
         return session;
     }
 
-    private AuthSessions updateSessionActivity(AuthSessions session, UpdatedByType actorType) {
+    private AuthSession updateSessionActivity(AuthSession session, UpdatedByType actorType) {
         session.setLastSeenAt(LocalDateTime.now());
         if (actorType == UpdatedByType.CORPORATE_USER) {
             session.setUpdatedByType(UpdatedByType.CORPORATE_USER);
@@ -833,7 +833,7 @@ public class CusSessionService {
         return authSessionsRepository.save(session);
     }
 
-    private void validateRefreshTokenHash(AuthSessions session, String rawRefreshToken) {
+    private void validateRefreshTokenHash(AuthSession session, String rawRefreshToken) {
         String incomingHash =
                 hashRefreshToken(
                         rawRefreshToken
@@ -880,7 +880,7 @@ public class CusSessionService {
 
     }
 
-    private void validateSessionLifetime(AuthSessions session, LocalDateTime now, long tokenVersion) {
+    private void validateSessionLifetime(AuthSession session, LocalDateTime now, long tokenVersion) {
         // =====================================================
         // 10. SESSION ALREADY REVOKED?
         // =====================================================
