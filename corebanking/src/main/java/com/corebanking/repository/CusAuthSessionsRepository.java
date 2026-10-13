@@ -31,7 +31,7 @@ public interface CusAuthSessionsRepository
             clearAutomatically = true
     )
     @Query("""
-            UPDATE AuthSessions s
+            UPDATE AuthSession s
                SET s.revokedAt = :revokedAt,
                    s.revokeReason = :reason,
                    s.updatedByType = :updatedByType,
@@ -71,7 +71,7 @@ public interface CusAuthSessionsRepository
             clearAutomatically = true
     )
     @Query("""
-            UPDATE AuthSessions s
+            UPDATE AuthSession s
                SET s.refreshTokenHash = :newRefreshTokenHash,
                    s.refreshExpiresAt = :newRefreshExpiresAt,
                    s.lastSeenAt = :now,
@@ -126,7 +126,7 @@ public interface CusAuthSessionsRepository
             flushAutomatically = true
     )
     @Query("""
-            UPDATE AuthSessions s
+            UPDATE AuthSession s
                SET s.revokedAt = :revokedAt,
                    s.revokeReason = :reason,
                    s.updatedByType = :updatedByType,
