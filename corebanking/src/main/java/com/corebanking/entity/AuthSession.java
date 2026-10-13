@@ -18,7 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuthSessions {
+public class AuthSession {
 
     @Id
     @UuidGenerator(style = UuidGenerator.Style.TIME)

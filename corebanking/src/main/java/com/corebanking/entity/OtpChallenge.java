@@ -27,7 +27,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OtpChallenges {
+public class OtpChallenge {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
