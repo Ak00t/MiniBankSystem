@@ -1807,3 +1807,25 @@ VALUES
 ('STAFF',@staff1_id,'STAFF_LOGIN','AUTH_SESSION','','{}','{"result":"SUCCESS"}','192.168.1.10','Mozilla/5.0 Staff Portal',NOW()-INTERVAL  3 HOUR),
 ('STAFF',@staff2_id,'CREATE_ACCOUNT','ACCOUNT','1001000014','{}','{"account_number":"1001000014","status":"ACTIVE"}','192.168.1.11','Mozilla/5.0 Staff Portal',NOW()-INTERVAL  2 HOUR),
 ('STAFF',@staff1_id,'APPROVE_TRANSACTION','TRANSACTION','REF-T051','{"status":"PENDING_AUTHORIZATION"}','{"status":"COMPLETED"}','192.168.1.10','Mozilla/5.0 Staff Portal',NOW()-INTERVAL  1 HOUR);
+
+-- Enrich action_category and description for unified audit_logs
+UPDATE audit_logs
+SET action_category = CASE
+        WHEN action_type LIKE '%LOGIN%' OR action_type LIKE '%LOGOUT%' OR action_type LIKE '%AUTH%' THEN 'SECURITY'
+        WHEN action_type LIKE '%TRANSACTION%' OR action_type LIKE '%TRANSFER%' OR action_type LIKE '%DEPOSIT%' OR action_type LIKE '%WITHDRAWAL%' THEN 'TRANSACTION'
+        WHEN action_type LIKE '%ACCOUNT%' THEN 'ACCOUNT'
+        WHEN action_type LIKE '%CUSTOMER%' OR action_type LIKE '%KYC%' THEN 'CUSTOMER'
+        ELSE 'SYSTEM'
+    END,
+    description = CASE
+        WHEN action_type = 'STAFF_LOGIN' THEN 'Staff authenticated into staff portal'
+        WHEN action_type = 'CREATE_ACCOUNT' THEN CONCAT('Created new account ', entity_id)
+        WHEN action_type = 'FREEZE_ACCOUNT' THEN CONCAT('Account ', entity_id, ' status changed to FROZEN')
+        WHEN action_type = 'UNFREEZE_ACCOUNT' THEN CONCAT('Account ', entity_id, ' status restored to ACTIVE')
+        WHEN action_type = 'CLOSE_ACCOUNT' THEN CONCAT('Account ', entity_id, ' status changed to CLOSED')
+        WHEN action_type = 'APPROVE_TRANSACTION' THEN CONCAT('Approved transaction ', entity_id)
+        WHEN action_type = 'REJECT_TRANSACTION' THEN CONCAT('Rejected transaction ', entity_id)
+        ELSE CONCAT(action_type, ' performed on ', entity_type, ' ', entity_id)
+    END
+WHERE (action_category IS NULL OR description IS NULL);
+

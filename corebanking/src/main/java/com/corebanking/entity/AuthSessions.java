@@ -39,6 +39,11 @@ public class AuthSessions {
     private Customers customer;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "corporate_user_id",
+            foreignKey = @ForeignKey(name = "fk_auth_sessions_corporate_user"))
+    private CorporateUser corporateUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id",
             foreignKey = @ForeignKey(name = "fk_auth_sessions_staff"))
     private StaffUsers staff;
