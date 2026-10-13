@@ -1,5 +1,6 @@
 package com.corebanking.entity;
 
+import com.corebanking.entity.enums.OtpSubjectType;
 import com.corebanking.entity.enums.DeliveryChannel;
 import com.corebanking.entity.enums.OtpPurpose;
 import com.corebanking.entity.enums.OtpStatus;
@@ -13,7 +14,14 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "otp_challenges")
+@Table(
+        name = "otp_challenges",
+        indexes = {
+                @Index(name = "fk_otp_customer", columnList = "customer_id"),
+                @Index(name = "idx_otp_corporate_user", columnList = "corporate_user_id"),
+                @Index(name = "fk_otp_transaction", columnList = "transaction_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,10 +34,20 @@ public class OtpChallenges {
     @Column(name = "otp_id", nullable = false)
     private Long otpId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "subject_type", nullable = false, length = 20)
+    @Builder.Default
+    private OtpSubjectType subjectType = OtpSubjectType.CUSTOMER;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false,
+    @JoinColumn(name = "customer_id",
             foreignKey = @ForeignKey(name = "fk_otp_customer"))
     private Customers customer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "corporate_user_id",
+            foreignKey = @ForeignKey(name = "fk_otp_corporate_user"))
+    private CorporateUser corporateUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transaction_id",

@@ -60,6 +60,15 @@ public class AuditLogs {
     private Customers actorCustomer;
 
     /**
+     * Corporate user actor associated with the event, if initiated by a corporate user.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_corporate_user_id",
+            foreignKey = @ForeignKey(name = "fk_audit_corporate_user"),
+            updatable = false)
+    private CorporateUser actorCorporateUser;
+
+    /**
      * Staff user associated with the event, if initiated by an employee/teller/admin.
      */
     @ManyToOne(fetch = FetchType.LAZY)

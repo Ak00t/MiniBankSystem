@@ -42,6 +42,15 @@ public interface AuditLogsRepository extends JpaRepository<AuditLogs, Long>, Jpa
     Page<AuditLogs> findByActorCustomer_CustomerId(UUID customerId, Pageable pageable);
 
     /**
+     * Retrieve paginated audit logs for a specific corporate user ID.
+     *
+     * @param corporateUserId UUID of the corporate user
+     * @param pageable        pagination parameters
+     * @return paginated audit entries
+     */
+    Page<AuditLogs> findByActorCorporateUser_CorporateUserId(UUID corporateUserId, Pageable pageable);
+
+    /**
      * Retrieve paginated audit logs for a specific entity type and entity ID.
      *
      * @param entityType domain entity type (e.g., ACCOUNT, TRANSACTION)
