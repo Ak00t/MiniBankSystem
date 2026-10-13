@@ -13,6 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.corebanking.entity.AuditLogs;
 import com.corebanking.entity.AuthSession;
 import com.corebanking.entity.CustomerCredentials;
+import com.corebanking.entity.CorporateCredential;
+import com.corebanking.entity.CorporateUser;
+import com.corebanking.entity.Customers;
+import com.corebanking.entity.enums.CorporateUserStatus;
+import com.corebanking.entity.enums.CustomerType;
+import com.corebanking.repository.CusCorporateCredentialRepository;
 import com.corebanking.entity.enums.ActorType;
 import com.corebanking.entity.enums.CustomerStatus;
 import com.corebanking.entity.enums.SessionSubjectType;
@@ -42,6 +48,8 @@ public class CusSessionService {
 
     private final CusAuditLogsRepository auditLogsRepository;
 
+    private final CusCorporateCredentialRepository corporateCredentialRepository;
+
 
     // =========================================================
     // 1. VALIDATE ACCESS TOKEN SESSION
@@ -61,19 +69,7 @@ public class CusSessionService {
 
         // Valid protected API request
         // => customer activity ဖြစ်လို့ lastSeenAt update
-        session.setLastSeenAt(
-                LocalDateTime.now()
-        );
-
-
-        markSessionUpdatedByCustomer(
-                session
-        );
-
-
-        return authSessionsRepository.save(
-                session
-        );
+        return updateSessionActivity(session, UpdatedByType.CUSTOMER);
     }
 
 
@@ -117,49 +113,7 @@ public class CusSessionService {
         // HASH INCOMING REFRESH TOKEN
         // =====================================================
 
-        String incomingHash =
-                hashRefreshToken(
-                        rawRefreshToken
-                );
-
-
-        String storedHash =
-                session.getRefreshTokenHash();
-
-
-        if (storedHash == null
-                || storedHash.isBlank()) {
-
-            throw new CusAuthenticationException(
-                    "Invalid refresh token."
-            );
-        }
-
-
-        // =====================================================
-        // CONSTANT-TIME HASH COMPARISON
-        // =====================================================
-
-        boolean refreshTokenMatches =
-                MessageDigest.isEqual(
-
-                        incomingHash.getBytes(
-                                StandardCharsets.UTF_8
-                        ),
-
-                        storedHash.getBytes(
-                                StandardCharsets.UTF_8
-                        )
-                );
-
-
-        if (!refreshTokenMatches) {
-
-            throw new CusAuthenticationException(
-                    "Invalid refresh token."
-            );
-        }
-
+        validateRefreshTokenHash(session, rawRefreshToken);
 
         // ဒီ method ရဲ့တာဝန်က validate ပဲ
         // DB update / rotation ကို CusAuthService မှာ
@@ -380,112 +334,7 @@ public class CusSessionService {
         }
 
 
-        // =====================================================
-        // 10. SESSION ALREADY REVOKED?
-        // =====================================================
-
-        if (session.getRevokedAt()
-                != null) {
-
-            throw new CusAuthenticationException(
-                    "Authentication session has been revoked."
-            );
-        }
-
-
-        // =====================================================
-        // 11. REFRESH SESSION MAX EXPIRY
-        // =====================================================
-
-        if (session.getRefreshExpiresAt() == null
-                || !session
-                        .getRefreshExpiresAt()
-                        .isAfter(now)) {
-
-
-            revokeSession(
-                    session,
-                    "SESSION_EXPIRED"
-            );
-
-
-            throw new CusSessionExpiredException(
-                    "Authentication session has expired."
-            );
-        }
-
-
-        // =====================================================
-        // 12. LAST ACTIVITY MUST EXIST
-        // =====================================================
-
-        if (session.getLastSeenAt()
-                == null) {
-
-
-            revokeSession(
-                    session,
-                    "INVALID_SESSION_ACTIVITY"
-            );
-
-
-            throw new CusSessionExpiredException(
-                    "Authentication session is invalid."
-            );
-        }
-
-
-        // =====================================================
-        // 13. IDLE TIMEOUT CHECK
-        // =====================================================
-        //
-        // Example:
-        //
-        // lastSeenAt = 10:00
-        // idleTimeoutMinutes = 5
-        //
-        // idleExpiry = 10:05
-        //
-        // 10:05 ကျော်ပြီး request ထပ်လာရင်
-        // session revoke လုပ်မယ်.
-        // =====================================================
-
-        LocalDateTime idleExpiry =
-                session
-                        .getLastSeenAt()
-                        .plusMinutes(
-                                session.getIdleTimeoutMinutes()
-                        );
-
-
-        if (!idleExpiry.isAfter(
-                now)) {
-
-
-            revokeSession(
-                    session,
-                    "IDLE_TIMEOUT"
-            );
-
-
-            throw new CusSessionExpiredException(
-                    "Session expired due to inactivity."
-            );
-        }
-
-
-        // =====================================================
-        // 14. TOKEN VERSION STORED IN SESSION
-        // =====================================================
-
-        if (session.getTokenVersionAtIssue()
-                != tokenVersion) {
-
-            throw new CusAuthenticationException(
-                    "Authentication token is no longer valid."
-            );
-        }
-
+        validateSessionLifetime(session, now, tokenVersion);
 
         // =====================================================
         // 15. CURRENT CUSTOMER TOKEN VERSION
@@ -905,5 +754,239 @@ public class CusSessionService {
                 claims,
                 "ACCESS"
         );
+    }
+
+    @Transactional(noRollbackFor = CusSessionExpiredException.class)
+    public AuthSessions validateCorporateAccessSession(Claims claims) {
+        AuthSessions session = validateCorporateBaseSession(claims, "ACCESS");
+        return updateSessionActivity(session, UpdatedByType.CORPORATE_USER);
+    }
+
+    @Transactional(noRollbackFor = CusSessionExpiredException.class)
+    public AuthSessions validateCorporateRefreshSession(Claims claims, String rawRefreshToken) {
+        if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
+            throw new CusAuthenticationException("Refresh token is required.");
+        }
+        AuthSessions session = validateCorporateBaseSession(claims, "REFRESH");
+        validateRefreshTokenHash(session, rawRefreshToken);
+        return session;
+    }
+
+    @Transactional(noRollbackFor = CusSessionExpiredException.class)
+    public AuthSessions validateCorporateAccessSessionForLogout(Claims claims) {
+        return validateCorporateBaseSession(claims, "ACCESS");
+    }
+
+    private AuthSessions validateCorporateBaseSession(Claims claims, String expectedTokenType) {
+        if (claims == null
+                || !"CORPORATE_USER".equals(claims.get("subjectType", String.class))
+                || !expectedTokenType.equals(claims.get("tokenType", String.class))
+                || claims.getSubject() == null || claims.getSubject().isBlank()) {
+            throw new CusAuthenticationException("Invalid authentication token.");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        UUID corporateUserId;
+        try {
+            corporateUserId = UUID.fromString(claims.getSubject());
+        } catch (IllegalArgumentException ex) {
+            throw new CusAuthenticationException("Invalid authentication token.");
+        }
+        String sessionUuid = claims.get("sid", String.class);
+        Object version = claims.get("tokenVersion");
+        if (sessionUuid == null || sessionUuid.isBlank() || !(version instanceof Number)) {
+            throw new CusAuthenticationException("Invalid authentication token.");
+        }
+        long tokenVersion = ((Number) version).longValue();
+        AuthSessions session = authSessionsRepository.findBySessionUuid(sessionUuid)
+                .orElseThrow(() -> new CusAuthenticationException("Authentication session is invalid."));
+        CorporateUser user = session.getCorporateUser();
+        if (session.getSubjectType() != SessionSubjectType.CORPORATE_USER
+                || user == null || !corporateUserId.equals(user.getCorporateUserId())) {
+            throw new CusAuthenticationException("Authentication session is invalid.");
+        }
+        if (user.getStatus() != CorporateUserStatus.ACTIVE) {
+            throw new CusAuthenticationException("Corporate user is not active.");
+        }
+        Customers company = user.getCompanyInfo() == null ? null : user.getCompanyInfo().getCustomer();
+        if (company == null || company.getCustomerType() != CustomerType.COMPANY
+                || company.getStatus() != CustomerStatus.ACTIVE) {
+            throw new CusAuthenticationException("Company account is not active or invalid.");
+        }
+        validateSessionLifetime(session, now, tokenVersion);
+        CorporateCredential credentials = corporateCredentialRepository.findById(corporateUserId)
+                .orElseThrow(() -> new IllegalStateException("Corporate credentials not found."));
+        if (credentials.getTokenVersion() == null || credentials.getTokenVersion() != tokenVersion) {
+            revokeSession(session, "TOKEN_VERSION_CHANGED");
+            throw new CusSessionExpiredException("Authentication token is no longer valid.");
+        }
+        return session;
+    }
+
+    private AuthSessions updateSessionActivity(AuthSessions session, UpdatedByType actorType) {
+        session.setLastSeenAt(LocalDateTime.now());
+        if (actorType == UpdatedByType.CORPORATE_USER) {
+            session.setUpdatedByType(UpdatedByType.CORPORATE_USER);
+            session.setUpdatedById(session.getCorporateUser().getCorporateUserId());
+        } else {
+            markSessionUpdatedByCustomer(session);
+        }
+        return authSessionsRepository.save(session);
+    }
+
+    private void validateRefreshTokenHash(AuthSessions session, String rawRefreshToken) {
+        String incomingHash =
+                hashRefreshToken(
+                        rawRefreshToken
+                );
+
+
+        String storedHash =
+                session.getRefreshTokenHash();
+
+
+        if (storedHash == null
+                || storedHash.isBlank()) {
+
+            throw new CusAuthenticationException(
+                    "Invalid refresh token."
+            );
+        }
+
+
+        // =====================================================
+        // CONSTANT-TIME HASH COMPARISON
+        // =====================================================
+
+        boolean refreshTokenMatches =
+                MessageDigest.isEqual(
+
+                        incomingHash.getBytes(
+                                StandardCharsets.UTF_8
+                        ),
+
+                        storedHash.getBytes(
+                                StandardCharsets.UTF_8
+                        )
+                );
+
+
+        if (!refreshTokenMatches) {
+
+            throw new CusAuthenticationException(
+                    "Invalid refresh token."
+            );
+        }
+
+
+    }
+
+    private void validateSessionLifetime(AuthSessions session, LocalDateTime now, long tokenVersion) {
+        // =====================================================
+        // 10. SESSION ALREADY REVOKED?
+        // =====================================================
+
+        if (session.getRevokedAt()
+                != null) {
+
+            throw new CusAuthenticationException(
+                    "Authentication session has been revoked."
+            );
+        }
+
+
+        // =====================================================
+        // 11. REFRESH SESSION MAX EXPIRY
+        // =====================================================
+
+        if (session.getRefreshExpiresAt() == null
+                || !session
+                        .getRefreshExpiresAt()
+                        .isAfter(now)) {
+
+
+            revokeSession(
+                    session,
+                    "SESSION_EXPIRED"
+            );
+
+
+            throw new CusSessionExpiredException(
+                    "Authentication session has expired."
+            );
+        }
+
+
+        // =====================================================
+        // 12. LAST ACTIVITY MUST EXIST
+        // =====================================================
+
+        if (session.getLastSeenAt()
+                == null) {
+
+
+            revokeSession(
+                    session,
+                    "INVALID_SESSION_ACTIVITY"
+            );
+
+
+            throw new CusSessionExpiredException(
+                    "Authentication session is invalid."
+            );
+        }
+
+
+        // =====================================================
+        // 13. IDLE TIMEOUT CHECK
+        // =====================================================
+        //
+        // Example:
+        //
+        // lastSeenAt = 10:00
+        // idleTimeoutMinutes = 5
+        //
+        // idleExpiry = 10:05
+        //
+        // 10:05 ကျော်ပြီး request ထပ်လာရင်
+        // session revoke လုပ်မယ်.
+        // =====================================================
+
+        LocalDateTime idleExpiry =
+                session
+                        .getLastSeenAt()
+                        .plusMinutes(
+                                session.getIdleTimeoutMinutes()
+                        );
+
+
+        if (!idleExpiry.isAfter(
+                now)) {
+
+
+            revokeSession(
+                    session,
+                    "IDLE_TIMEOUT"
+            );
+
+
+            throw new CusSessionExpiredException(
+                    "Session expired due to inactivity."
+            );
+        }
+
+
+        // =====================================================
+        // 14. TOKEN VERSION STORED IN SESSION
+        // =====================================================
+
+        if (session.getTokenVersionAtIssue()
+                != tokenVersion) {
+
+            throw new CusAuthenticationException(
+                    "Authentication token is no longer valid."
+            );
+        }
+
+
     }
 }

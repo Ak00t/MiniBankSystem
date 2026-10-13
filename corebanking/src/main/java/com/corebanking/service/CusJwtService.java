@@ -202,6 +202,58 @@ public class CusJwtService {
 
 
     // =========================================================
+    // CORPORATE ACCESS TOKEN GENERATE
+    // =========================================================
+
+    public String generateCorporateAccessToken(
+            UUID corporateUserId,
+            String sessionUuid,
+            long tokenVersion) {
+
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + accessTokenExpiration);
+
+        return Jwts.builder()
+                .setSubject(corporateUserId.toString())
+                .claim("sid", sessionUuid)
+                .claim("subjectType", "CORPORATE_USER")
+                .claim("tokenVersion", tokenVersion)
+                .claim("tokenType", "ACCESS")
+                .setId(UUID.randomUUID().toString())
+                .setIssuer(jwtIssuer)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // =========================================================
+    // CORPORATE REFRESH TOKEN GENERATE
+    // =========================================================
+
+    public String generateCorporateRefreshToken(
+            UUID corporateUserId,
+            String sessionUuid,
+            long tokenVersion) {
+
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + REFRESH_TOKEN_EXPIRATION);
+
+        return Jwts.builder()
+                .setSubject(corporateUserId.toString())
+                .claim("sid", sessionUuid)
+                .claim("subjectType", "CORPORATE_USER")
+                .claim("tokenVersion", tokenVersion)
+                .claim("tokenType", "REFRESH")
+                .setId(UUID.randomUUID().toString())
+                .setIssuer(jwtIssuer)
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // =========================================================
     // READ TOKEN CLAIMS
     // =========================================================
 

@@ -37,6 +37,7 @@ import com.corebanking.entity.enums.CustomerStatus;
 import com.corebanking.entity.enums.DeliveryChannel;
 import com.corebanking.entity.enums.OtpPurpose;
 import com.corebanking.entity.enums.OtpStatus;
+import com.corebanking.entity.enums.OtpSubjectType;
 import com.corebanking.entity.enums.SessionSubjectType;
 import com.corebanking.entity.enums.UpdatedByType;
 import com.corebanking.exception.CusAccountLockedException;
@@ -777,8 +778,9 @@ public class CusAuthService {
 
         var activeOtps =
                 otpChallengesRepository
-                        .findByCustomerAndPurposeAndStatus(
+                        .findByCustomerAndSubjectTypeAndPurposeAndStatus(
                                 customer,
+                                OtpSubjectType.CUSTOMER,
                                 OtpPurpose.LOGIN,
                                 OtpStatus.ACTIVE
                         );
@@ -830,8 +832,9 @@ public class CusAuthService {
         // 2. OTP Challenge ရှာ
         OtpChallenge otpChallenge =
                 otpChallengesRepository
-                        .findTopByChallengeGroupIdAndPurposeOrderByOtpIdDesc(
+                        .findTopByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
                                 challengeGroupId,
+                                OtpSubjectType.CUSTOMER,
                                 OtpPurpose.LOGIN
                         )
                         .orElseThrow(() ->
@@ -1130,8 +1133,9 @@ public class CusAuthService {
         // 2. Latest OTP challenge ရှာ
         OtpChallenge latestOtp =
                 otpChallengesRepository
-                        .findTopByChallengeGroupIdAndPurposeOrderByOtpIdDesc(
+                        .findTopByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
                                 challengeGroupId,
+                                OtpSubjectType.CUSTOMER,
                                 OtpPurpose.LOGIN
                         )
                         .orElseThrow(() ->
@@ -4789,8 +4793,9 @@ private boolean isValidPassword(
 
         OtpChallenge otpChallenge =
                 otpChallengesRepository
-                        .findTopByChallengeGroupIdAndPurposeOrderByOtpIdDesc(
+                        .findTopByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
                                 challengeGroupId.trim(),
+                                OtpSubjectType.CUSTOMER,
                                 OtpPurpose.LOGIN
                         )
                         .orElseThrow(() ->

@@ -47,7 +47,7 @@ public class AuditLogs {
      * Classification of the actor performing the operation.
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "actor_type", nullable = false, length = 10, updatable = false)
+    @Column(name = "actor_type", nullable = false, length = 20, updatable = false)
     private ActorType actorType;
 
     /**
