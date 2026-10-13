@@ -7,6 +7,7 @@ import MyAccountsPage from "./features/customer-account/accounts/MyaccountPage";
 //import AccountDetailPage from "./features/customer-account/accounts/AccountDetailPage";
 import ProfilePage from "./features/customer-account/profile/ProfilePage";
 import MainLayout from "./components/layout/MainLayout";
+import AccountDetailPage from "./features/customer-account/accounts/AccountDetailPage";
 
 function App() {
   return (
@@ -32,6 +33,11 @@ function App() {
         <Route
           path="/accounts"
           element={<MyAccountsPage />}
+        />
+
+        <Route
+          path="/accounts/:accountNumber"
+          element={<AccountDetailPage />}
         />
 
         <Route

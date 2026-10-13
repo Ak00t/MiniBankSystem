@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DashboardResponseDTO {
+public class CusDashboardResponseDTO {
 
     private String customerCode;
 
@@ -24,5 +24,5 @@ public class DashboardResponseDTO {
 
     private int accountCount;
 
-    private List<DashboardAccountDTO> accounts;
+    private List<CusDashboardAccountDTO> accounts;
 }
