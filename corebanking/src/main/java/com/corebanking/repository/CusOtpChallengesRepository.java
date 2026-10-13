@@ -46,7 +46,7 @@ public interface CusOtpChallengesRepository
 	        flushAutomatically = true
 	)
 	@Query("""
-	        UPDATE OtpChallenges o
+	        UPDATE OtpChallenge o
 	           SET o.status = :consumedStatus,
 	               o.consumedAt = :consumedAt,
 	               o.challengeGroupId = :newChallengeGroupId,
@@ -101,7 +101,7 @@ public interface CusOtpChallengesRepository
 	        clearAutomatically = true
 	)
 	@Query("""
-	        UPDATE OtpChallenges o
+	        UPDATE OtpChallenge o
 	           SET o.challengeGroupId = :newChallengeGroupId,
 	               o.updatedByType = :updatedByType,
 	               o.updatedById = :updatedById,
@@ -146,7 +146,7 @@ public interface CusOtpChallengesRepository
 	        flushAutomatically = true
 	)
 	@Query("""
-	        UPDATE OtpChallenges o
+	        UPDATE OtpChallenge o
 	           SET o.status = :consumedStatus,
 	               o.consumedAt = :consumedAt,
 	               o.challengeGroupId = :newChallengeGroupId,
@@ -204,7 +204,7 @@ public interface CusOtpChallengesRepository
 	        clearAutomatically = true
 	)
 	@Query("""
-	        UPDATE OtpChallenges o
+	        UPDATE OtpChallenge o
 	           SET o.challengeGroupId = :newChallengeGroupId,
 	               o.updatedByType = :updatedByType,
 	               o.updatedById = :updatedById,
