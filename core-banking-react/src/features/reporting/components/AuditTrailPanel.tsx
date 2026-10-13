@@ -107,14 +107,35 @@ const AuditTrailPanel: React.FC<Props> = ({
     },
     {
       key: 'staffUsername',
-      label: 'Staff',
+      label: 'Actor / User',
       render: (r: AuditTrailLog) => (
         <div>
           <div style={{ fontWeight: 600, color: '#1E40AF', fontSize: '12px' }}>
-            {r.staffUsername || r.staffId}
+            {r.staffUsername || r.staffId || '-'}
           </div>
-          <div style={{ fontSize: '10px', color: '#94a3b8' }}>{r.staffFullName}</div>
+          <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+            {r.staffFullName ? `${r.staffFullName} (${r.actorType || 'STAFF'})` : (r.actorType || 'STAFF')}
+          </div>
         </div>
+      ),
+    },
+    {
+      key: 'actionCategory',
+      label: 'Category',
+      render: (r: AuditTrailLog) => (
+        <span
+          style={{
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontSize: '10px',
+            fontWeight: 600,
+            backgroundColor: '#f1f5f9',
+            color: '#475569',
+            textTransform: 'uppercase',
+          }}
+        >
+          {r.actionCategory || '-'}
+        </span>
       ),
     },
     {
@@ -153,7 +174,7 @@ const AuditTrailPanel: React.FC<Props> = ({
           style={{
             fontSize: '12px',
             color: '#475569',
-            maxWidth: '200px',
+            maxWidth: '220px',
             display: 'block',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -161,7 +182,7 @@ const AuditTrailPanel: React.FC<Props> = ({
           }}
           title={r.description}
         >
-          {r.description}
+          {r.description || '-'}
         </span>
       ),
     },
