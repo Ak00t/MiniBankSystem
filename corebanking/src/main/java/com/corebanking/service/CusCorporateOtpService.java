@@ -1,5 +1,6 @@
 package com.corebanking.service;
 
+import com.corebanking.dto.CusCorporateOtpVerifyRequest;
 import com.corebanking.entity.CorporateUser;
 import com.corebanking.entity.Customers;
 import com.corebanking.entity.OtpChallenge;
@@ -13,6 +14,7 @@ import com.corebanking.entity.enums.OtpSubjectType;
 import com.corebanking.entity.enums.UpdatedByType;
 import com.corebanking.exception.CusAuthenticationException;
 import com.corebanking.exception.CusEmailException;
+import com.corebanking.exception.CusOtpException;
 import com.corebanking.repository.CusCorporateCredentialRepository;
 import com.corebanking.repository.CusCorporateUserRepository;
 import com.corebanking.repository.CusOtpChallengesRepository;
@@ -110,6 +112,93 @@ public class CusCorporateOtpService {
             throw new CusEmailException("Unable to send OTP email. Please try again.", ex);
         }
         return savedOtp;
+    }
+
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            noRollbackFor = CusOtpException.class
+    )
+    public UUID verifyLoginOtp(CusCorporateOtpVerifyRequest request) {
+        if (request == null
+                || request.getChallengeGroupId() == null
+                || request.getChallengeGroupId().isBlank()
+                || request.getOtp() == null
+                || request.getOtp().isBlank()) {
+            throw new CusOtpException("OTP verification information is required.");
+        }
+        String rawOtp = request.getOtp();
+        if (!rawOtp.matches("\\d{6}")) {
+            throw new CusOtpException("OTP must be exactly 6 digits.");
+        }
+
+        OtpChallenge challenge = otpChallengesRepository
+                .findFirstByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
+                        request.getChallengeGroupId().trim(),
+                        OtpSubjectType.CORPORATE_USER,
+                        OtpPurpose.LOGIN
+                )
+                .orElseThrow(() -> new CusOtpException("Invalid OTP challenge."));
+
+        CorporateUser user = challenge.getCorporateUser();
+        if (user == null || user.getCorporateUserId() == null || challenge.getCustomer() != null) {
+            throw new CusOtpException("Invalid corporate OTP challenge.");
+        }
+        Customers company = user.getCompanyInfo() == null
+                ? null : user.getCompanyInfo().getCustomer();
+        if (user.getStatus() != CorporateUserStatus.ACTIVE
+                || company == null
+                || company.getCustomerType() != CustomerType.COMPANY
+                || company.getStatus() != CustomerStatus.ACTIVE) {
+            throw new CusOtpException("Corporate user or company is not active or invalid.");
+        }
+
+        if (challenge.getStatus() == OtpStatus.CONSUMED) {
+            throw new CusOtpException("This OTP has already been used.");
+        }
+        if (challenge.getStatus() == OtpStatus.EXPIRED) {
+            throw new CusOtpException("OTP has expired.");
+        }
+        if (challenge.getStatus() == OtpStatus.BLOCKED) {
+            throw new CusOtpException("OTP verification has been blocked.");
+        }
+        if (challenge.getStatus() != OtpStatus.ACTIVE) {
+            throw new CusOtpException("OTP is not active.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (challenge.getExpiresAt() == null || !challenge.getExpiresAt().isAfter(now)) {
+            challenge.setStatus(OtpStatus.EXPIRED);
+            saveVerificationUpdate(challenge, UpdatedByType.SYSTEM, null);
+            throw new CusOtpException("OTP has expired.");
+        }
+        if (challenge.getAttemptCount() >= challenge.getMaxAttempts()) {
+            challenge.setStatus(OtpStatus.BLOCKED);
+            saveVerificationUpdate(challenge, UpdatedByType.SYSTEM, null);
+            throw new CusOtpException("OTP verification has been blocked.");
+        }
+
+        UUID corporateUserId = user.getCorporateUserId();
+        if (!passwordEncoder.matches(rawOtp, challenge.getOtpHash())) {
+            int attempts = challenge.getAttemptCount() + 1;
+            challenge.setAttemptCount(attempts);
+            if (attempts >= challenge.getMaxAttempts()) {
+                challenge.setStatus(OtpStatus.BLOCKED);
+            }
+            saveVerificationUpdate(challenge, UpdatedByType.CORPORATE_USER, corporateUserId);
+            throw new CusOtpException("Invalid OTP.");
+        }
+
+        challenge.setStatus(OtpStatus.CONSUMED);
+        challenge.setConsumedAt(now);
+        saveVerificationUpdate(challenge, UpdatedByType.CORPORATE_USER, corporateUserId);
+        return corporateUserId;
+    }
+
+    private void saveVerificationUpdate(OtpChallenge challenge,
+                                        UpdatedByType updatedByType, UUID updatedById) {
+        challenge.setUpdatedByType(updatedByType);
+        challenge.setUpdatedById(updatedById);
+        otpChallengesRepository.save(challenge);
     }
 
     private String maskEmail(String email) {
