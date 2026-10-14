@@ -894,6 +894,17 @@ public class CusSessionService {
         }
 
 
+        if (session.getIssuedAt() == null) {
+            revokeSession(session, "INVALID_SESSION_ISSUANCE");
+            throw new CusSessionExpiredException("Authentication session is invalid.");
+        }
+        LocalDateTime absoluteDeadline =
+                session.getIssuedAt().plusHours(CusJwtService.SESSION_LIFETIME_HOURS);
+        if (!absoluteDeadline.isAfter(now)) {
+            revokeSession(session, "SESSION_EXPIRED");
+            throw new CusSessionExpiredException("Authentication session has expired.");
+        }
+
         // =====================================================
         // 11. REFRESH SESSION MAX EXPIRY
         // =====================================================

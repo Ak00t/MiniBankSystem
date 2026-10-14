@@ -6,6 +6,7 @@ import com.corebanking.dto.CusPasswordResetConfirmRequest;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
+import java.util.Date;
 import com.corebanking.dto.CusPinResetStartResponse;
 import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -4314,6 +4315,8 @@ public void resetPassword(
      LocalDateTime now =
              LocalDateTime.now();
 
+     LocalDateTime absoluteDeadline =
+             now.plusHours(CusJwtService.SESSION_LIFETIME_HOURS);
 
      // 1. Session UUID
      String sessionUuid =
@@ -4335,7 +4338,8 @@ public void resetPassword(
              cusJwtService.generateRefreshToken(
                      customer.getCustomerId(),
                      sessionUuid,
-                     credentials.getTokenVersion()
+                     credentials.getTokenVersion(),
+                     Date.from(absoluteDeadline.atZone(ZoneId.systemDefault()).toInstant())
              );
 
 
@@ -4382,7 +4386,7 @@ public void resetPassword(
                      )
 
                      .refreshExpiresAt(
-                             now.plusDays(7)
+                             absoluteDeadline
                      )
 
                      .idleTimeoutMinutes(
@@ -4548,11 +4552,19 @@ public CusTokenResponse refreshToken(
   // 7. GENERATE NEW REFRESH TOKEN
   // =====================================================
 
+  LocalDateTime absoluteDeadline =
+          session.getIssuedAt().plusHours(CusJwtService.SESSION_LIFETIME_HOURS);
+  LocalDateTime effectiveDeadline =
+          session.getRefreshExpiresAt().isBefore(absoluteDeadline)
+                  ? session.getRefreshExpiresAt()
+                  : absoluteDeadline;
+
   String newRefreshToken =
           cusJwtService.generateRefreshToken(
                   customer.getCustomerId(),
                   session.getSessionUuid(),
-                  credentials.getTokenVersion()
+                  credentials.getTokenVersion(),
+                  Date.from(effectiveDeadline.atZone(ZoneId.systemDefault()).toInstant())
           );
 
 
@@ -4578,10 +4590,6 @@ public CusTokenResponse refreshToken(
 
   LocalDateTime now =
           LocalDateTime.now();
-
-
-  LocalDateTime newRefreshExpiresAt =
-          now.plusDays(7);
 
 
   // =====================================================
@@ -4613,7 +4621,7 @@ public CusTokenResponse refreshToken(
 
                           newRefreshTokenHash,
 
-                          newRefreshExpiresAt,
+                          effectiveDeadline,
 
                           now,
 
