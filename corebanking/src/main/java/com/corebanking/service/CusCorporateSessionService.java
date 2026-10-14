@@ -1,6 +1,7 @@
 package com.corebanking.service;
 
 import com.corebanking.dto.CusTokenResponse;
+import com.corebanking.dto.CusRefreshTokenRequest;
 import com.corebanking.entity.AuditLogs;
 import com.corebanking.entity.AuthSession;
 import com.corebanking.entity.CorporateCredential;
@@ -154,6 +155,74 @@ public class CusCorporateSessionService {
         otpChallengesRepository.saveAndFlush(challenge);
 
         return new CusTokenResponse(true, "Login successful.", accessToken, refreshToken);
+    }
+
+    @Transactional(noRollbackFor = CusSessionExpiredException.class)
+    public CusTokenResponse refreshToken(CusRefreshTokenRequest request) {
+        if (request == null
+                || request.getRefreshToken() == null
+                || request.getRefreshToken().isBlank()) {
+            throw new CusAuthenticationException("Refresh token is required.");
+        }
+        String oldRefreshToken = request.getRefreshToken().trim();
+        Claims claims = cusJwtService.getClaims(oldRefreshToken);
+        AuthSession session = validateRefreshSession(claims, oldRefreshToken);
+        CorporateUser user = session.getCorporateUser();
+        if (user == null || user.getCorporateUserId() == null) {
+            throw new CusAuthenticationException("Corporate session is invalid.");
+        }
+        UUID corporateUserId = user.getCorporateUserId();
+        CorporateCredential credentials = corporateCredentialRepository.findById(corporateUserId)
+                .orElseThrow(() -> new CusAuthenticationException("Corporate credentials not found."));
+        if (credentials.getTokenVersion() == null) {
+            throw new CusAuthenticationException("Invalid credential token version.");
+        }
+
+        LocalDateTime absoluteDeadline =
+                session.getIssuedAt().plusHours(CusJwtService.SESSION_LIFETIME_HOURS);
+        LocalDateTime effectiveDeadline =
+                session.getRefreshExpiresAt().isBefore(absoluteDeadline)
+                        ? session.getRefreshExpiresAt()
+                        : absoluteDeadline;
+        String newAccessToken = cusJwtService.generateCorporateAccessToken(
+                corporateUserId, session.getSessionUuid(), credentials.getTokenVersion()
+        );
+        String newRefreshToken = cusJwtService.generateCorporateRefreshToken(
+                corporateUserId,
+                session.getSessionUuid(),
+                credentials.getTokenVersion(),
+                Date.from(effectiveDeadline.atZone(ZoneId.systemDefault()).toInstant())
+        );
+        String expectedOldHash = cusSessionService.hashRefreshToken(oldRefreshToken);
+        String newRefreshHash = cusSessionService.hashRefreshToken(newRefreshToken);
+        LocalDateTime now = LocalDateTime.now();
+        int updatedRows = authSessionsRepository.rotateRefreshTokenIfMatch(
+                session.getSessionUuid(),
+                expectedOldHash,
+                newRefreshHash,
+                effectiveDeadline,
+                now,
+                UpdatedByType.CORPORATE_USER,
+                corporateUserId
+        );
+        if (updatedRows != 1) {
+            throw new CusAuthenticationException(
+                    "Refresh token has already been used or is no longer valid."
+            );
+        }
+        auditLogsRepository.save(AuditLogs.builder()
+                .actorType(ActorType.CORPORATE_USER)
+                .actorCorporateUser(user)
+                .actorCustomer(null)
+                .actorStaff(null)
+                .actionType("TOKEN_REFRESHED")
+                .entityType("AUTH_SESSION")
+                .entityId(session.getSessionUuid())
+                .newValues("{\"status\":\"ACTIVE\",\"refreshTokenRotated\":true}")
+                .build());
+        return new CusTokenResponse(
+                true, "Token refreshed successfully.", newAccessToken, newRefreshToken
+        );
     }
 
     private void validateCompletionBinding(OtpChallenge challenge) {

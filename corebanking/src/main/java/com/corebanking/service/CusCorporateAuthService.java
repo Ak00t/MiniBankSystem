@@ -5,6 +5,7 @@ import com.corebanking.dto.CusCorporateLoginResponse;
 import com.corebanking.dto.CusCorporateOtpVerifyRequest;
 import com.corebanking.dto.CusCorporateOtpVerifyResponse;
 import com.corebanking.dto.CusTokenResponse;
+import com.corebanking.dto.CusRefreshTokenRequest;
 import com.corebanking.entity.CorporateCredential;
 import com.corebanking.entity.OtpChallenge;
 import com.corebanking.exception.CusAuthenticationException;
@@ -65,6 +66,10 @@ public class CusCorporateAuthService {
     public CusCorporateOtpVerifyResponse completeFirstLogin(String challengeGroupId) {
         CusTokenResponse tokens = corporateSessionService.createAuthenticatedSession(challengeGroupId);
         return completedLoginResponse(tokens, "Login successful.");
+    }
+
+    public CusTokenResponse refreshToken(CusRefreshTokenRequest request) {
+        return corporateSessionService.refreshToken(request);
     }
 
     private CusCorporateOtpVerifyResponse completedLoginResponse(CusTokenResponse tokens, String message) {
