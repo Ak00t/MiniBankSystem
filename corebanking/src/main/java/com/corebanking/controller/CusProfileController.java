@@ -1,8 +1,8 @@
 package com.corebanking.controller;
 
-import com.corebanking.dto.CustomerProfileResponseDTO;
-import com.corebanking.dto.CustomerProfileUpdateDTO;
-import com.corebanking.service.CustomerProfileService;
+import com.corebanking.dto.CusProfileResponseDTO;
+import com.corebanking.dto.CusProfileUpdateDTO;
+import com.corebanking.service.CusProfileService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,12 +14,12 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/customer/profile")
 @RequiredArgsConstructor
-public class CustomerProfileController {
+public class CusProfileController {
 
-    private final CustomerProfileService customerProfileService;
+    private final CusProfileService customerProfileService;
 
     @GetMapping
-    public ResponseEntity<CustomerProfileResponseDTO> getMyProfile() {
+    public ResponseEntity<CusProfileResponseDTO> getMyProfile() {
 
         return ResponseEntity.ok(
                 customerProfileService.getMyProfile()
@@ -27,8 +27,8 @@ public class CustomerProfileController {
     }
 
     @PutMapping
-    public ResponseEntity<CustomerProfileResponseDTO> updateMyProfile(
-            @RequestBody CustomerProfileUpdateDTO dto) {
+    public ResponseEntity<CusProfileResponseDTO> updateMyProfile(
+            @RequestBody CusProfileUpdateDTO dto) {
 
         return ResponseEntity.ok(
                 customerProfileService.updateMyProfile(dto)
@@ -39,7 +39,7 @@ public class CustomerProfileController {
             value = "/image",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<CustomerProfileResponseDTO> uploadProfileImage(
+    public ResponseEntity<CusProfileResponseDTO> uploadProfileImage(
             @RequestParam("file") MultipartFile file) {
 
         return ResponseEntity.ok(

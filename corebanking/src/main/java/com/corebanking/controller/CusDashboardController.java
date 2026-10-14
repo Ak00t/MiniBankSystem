@@ -1,7 +1,7 @@
 package com.corebanking.controller;
 
-import com.corebanking.dto.DashboardResponseDTO;
-import com.corebanking.service.DashboardService;
+import com.corebanking.dto.CusDashboardResponseDTO;
+import com.corebanking.service.CusDashboardService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/customer")
 @RequiredArgsConstructor
-public class DashboardController {
+public class CusDashboardController {
 
-    private final DashboardService dashboardService;
+    private final CusDashboardService dashboardService;
 
     @GetMapping("/dashboard")
-    public ResponseEntity<DashboardResponseDTO> getDashboard() {
+    public ResponseEntity<CusDashboardResponseDTO> getDashboard() {
 
-        DashboardResponseDTO response =
+        CusDashboardResponseDTO response =
                 dashboardService.getDashboard();
 
         return ResponseEntity.ok(response);
