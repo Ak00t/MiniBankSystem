@@ -4,7 +4,7 @@ import com.corebanking.dto.CoreLoginRequest;
 import com.corebanking.dto.CoreLoginResponse;
 import com.corebanking.dto.CoreLogoutRequest;
 import com.corebanking.dto.CoreRefreshRequest;
-import com.corebanking.entity.AuthSessions;
+import com.corebanking.entity.AuthSession;
 import com.corebanking.entity.JwtRevokedTokens;
 import com.corebanking.entity.StaffUsers;
 import com.corebanking.entity.enums.SessionSubjectType;
@@ -122,7 +122,7 @@ public class AuthService {
         String refreshTokenHash = hashToken(plainRefreshToken);
 
         // Create Auth Session
-        AuthSessions session = AuthSessions.builder()
+        AuthSession session = AuthSession.builder()
                 .sessionUuid(UUID.randomUUID().toString())
                 .subjectType(SessionSubjectType.STAFF)
                 .staff(staff)
@@ -165,7 +165,7 @@ public class AuthService {
         String hashedToken = hashToken(plainToken);
         
         
-        AuthSessions session = authSessionsRepository.findByRefreshTokenHash(hashedToken)
+        AuthSession session = authSessionsRepository.findByRefreshTokenHash(hashedToken)
                 .orElseThrow(() -> new AuthException("Invalid refresh token"));
 
         StaffUsers staff = session.getStaff();
@@ -206,7 +206,7 @@ public class AuthService {
         authSessionsRepository.save(session);
 
         // Create New Session
-        AuthSessions newSession = AuthSessions.builder()
+        AuthSession newSession = AuthSession.builder()
                 .sessionUuid(UUID.randomUUID().toString())
                 .subjectType(session.getSubjectType())
                 .staff(staff)
@@ -244,7 +244,7 @@ public class AuthService {
         // 1. REVOKE REFRESH TOKEN FIRST
         if (request != null && request.getRefreshToken() != null && !request.getRefreshToken().isBlank()) {
             String hashedToken = hashToken(request.getRefreshToken());
-            AuthSessions session = authSessionsRepository.findByRefreshTokenHash(hashedToken).orElse(null);
+            AuthSession session = authSessionsRepository.findByRefreshTokenHash(hashedToken).orElse(null);
             
             if (session != null) {
                 session.setRevokedAt(LocalDateTime.now());
