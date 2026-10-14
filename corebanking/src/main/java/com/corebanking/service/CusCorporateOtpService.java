@@ -1,6 +1,8 @@
 package com.corebanking.service;
 
 import com.corebanking.dto.CusCorporateOtpVerifyRequest;
+import com.corebanking.dto.CusOtpResendRequest;
+import com.corebanking.dto.CusOtpResendResponse;
 import com.corebanking.entity.CorporateUser;
 import com.corebanking.entity.Customers;
 import com.corebanking.entity.OtpChallenge;
@@ -15,9 +17,12 @@ import com.corebanking.entity.enums.UpdatedByType;
 import com.corebanking.exception.CusAuthenticationException;
 import com.corebanking.exception.CusEmailException;
 import com.corebanking.exception.CusOtpException;
+import com.corebanking.exception.CusOtpResendLimitException;
 import com.corebanking.repository.CusCorporateCredentialRepository;
 import com.corebanking.repository.CusCorporateUserRepository;
 import com.corebanking.repository.CusOtpChallengesRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,6 +48,9 @@ public class CusCorporateOtpService {
     private final CusOtpChallengesRepository otpChallengesRepository;
     private final CusEmailService cusEmailService;
     private final PasswordEncoder passwordEncoder;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional(
             propagation = Propagation.REQUIRES_NEW,
@@ -192,6 +200,116 @@ public class CusCorporateOtpService {
         challenge.setConsumedAt(now);
         saveVerificationUpdate(challenge, UpdatedByType.CORPORATE_USER, corporateUserId);
         return corporateUserId;
+    }
+
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            noRollbackFor = CusEmailException.class
+    )
+    public CusOtpResendResponse resendLoginOtp(CusOtpResendRequest request) {
+        if (request == null
+                || request.getChallengeGroupId() == null
+                || request.getChallengeGroupId().isBlank()) {
+            throw new CusOtpException("OTP challenge information is required.");
+        }
+        String challengeGroupId = request.getChallengeGroupId().trim();
+        OtpChallenge initialChallenge = otpChallengesRepository
+                .findTopByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
+                        challengeGroupId, OtpSubjectType.CORPORATE_USER, OtpPurpose.LOGIN)
+                .orElseThrow(() -> new CusOtpException("Invalid OTP challenge."));
+        CorporateUser initialUser = initialChallenge.getCorporateUser();
+        if (initialUser == null || initialUser.getCorporateUserId() == null
+                || initialChallenge.getCustomer() != null) {
+            throw new CusOtpException("Invalid corporate OTP challenge.");
+        }
+        UUID corporateUserId = initialUser.getCorporateUserId();
+
+        // No changes have been made. Discard the preliminary lookup so the
+        // authoritative locking read cannot reuse a cached challenge.
+        entityManager.clear();
+        corporateCredentialRepository.findByCorporateUserIdForUpdate(corporateUserId)
+                .orElseThrow(() -> new CusAuthenticationException("Invalid login credentials."));
+
+        // The stable credential lock is held until commit, including delivery
+        // failure. Read the latest replacement only after acquiring that lock.
+        OtpChallenge latestOtp = otpChallengesRepository
+                .findFirstByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
+                        challengeGroupId, OtpSubjectType.CORPORATE_USER, OtpPurpose.LOGIN)
+                .orElseThrow(() -> new CusOtpException("Invalid OTP challenge."));
+        CorporateUser user = latestOtp.getCorporateUser();
+        if (user == null || !corporateUserId.equals(user.getCorporateUserId())
+                || latestOtp.getCustomer() != null) {
+            throw new CusOtpException("Invalid corporate OTP challenge.");
+        }
+        Customers company = user.getCompanyInfo() == null
+                ? null : user.getCompanyInfo().getCustomer();
+        if (user.getStatus() != CorporateUserStatus.ACTIVE
+                || company == null
+                || company.getCustomerType() != CustomerType.COMPANY
+                || company.getStatus() != CustomerStatus.ACTIVE) {
+            throw new CusOtpException("Corporate user or company is not active or invalid.");
+        }
+        String email = user.getEmail();
+        if (email == null || email.isBlank()) {
+            throw new CusAuthenticationException("No registered email address is available for MFA.");
+        }
+
+        if (latestOtp.getStatus() == OtpStatus.CONSUMED || latestOtp.getConsumedAt() != null) {
+            throw new CusOtpException("OTP has already been verified.");
+        }
+        if (latestOtp.getStatus() == OtpStatus.BLOCKED) {
+            throw new CusOtpException("OTP verification has been blocked.");
+        }
+        if (latestOtp.getStatus() != OtpStatus.ACTIVE && latestOtp.getStatus() != OtpStatus.EXPIRED) {
+            throw new CusOtpException("OTP cannot be resent.");
+        }
+        if (latestOtp.getResendNo() >= latestOtp.getMaxResendAttempts()) {
+            throw new CusOtpResendLimitException("Maximum OTP resend attempts reached.");
+        }
+        int newResendNo = latestOtp.getResendNo() + 1;
+        latestOtp.setStatus(OtpStatus.EXPIRED);
+        latestOtp.setUpdatedByType(UpdatedByType.CORPORATE_USER);
+        latestOtp.setUpdatedById(corporateUserId);
+        otpChallengesRepository.save(latestOtp);
+
+        String rawOtp = String.valueOf(100000 + SECURE_RANDOM.nextInt(900000));
+        LocalDateTime now = LocalDateTime.now();
+        OtpChallenge replacement = OtpChallenge.builder()
+                .subjectType(OtpSubjectType.CORPORATE_USER)
+                .corporateUser(user)
+                .customer(null)
+                .purpose(OtpPurpose.LOGIN)
+                .otpHash(passwordEncoder.encode(rawOtp))
+                .deliveryChannel(DeliveryChannel.EMAIL)
+                .destinationMasked(maskEmail(email))
+                .attemptCount(0)
+                .maxAttempts(MAX_OTP_ATTEMPTS)
+                .expiresAt(now.plusMinutes(OTP_EXPIRY_MINUTES))
+                .status(OtpStatus.ACTIVE)
+                .challengeGroupId(challengeGroupId)
+                .lastSentAt(now)
+                .maxResendAttempts(MAX_OTP_RESENDS)
+                .resendNo(newResendNo)
+                .updatedByType(UpdatedByType.CORPORATE_USER)
+                .updatedById(corporateUserId)
+                .build();
+        OtpChallenge savedOtp = otpChallengesRepository.saveAndFlush(replacement);
+        try {
+            cusEmailService.sendCorporateLoginOtp(email, rawOtp);
+        } catch (MailException ex) {
+            savedOtp.setStatus(OtpStatus.EXPIRED);
+            savedOtp.setUpdatedByType(UpdatedByType.SYSTEM);
+            savedOtp.setUpdatedById(null);
+            otpChallengesRepository.saveAndFlush(savedOtp);
+            throw new CusEmailException("Unable to resend OTP email. Please try again.", ex);
+        }
+        return new CusOtpResendResponse(
+                true,
+                "A new OTP has been sent to your registered email.",
+                savedOtp.getChallengeGroupId(),
+                savedOtp.getDestinationMasked(),
+                savedOtp.getResendNo()
+        );
     }
 
     private void saveVerificationUpdate(OtpChallenge challenge,
