@@ -1,6 +1,7 @@
 package com.corebanking.service;
 
 import com.corebanking.dto.CusCorporateFirstLoginPasswordRequest;
+import com.corebanking.dto.CusCorporatePinSetupRequest;
 import com.corebanking.entity.CorporateCredential;
 import com.corebanking.entity.CorporateUser;
 import com.corebanking.entity.Customers;
@@ -111,6 +112,71 @@ public class CusCorporateFirstLoginService {
 
         return credentials.getTransactionPinHash() == null
                 || credentials.getTransactionPinHash().isBlank();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void setupTransactionPin(CusCorporatePinSetupRequest request) {
+        if (request == null
+                || request.getChallengeGroupId() == null
+                || request.getChallengeGroupId().isBlank()
+                || request.getTransactionPin() == null
+                || request.getTransactionPin().isBlank()
+                || request.getConfirmTransactionPin() == null
+                || request.getConfirmTransactionPin().isBlank()) {
+            throw new CusValidationException("All PIN setup fields are required.");
+        }
+        String transactionPin = request.getTransactionPin();
+        if (!transactionPin.equals(request.getConfirmTransactionPin())) {
+            throw new CusValidationException("PIN and confirm PIN do not match.");
+        }
+        if (!transactionPin.matches("\\d{6}")) {
+            throw new CusValidationException("Transaction PIN must be exactly 6 digits.");
+        }
+
+        OtpChallenge challenge = otpChallengesRepository
+                .findFirstByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
+                        request.getChallengeGroupId().trim(),
+                        OtpSubjectType.CORPORATE_USER,
+                        OtpPurpose.LOGIN
+                )
+                .orElseThrow(() -> new CusOtpException("Invalid OTP challenge."));
+        validateSetupBinding(challenge);
+
+        CorporateUser user = challenge.getCorporateUser();
+        if (user == null || user.getCorporateUserId() == null || challenge.getCustomer() != null) {
+            throw new CusOtpException("Invalid corporate OTP challenge.");
+        }
+        Customers company = user.getCompanyInfo() == null
+                ? null : user.getCompanyInfo().getCustomer();
+        if (user.getStatus() != CorporateUserStatus.ACTIVE
+                || company == null
+                || company.getCustomerType() != CustomerType.COMPANY
+                || company.getStatus() != CustomerStatus.ACTIVE) {
+            throw new CusAuthenticationException("Corporate user or company is not active or invalid.");
+        }
+
+        UUID corporateUserId = user.getCorporateUserId();
+        CorporateCredential credentials = corporateCredentialRepository
+                .findByCorporateUserIdForUpdate(corporateUserId)
+                .orElseThrow(() -> new CusAuthenticationException("Invalid login credentials."));
+        validateSetupBinding(challenge);
+        if (credentials.isMustChangePassword()) {
+            throw new CusValidationException(
+                    "Please change the temporary password before setting the transaction PIN."
+            );
+        }
+        if (credentials.getTransactionPinHash() != null
+                && !credentials.getTransactionPinHash().isBlank()) {
+            throw new CusValidationException("Transaction PIN has already been set.");
+        }
+
+        credentials.setTransactionPinHash(passwordEncoder.encode(transactionPin));
+        credentials.setPinChangedAt(LocalDateTime.now());
+        credentials.setFailedPinAttemptCount(0);
+        credentials.setPinLockedUntil(null);
+        credentials.setUpdatedByType(UpdatedByType.CORPORATE_USER);
+        credentials.setUpdatedById(corporateUserId);
+        corporateCredentialRepository.save(credentials);
     }
 
     private void validateSetupBinding(OtpChallenge challenge) {
