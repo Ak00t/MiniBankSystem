@@ -8,6 +8,7 @@ import com.corebanking.entity.CorporateCredential;
 import com.corebanking.entity.CorporateUser;
 import com.corebanking.entity.Customers;
 import com.corebanking.entity.LoginAttempt;
+import com.corebanking.entity.JwtRevokedTokens;
 import com.corebanking.entity.OtpChallenge;
 import com.corebanking.entity.enums.ActorType;
 import com.corebanking.entity.enums.CorporateUserStatus;
@@ -26,6 +27,7 @@ import com.corebanking.repository.CusAuditLogsRepository;
 import com.corebanking.repository.CusAuthSessionsRepository;
 import com.corebanking.repository.CusCorporateCredentialRepository;
 import com.corebanking.repository.CusLoginAttemptsRepository;
+import com.corebanking.repository.CusJwtRevokedTokensRepository;
 import com.corebanking.repository.CusOtpChallengesRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +53,7 @@ public class CusCorporateSessionService {
     private final CusAuthSessionsRepository authSessionsRepository;
     private final CusLoginAttemptsRepository loginAttemptsRepository;
     private final CusAuditLogsRepository auditLogsRepository;
+    private final CusJwtRevokedTokensRepository jwtRevokedTokensRepository;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public CusTokenResponse createAuthenticatedSession(String challengeGroupId) {
@@ -223,6 +226,61 @@ public class CusCorporateSessionService {
         return new CusTokenResponse(
                 true, "Token refreshed successfully.", newAccessToken, newRefreshToken
         );
+    }
+
+    @Transactional(noRollbackFor = CusSessionExpiredException.class)
+    public void logout(String authorizationHeader) {
+        if (authorizationHeader == null || authorizationHeader.isBlank()
+                || !authorizationHeader.startsWith("Bearer ")) {
+            throw new CusAuthenticationException("Access token is required.");
+        }
+        String accessToken = authorizationHeader.substring(7).trim();
+        if (accessToken.isBlank()) {
+            throw new CusAuthenticationException("Access token is required.");
+        }
+        Claims claims = cusJwtService.getClaims(accessToken);
+        if (!"ACCESS".equals(claims.get("tokenType", String.class))) {
+            throw new CusAuthenticationException("Invalid access token.");
+        }
+        String jti = claims.getId();
+        if (jti == null || jti.isBlank()) {
+            throw new CusAuthenticationException("Invalid token ID.");
+        }
+        AuthSession session = validateAccessSessionForLogout(claims);
+        CorporateUser user = session.getCorporateUser();
+        if (user == null || user.getCorporateUserId() == null) {
+            throw new CusSessionExpiredException("Corporate session is invalid.");
+        }
+        UUID corporateUserId = user.getCorporateUserId();
+        boolean revoked = revokeSession(session, "USER_LOGOUT");
+        if (!revoked) {
+            return;
+        }
+        if (!jwtRevokedTokensRepository.existsByJti(jti)) {
+            jwtRevokedTokensRepository.save(JwtRevokedTokens.builder()
+                    .jti(jti)
+                    .subjectType(SessionSubjectType.CORPORATE_USER)
+                    .corporateUser(user)
+                    .customer(null)
+                    .staff(null)
+                    .tokenExpiresAt(claims.getExpiration().toInstant()
+                            .atZone(ZoneId.systemDefault()).toLocalDateTime())
+                    .reason("USER_LOGOUT")
+                    .updatedByType(UpdatedByType.CORPORATE_USER)
+                    .updatedById(corporateUserId)
+                    .build());
+        }
+        auditLogsRepository.save(AuditLogs.builder()
+                .actorType(ActorType.CORPORATE_USER)
+                .actorCorporateUser(user)
+                .actorCustomer(null)
+                .actorStaff(null)
+                .actionType("CUSTOMER_LOGOUT")
+                .entityType("AUTH_SESSION")
+                .entityId(session.getSessionUuid())
+                .oldValues("{\"status\":\"ACTIVE\"}")
+                .newValues("{\"status\":\"REVOKED\",\"reason\":\"USER_LOGOUT\"}")
+                .build());
     }
 
     private void validateCompletionBinding(OtpChallenge challenge) {

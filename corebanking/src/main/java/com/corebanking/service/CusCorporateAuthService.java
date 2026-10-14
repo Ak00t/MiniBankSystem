@@ -72,6 +72,10 @@ public class CusCorporateAuthService {
         return corporateSessionService.refreshToken(request);
     }
 
+    public void logout(String authorizationHeader) {
+        corporateSessionService.logout(authorizationHeader);
+    }
+
     private CusCorporateOtpVerifyResponse completedLoginResponse(CusTokenResponse tokens, String message) {
         return new CusCorporateOtpVerifyResponse(
                 true, message, false, false, false, tokens.getAccessToken(), tokens.getRefreshToken()
