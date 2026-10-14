@@ -68,7 +68,7 @@ export const MerchantPaymentAuthorize: React.FC = () => {
         if (currentAccounts.length > 0) {
           setSelectedAccountId(currentAccounts[0].accountNumber);
         }
-      } catch (err: any) {
+      } catch {
         setErrorMessage('Failed to load payment details. Invalid or expired token.');
         setErrorCode('SYSTEM_ERROR');
       } finally {
