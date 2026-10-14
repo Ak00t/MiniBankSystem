@@ -2,7 +2,7 @@
 package com.corebanking.service;
 
 import com.corebanking.dto.StaffPasswordSetupRequest;
-import com.corebanking.entity.AuthSessions;
+import com.corebanking.entity.AuthSession;
 import com.corebanking.entity.StaffPasswordSetupToken;
 import com.corebanking.entity.StaffUsers;
 import com.corebanking.entity.enums.StaffUserStatus;

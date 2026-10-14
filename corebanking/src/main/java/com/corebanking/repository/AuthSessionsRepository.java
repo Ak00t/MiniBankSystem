@@ -1,6 +1,6 @@
 package com.corebanking.repository;
 
-import com.corebanking.entity.AuthSessions;
+import com.corebanking.entity.AuthSession;
 
 import jakarta.persistence.LockModeType; 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,15 +13,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AuthSessionsRepository
-        extends JpaRepository<AuthSessions, UUID> {
+        extends JpaRepository<AuthSession, UUID> {
 
-    Optional<AuthSessions> findBySessionUuid(
+    Optional<AuthSession> findBySessionUuid(
             String sessionUuid
     );
 
    
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<AuthSessions> findByRefreshTokenHash(
+    Optional<AuthSession> findByRefreshTokenHash(
             String refreshTokenHash
     );
     
