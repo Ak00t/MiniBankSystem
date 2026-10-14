@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
     LOGIN: '/api/auth/login',
     LOGOUT: '/api/auth/logout',
     REFRESH: '/api/auth/refresh',
+    STAFF_PASSWORD_SETUP_COMPLETE: '/api/auth/staff-password-setup/complete',
   },
 
   // Admin — (requires ADMIN role)
@@ -16,6 +17,7 @@ export const API_ENDPOINTS = {
     STAFF_BY_ID: (id: string) => `/api/admin/staff/${id}`,
     STAFF_DEACTIVATE: (id: string) => `/api/admin/staff/${id}/deactivate`,
     STAFF_RESET_PASSWORD: (id: string) => `/api/admin/staff/${id}/reset-password`,
+    STAFF_RESEND_SETUP_LINK: (id: string) => `/api/admin/staff/${id}/password-setup-link`,
     STAFF_ROLE: (id: string) => `/api/admin/staff/${id}/role`,
 
     // Announcements
@@ -34,7 +36,7 @@ export const API_ENDPOINTS = {
     },
   },
 
-  // Customers (public)
+  // Customers
   CUSTOMERS: '/api/customers',
   CUSTOMER_BY_CODE: (code: string) => `/api/customers/${code}`,
 
@@ -42,11 +44,12 @@ export const API_ENDPOINTS = {
   ACCOUNTS: '/api/accounts',
   ACCOUNT_BY_NUMBER: (num: string) => `/api/accounts/${num}`,
   ACCOUNTS_BY_CUSTOMER: (code: string) => `/api/accounts/customer/${code}`,
+  ACCOUNT_STATUS: (num: string) => `/api/accounts/${num}/status`,
 
   // Transfers
   TRANSFER_P2P: '/api/transfers/p2p',
 
-  // Announcements (active, for authenticated staff)
+  // Announcements (active, for authenticated staff / all)
   ANNOUNCEMENTS: '/api/announcements',
 } as const;
 

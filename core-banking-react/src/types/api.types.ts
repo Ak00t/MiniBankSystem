@@ -1,6 +1,9 @@
 // ============================================================
-// Auth DTOs — mirrors Backend CoreLoginRequest / CoreLoginResponse / CoreRefreshRequest
+// Core Banking API Type Definitions
+// Mirrors Spring Boot DTOs and backend entities
 // ============================================================
+
+// --- Auth DTOs ---
 
 export interface LoginRequest {
   username: string;
@@ -15,13 +18,23 @@ export interface LoginResponse {
   permissions: string[];
 }
 
+export interface CoreApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 export interface RefreshRequest {
   refreshToken: string;
 }
 
-// ============================================================
-// Staff — mirrors Backend StaffResponse / Request DTOs
-// ============================================================
+export interface StaffPasswordSetupRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+// --- Staff DTOs ---
 
 export type StaffUserStatus = 'ACTIVE' | 'SUSPENDED' | 'DEACTIVATED';
 
@@ -45,7 +58,6 @@ export interface StaffCreateRequest {
   fullName: string;
   email: string;
   phone: string;
-  password: string;
   roleId: number;
 }
 
@@ -60,12 +72,10 @@ export interface ChangeStaffRoleRequest {
 }
 
 export interface PasswordResetRequest {
-  newPassword: string;
+  newPassword?: string;
 }
 
-// ============================================================
-// System Rules — mirrors Backend SystemParameters & FeeSchedules DTOs
-// ============================================================
+// --- System Rules DTOs ---
 
 export interface SystemParameterResponse {
   parameterId: number;
@@ -140,63 +150,130 @@ export interface FeeScheduleUpdateRequest {
   activeUntil?: string | null;
 }
 
-// ============================================================
-// Announcements — mirrors Backend AnnouncementResponse DTO
-// ============================================================
+// --- Announcements DTOs ---
+
+export type AnnouncementAudience = 'ALL' | 'CUSTOMER' | 'STAFF';
 
 export interface AnnouncementResponse {
-  id: number;
+  announcementId: number;
   title: string;
-  content: string;
+  message: string;
+  audience: AnnouncementAudience;
   isActive: boolean;
-  createdBy: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  createdByStaffId: string | null;
   createdAt: string;
   updatedAt: string;
-  updatedBy: string | null;
 }
 
 export interface AnnouncementCreateRequest {
   title: string;
-  content: string;
+  message: string;
+  audience: AnnouncementAudience;
+  startsAt?: string | null;
+  endsAt?: string | null;
 }
 
 export interface AnnouncementUpdateRequest {
   title?: string;
-  content?: string;
+  message?: string;
+  audience?: AnnouncementAudience;
+  startsAt?: string | null;
+  endsAt?: string | null;
 }
 
-// ============================================================
-// Customer — mirrors Backend CustomerResponseDTO
-// ============================================================
+// --- Customer DTOs ---
 
 export interface CustomerResponse {
   customerCode: string;
+  customerType: string;
   fullName: string;
   email: string;
   phone: string;
-  dateOfBirth: string | null;
-  address: string | null;
   status: string;
   createdAt: string;
 }
 
-// ============================================================
-// Account — mirrors Backend AccountResponseDTO
-// ============================================================
+export interface CustomerDetailResponse extends CustomerResponse {
+  updatedAt: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  nrc?: string;
+  address?: string;
+  occupation?: string;
+  companyName?: string;
+  registrationNumber?: string;
+  taxId?: string;
+  businessType?: string;
+  country?: string;
+}
+
+export interface CustomerCreateDTO {
+  customerType: 'INDIVIDUAL' | 'CORPORATE';
+  email: string;
+  phone: string;
+  fullName: string;
+  nrc?: string;
+  dateOfBirth?: string;
+  address?: string;
+  companyName?: string;
+  registrationNumber?: string;
+}
+
+// --- Account DTOs ---
 
 export interface AccountResponse {
   accountNumber: string;
   accountType: string;
-  balance: number;
+  accountCategory: string;
+  isJointAccount: boolean;
+  customerCode: string;
+  customerName: string;
+  currentBalance: number;
+  availableBalance: number;
   currency: string;
   status: string;
-  customerCode: string;
-  createdAt: string;
+  openedAt: string;
 }
 
-// ============================================================
-// Generic API error shape from Spring Boot
-// ============================================================
+export interface AccountCreateDTO {
+  customerCode: string;
+  accountType: string;
+  currency: string;
+  initialDeposit?: number;
+}
+
+export interface AccountStatusUpdateDTO {
+  status: string;
+  reason?: string;
+}
+
+// --- Transfer DTOs ---
+
+export interface P2PTransferRequestDto {
+  sourceAccountNumber: string;
+  destinationAccountNumber: string;
+  amount: number;
+  remark?: string;
+  idempotencyKey?: string;
+}
+
+export interface P2PTransferResponseDto {
+  transactionReference: string;
+  sourceAccountNumber: string;
+  destinationAccountNumber: string;
+  amount: number;
+  fee: number;
+  totalDebited: number;
+  status: string;
+  transactedAt: string;
+  remark?: string;
+}
+
+// --- Generic API error shape from Spring Boot ---
 
 export interface ApiError {
   status: number;
