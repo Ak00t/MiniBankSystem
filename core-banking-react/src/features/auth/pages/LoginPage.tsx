@@ -6,7 +6,7 @@ import Input from '../../../components/common/Input';
 import Button from '../../../components/common/Button';
 
 export default function LoginPage() {
-  const { login, isLoading, error, isAuthenticated, isAdmin, dismissError } = useAuth();
+  const { login, isLoading, error, isAuthenticated, dismissError } = useAuth();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -16,12 +16,12 @@ export default function LoginPage() {
     password?: string;
   }>({});
 
-  // If already authenticated, redirect immediately
+  // If already authenticated, redirect immediately to dashboard
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(isAdmin ? '/admin/dashboard' : '/login', { replace: true });
+      navigate('/admin/dashboard', { replace: true });
     }
-  }, [isAuthenticated, isAdmin, navigate]);
+  }, [isAuthenticated, navigate]);
 
   // Clear backend error when user starts typing
   const handleUsernameChange = (value: string) => {

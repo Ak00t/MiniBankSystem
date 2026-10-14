@@ -133,8 +133,8 @@ export default function FeeScheduleEditModal({
       minimumFee: formData.minimumFee ? Number(formData.minimumFee) : null,
       maximumFee: formData.maximumFee ? Number(formData.maximumFee) : null,
       currency: formData.currency.trim().toUpperCase(),
-      activeFrom: new Date(formData.activeFrom).toISOString(),
-      activeUntil: formData.activeUntil ? new Date(formData.activeUntil).toISOString() : null,
+      activeFrom: formData.activeFrom.length === 16 ? `${formData.activeFrom}:00` : formData.activeFrom.slice(0, 19),
+      activeUntil: formData.activeUntil ? (formData.activeUntil.length === 16 ? `${formData.activeUntil}:00` : formData.activeUntil.slice(0, 19)) : null,
     };
 
     try {

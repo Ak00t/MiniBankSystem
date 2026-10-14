@@ -7,7 +7,7 @@ import type {
   StaffCreateRequest,
   StaffUpdateRequest,
   ChangeStaffRoleRequest,
-  PasswordResetRequest,
+  StaffPasswordSetupRequest,
   SystemParameterResponse,
   SystemParameterCreateRequest,
   SystemParameterUpdateRequest,
@@ -18,7 +18,12 @@ import type {
   AnnouncementCreateRequest,
   AnnouncementUpdateRequest,
   CustomerResponse,
+  CustomerDetailResponse,
   AccountResponse,
+  AccountCreateDTO,
+  AccountStatusUpdateDTO,
+  P2PTransferRequestDto,
+  P2PTransferResponseDto,
 } from '../types/api.types';
 
 // ============================================================
@@ -34,6 +39,12 @@ export const authApi = {
 
   refresh: (refreshToken: string) =>
     axiosInstance.post<LoginResponse>(API_ENDPOINTS.AUTH.REFRESH, { refreshToken }),
+
+  completePasswordSetup: (data: StaffPasswordSetupRequest) =>
+    axiosInstance.post<{ message: string }>(
+      API_ENDPOINTS.AUTH.STAFF_PASSWORD_SETUP_COMPLETE,
+      data,
+    ),
 };
 
 // ============================================================
@@ -59,8 +70,11 @@ export const staffApi = {
   deactivate: (staffId: string) =>
     axiosInstance.patch<StaffResponse>(API_ENDPOINTS.ADMIN.STAFF_DEACTIVATE(staffId)),
 
-  resetPassword: (staffId: string, data: PasswordResetRequest) =>
-    axiosInstance.post<string>(API_ENDPOINTS.ADMIN.STAFF_RESET_PASSWORD(staffId), data),
+  resetPassword: (staffId: string) =>
+    axiosInstance.post<string>(API_ENDPOINTS.ADMIN.STAFF_RESET_PASSWORD(staffId)),
+
+  resendSetupLink: (staffId: string) =>
+    axiosInstance.post<{ message: string }>(API_ENDPOINTS.ADMIN.STAFF_RESEND_SETUP_LINK(staffId)),
 };
 
 // ============================================================
@@ -126,12 +140,15 @@ export const systemRulesApi = {
 };
 
 // ============================================================
-// Admin — Announcements API
+// Announcements API (Admin + Staff)
 // ============================================================
 
 export const announcementsApi = {
   getAll: () =>
     axiosInstance.get<AnnouncementResponse[]>(API_ENDPOINTS.ADMIN.ANNOUNCEMENTS),
+
+  getActive: () =>
+    axiosInstance.get<AnnouncementResponse[]>(API_ENDPOINTS.ANNOUNCEMENTS),
 
   getById: (id: number) =>
     axiosInstance.get<AnnouncementResponse>(API_ENDPOINTS.ADMIN.ANNOUNCEMENT_BY_ID(id)),
@@ -150,7 +167,7 @@ export const announcementsApi = {
 };
 
 // ============================================================
-// Customers API (public — no auth required by backend)
+// Customers API
 // ============================================================
 
 export const customersApi = {
@@ -158,7 +175,7 @@ export const customersApi = {
     axiosInstance.get<CustomerResponse[]>(API_ENDPOINTS.CUSTOMERS),
 
   getByCode: (code: string) =>
-    axiosInstance.get<CustomerResponse>(API_ENDPOINTS.CUSTOMER_BY_CODE(code)),
+    axiosInstance.get<CustomerDetailResponse>(API_ENDPOINTS.CUSTOMER_BY_CODE(code)),
 };
 
 // ============================================================
@@ -166,9 +183,34 @@ export const customersApi = {
 // ============================================================
 
 export const accountsApi = {
+  create: (data: AccountCreateDTO) =>
+    axiosInstance.post<AccountResponse>(API_ENDPOINTS.ACCOUNTS, data),
+
   getByNumber: (accountNumber: string) =>
     axiosInstance.get<AccountResponse>(API_ENDPOINTS.ACCOUNT_BY_NUMBER(accountNumber)),
 
   getByCustomer: (customerCode: string) =>
     axiosInstance.get<AccountResponse[]>(API_ENDPOINTS.ACCOUNTS_BY_CUSTOMER(customerCode)),
+
+  updateStatus: (accountNumber: string, data: AccountStatusUpdateDTO) =>
+    axiosInstance.patch<AccountResponse>(API_ENDPOINTS.ACCOUNT_STATUS(accountNumber), data),
+};
+
+// ============================================================
+// Transfers API
+// ============================================================
+
+export const transfersApi = {
+  p2pTransfer: (data: P2PTransferRequestDto, idempotencyKey?: string) =>
+    axiosInstance.post<P2PTransferResponseDto>(
+      API_ENDPOINTS.TRANSFER_P2P,
+      data,
+      idempotencyKey
+        ? {
+            headers: {
+              'Idempotency-Key': idempotencyKey,
+            },
+          }
+        : undefined,
+    ),
 };

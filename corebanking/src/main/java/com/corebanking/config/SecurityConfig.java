@@ -81,6 +81,8 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/customers/**").permitAll()
                 
+                .requestMatchers(HttpMethod.GET, "/api/announcements/customer").permitAll()
+                
                 // All other endpoints require authentication.
                 .anyRequest().authenticated()
             )

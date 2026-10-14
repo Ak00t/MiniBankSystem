@@ -1,11 +1,14 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from '../../features/auth/pages/LoginPage';
+import StaffPasswordSetupPage from '../../features/auth/pages/StaffPasswordSetupPage';
 import AdminDashboardPage from '../../features/admin/pages/AdminDashboardPage';
 import StaffListPage from '../../features/admin/pages/StaffListPage';
 import SystemRulesPage from '../../features/admin/pages/SystemRulesPage';
 import AnnouncementsPage from '../../features/admin/pages/AnnouncementsPage';
 import CustomersPage from '../../features/admin/pages/CustomersPage';
+import AccountsPage from '../../features/operations/pages/AccountsPage';
+import TransfersPage from '../../features/operations/pages/TransfersPage';
+import UnauthorizedPage from '../../components/common/UnauthorizedPage';
 import ProtectedRoute from './ProtectedRoute';
 
 export default function RouterProvider() {
@@ -14,16 +17,22 @@ export default function RouterProvider() {
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/setup-password" element={<StaffPasswordSetupPage />} />
 
-        {/* Admin-only protected routes */}
+        <Route path="/set-password" element={<StaffPasswordSetupPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+        {/* Protected Dashboard (available to authenticated staff) */}
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute requiredRole="ADMIN">
+            <ProtectedRoute>
               <AdminDashboardPage />
             </ProtectedRoute>
           }
         />
+
+        {/* Admin / Auditor: Staff Management */}
         <Route
           path="/admin/staff"
           element={
@@ -32,6 +41,8 @@ export default function RouterProvider() {
             </ProtectedRoute>
           }
         />
+
+        {/* Admin: System Rules */}
         <Route
           path="/admin/system-rules"
           element={
@@ -40,19 +51,43 @@ export default function RouterProvider() {
             </ProtectedRoute>
           }
         />
+
+        {/* Announcements (Accessible to authenticated staff) */}
         <Route
           path="/admin/announcements"
           element={
-            <ProtectedRoute requiredRole="ADMIN">
+            <ProtectedRoute>
               <AnnouncementsPage />
             </ProtectedRoute>
           }
         />
+
+        {/* Customers (Accessible to staff) */}
         <Route
           path="/admin/customers"
           element={
-            <ProtectedRoute requiredRole="ADMIN">
+            <ProtectedRoute>
               <CustomersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Bank Accounts */}
+        <Route
+          path="/admin/accounts"
+          element={
+            <ProtectedRoute>
+              <AccountsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Transfers (Teller or Admin) */}
+        <Route
+          path="/admin/transfers"
+          element={
+            <ProtectedRoute>
+              <TransfersPage />
             </ProtectedRoute>
           }
         />
@@ -65,5 +100,4 @@ export default function RouterProvider() {
       </Routes>
     </BrowserRouter>
   );
-
 }
