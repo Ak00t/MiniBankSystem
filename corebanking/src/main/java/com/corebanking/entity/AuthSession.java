@@ -18,7 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuthSessions {
+public class AuthSession {
 
     @Id
     @UuidGenerator(style = UuidGenerator.Style.TIME)
@@ -37,6 +37,11 @@ public class AuthSessions {
     @JoinColumn(name = "customer_id",
             foreignKey = @ForeignKey(name = "fk_auth_sessions_customer"))
     private Customers customer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "corporate_user_id",
+            foreignKey = @ForeignKey(name = "fk_auth_sessions_corporate_user"))
+    private CorporateUser corporateUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id",

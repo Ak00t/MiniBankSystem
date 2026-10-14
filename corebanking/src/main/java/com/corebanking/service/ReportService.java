@@ -119,9 +119,11 @@ public class ReportService {
             String accountNo, int page, int pageSize) throws IOException {
         AuditTrailPageDTO page1 = getAuditTrailLog(staffId, actionType, startDate, endDate, accountNo, page, pageSize);
         StringBuilder sb = new StringBuilder();
-        sb.append("Log ID,Staff ID,Staff Username,Staff Full Name,Action Type,Entity Type,Entity ID,IP Address,Description,Created At\n");
+        sb.append("Log ID,Actor Type,Category,Staff ID,Staff Username,Staff Full Name,Action Type,Entity Type,Entity ID,IP Address,Description,Created At\n");
         for (AuditTrailLogDTO r : page1.getLogs()) {
             sb.append(safe(r.getLogId())).append(',')
+              .append(safe(r.getActorType())).append(',')
+              .append(safe(r.getActionCategory())).append(',')
               .append(safe(r.getStaffId())).append(',')
               .append(safe(r.getStaffUsername())).append(',')
               .append(safe(r.getStaffFullName())).append(',')
@@ -212,22 +214,24 @@ public class ReportService {
         try (XSSFWorkbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = wb.createSheet("Audit Trail");
             CellStyle headerStyle = buildHeaderStyle(wb);
-            String[] headers = {"Log ID","Staff ID","Username","Full Name","Action","Entity Type","Entity ID","IP Address","Description","Created At"};
+            String[] headers = {"Log ID","Actor Type","Category","Staff ID","Username","Full Name","Action","Entity Type","Entity ID","IP Address","Description","Created At"};
             createHeaderRow(sheet, headers, headerStyle);
 
             int ri = 1;
             for (AuditTrailLogDTO r : pageData.getLogs()) {
                 Row row = sheet.createRow(ri++);
                 row.createCell(0).setCellValue(safe(r.getLogId()));
-                row.createCell(1).setCellValue(safe(r.getStaffId()));
-                row.createCell(2).setCellValue(safe(r.getStaffUsername()));
-                row.createCell(3).setCellValue(safe(r.getStaffFullName()));
-                row.createCell(4).setCellValue(safe(r.getActionType()));
-                row.createCell(5).setCellValue(safe(r.getEntityType()));
-                row.createCell(6).setCellValue(safe(r.getEntityId()));
-                row.createCell(7).setCellValue(safe(r.getIpAddress()));
-                row.createCell(8).setCellValue(safe(r.getDescription()));
-                row.createCell(9).setCellValue(fmt(r.getCreatedAt()));
+                row.createCell(1).setCellValue(safe(r.getActorType()));
+                row.createCell(2).setCellValue(safe(r.getActionCategory()));
+                row.createCell(3).setCellValue(safe(r.getStaffId()));
+                row.createCell(4).setCellValue(safe(r.getStaffUsername()));
+                row.createCell(5).setCellValue(safe(r.getStaffFullName()));
+                row.createCell(6).setCellValue(safe(r.getActionType()));
+                row.createCell(7).setCellValue(safe(r.getEntityType()));
+                row.createCell(8).setCellValue(safe(r.getEntityId()));
+                row.createCell(9).setCellValue(safe(r.getIpAddress()));
+                row.createCell(10).setCellValue(safe(r.getDescription()));
+                row.createCell(11).setCellValue(fmt(r.getCreatedAt()));
             }
             autoSizeColumns(sheet, headers.length);
             wb.write(out);
@@ -375,12 +379,12 @@ public class ReportService {
                             + (actionType != null && !actionType.isBlank() ? " | Action: " + actionType : "")
                             + (accountNo != null && !accountNo.isBlank() ? " | Account: " + accountNo : ""));
 
-            PdfPTable table = new PdfPTable(8);
+            PdfPTable table = new PdfPTable(9);
             table.setWidthPercentage(100);
-            table.setWidths(new float[]{2.2f, 2.0f, 2.0f, 1.8f, 1.8f, 1.8f, 1.8f, 3.5f});
+            table.setWidths(new float[]{2.0f, 1.4f, 1.6f, 1.8f, 1.8f, 1.6f, 1.6f, 1.6f, 3.2f});
             table.setHeaderRows(1);
 
-            String[] headers = {"Timestamp", "Staff Username", "Full Name", "Action", "Entity Type", "Entity ID", "IP Address", "Description"};
+            String[] headers = {"Timestamp", "Actor Type", "Category", "Username", "Full Name", "Action", "Entity Type", "Entity ID", "Description"};
             for (String h : headers) {
                 table.addCell(createPdfHeaderCell(h));
             }
@@ -389,12 +393,13 @@ public class ReportService {
             for (AuditTrailLogDTO r : pageData.getLogs()) {
                 Color bg = (idx++ % 2 == 1) ? new Color(248, 250, 252) : Color.WHITE;
                 table.addCell(createPdfCell(fmt(r.getCreatedAt()), bg, Element.ALIGN_LEFT));
+                table.addCell(createPdfCell(safe(r.getActorType()), bg, Element.ALIGN_CENTER));
+                table.addCell(createPdfCell(safe(r.getActionCategory()), bg, Element.ALIGN_CENTER));
                 table.addCell(createPdfCell(safe(r.getStaffUsername()), bg, Element.ALIGN_LEFT));
                 table.addCell(createPdfCell(safe(r.getStaffFullName()), bg, Element.ALIGN_LEFT));
                 table.addCell(createPdfCell(safe(r.getActionType()), bg, Element.ALIGN_CENTER));
                 table.addCell(createPdfCell(safe(r.getEntityType()), bg, Element.ALIGN_LEFT));
                 table.addCell(createPdfCell(safe(r.getEntityId()), bg, Element.ALIGN_LEFT));
-                table.addCell(createPdfCell(safe(r.getIpAddress()), bg, Element.ALIGN_LEFT));
                 table.addCell(createPdfCell(safe(r.getDescription()), bg, Element.ALIGN_LEFT));
             }
 
