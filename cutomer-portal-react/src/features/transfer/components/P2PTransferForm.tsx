@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../lib/redux";
 import { submitP2PTransfer, resetTransferState } from "../store/transferSlice";
@@ -824,6 +824,8 @@ export const P2PTransferForm = () => {
         saveDestination(destinationAccount);
         dispatch(fetchMyAccounts());
       }
+      // Refresh notifications immediately for both success and failure
+      window.dispatchEvent(new Event("new-notification-event"));
     });
   };
 
