@@ -67,7 +67,13 @@ public class BankTransactions {
     private Customers initiatedByCustomer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "initiated_by_staff_id", foreignKey = @ForeignKey(name = "fk_transactions_staff_actor"))
+    @JoinColumn(name = "initiated_by_corporate_user_id",
+            foreignKey = @ForeignKey(name = "fk_transactions_corporate_actor"))
+    private CorporateUser initiatedByCorporateUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "initiated_by_staff_id",
+            foreignKey = @ForeignKey(name = "fk_transactions_staff_actor"))
     private StaffUsers initiatedByStaff;
 
     @Enumerated(EnumType.STRING)

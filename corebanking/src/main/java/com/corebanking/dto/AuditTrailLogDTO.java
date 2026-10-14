@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AuditTrailLogDTO {
     private String logId;
+    private String actorType;
+    private String actionCategory;
     private String staffId;
     private String staffUsername;
     private String staffFullName;

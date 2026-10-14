@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 
 import ProtectedRoute from "../../features/auth/components/ProtectedRoute";
+import SessionTimeoutProvider from "../../features/auth/components/SessionTimeoutProvider";
 
 // ======================================================
 // AUTH PAGES
@@ -115,10 +116,14 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
 
     children: [
+
       
-      // Dashboard routes (With Sidebar)
-      {
-        element: <MainLayout />,
+       {
+          element: (
+            <SessionTimeoutProvider>
+              <MainLayout />
+            </SessionTimeoutProvider>
+          ),
 
         children: [
 

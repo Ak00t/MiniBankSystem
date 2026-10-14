@@ -159,6 +159,8 @@ public class ReportRepository {
                     while (rs.next()) {
                         logs.add(AuditTrailLogDTO.builder()
                                 .logId(String.valueOf(rs.getLong("log_id")))
+                                .actorType(rs.getString("actor_type"))
+                                .actionCategory(rs.getString("action_category"))
                                 .staffId(rs.getString("staff_id"))
                                 .staffUsername(rs.getString("staff_username"))
                                 .staffFullName(rs.getString("staff_full_name"))

@@ -30,6 +30,8 @@ export interface AccountStatusReport {
 
 export interface AuditTrailLog {
   logId: string;
+  actorType?: string;
+  actionCategory?: string;
   staffId: string;
   staffUsername: string;
   staffFullName: string;

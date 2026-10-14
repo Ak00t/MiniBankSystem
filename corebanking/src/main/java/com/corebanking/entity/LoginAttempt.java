@@ -17,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LoginAttempts {
+public class LoginAttempt {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,6 +35,11 @@ public class LoginAttempts {
     @JoinColumn(name = "customer_id",
             foreignKey = @ForeignKey(name = "fk_login_customer"))
     private Customers customer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "corporate_user_id",
+            foreignKey = @ForeignKey(name = "fk_login_corporate_user"))
+    private CorporateUser corporateUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id",
