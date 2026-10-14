@@ -17,14 +17,12 @@ interface Props {
 }
 
 const typeColors: Record<string, string> = {
-  TRANSFER: '#2563EB',
   INTERNAL_TRANSFER: '#2563EB',
   OTC_DEPOSIT: '#16a34a',
   OTC_WITHDRAWAL: '#dc2626',
   EXTERNAL_PAYMENT: '#0891b2',
   LEDGER_ADJUSTMENT: '#7c3aed',
   REFUND: '#ea580c',
-  MERCHANT_CHECKOUT: '#d97706',
 };
 
 const DailyLedgerPanel: React.FC<Props> = ({
@@ -38,6 +36,7 @@ const DailyLedgerPanel: React.FC<Props> = ({
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadDuration, setLoadDuration] = useState<number | null>(null);
 
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 30;
@@ -47,11 +46,16 @@ const DailyLedgerPanel: React.FC<Props> = ({
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const startTime = performance.now();
     try {
       const result = await fetchDailyLedgerSummary(params);
+      const elapsedSec = (performance.now() - startTime) / 1000;
+      setLoadDuration(elapsedSec);
       setData(result);
       setFetched(true);
     } catch (e: unknown) {
+      const elapsedSec = (performance.now() - startTime) / 1000;
+      setLoadDuration(elapsedSec);
       setError((e as Error).message || 'Failed to load data');
     } finally {
       setLoading(false);
@@ -214,23 +218,26 @@ const DailyLedgerPanel: React.FC<Props> = ({
             })}
           </svg>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
-            {Object.entries(typeColors).map(([k, v]) => (
-              <span
-                key={k}
-                style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
-              >
+            {Array.from(new Set(chartData.map((r) => r.transactionType))).map((type) => {
+              const color = typeColors[type] ?? '#2563EB';
+              return (
                 <span
-                  style={{
-                    width: '12px',
-                    height: '12px',
-                    borderRadius: '2px',
-                    backgroundColor: v,
-                    display: 'inline-block',
-                  }}
-                />
-                {k}
-              </span>
-            ))}
+                  key={type}
+                  style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <span
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '2px',
+                      backgroundColor: color,
+                      display: 'inline-block',
+                    }}
+                  />
+                  {type}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
@@ -254,6 +261,24 @@ const DailyLedgerPanel: React.FC<Props> = ({
         >
           <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
             Daily Ledger Records ({filteredData.length} rows{totalPages > 1 ? ` — Page ${page} of ${totalPages} (30 rows/page)` : ''})
+            {loadDuration !== null && (
+              <span
+                style={{
+                  marginLeft: '10px',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: '#64748b',
+                  backgroundColor: '#f1f5f9',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                ⏱️ {loadDuration.toFixed(2)}s
+              </span>
+            )}
           </span>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <ExportButtons

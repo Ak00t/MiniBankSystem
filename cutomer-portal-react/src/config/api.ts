@@ -119,6 +119,9 @@ const isPublicEndpoint = (
     url.includes(
       "/auth/first-login/setup-pin"
     ) ||
+     url.includes(
+      "/auth/password-reset/"
+    ) ||
 
     url.includes(
       "/auth/refresh"
