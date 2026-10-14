@@ -472,7 +472,7 @@ export default function StaffListPage() {
         onClose={() => setIsResetPasswordOpen(false)}
         staff={selectedStaff}
         onSuccess={() => {
-          handleShowSuccess('Password reset successfully. Staff must change password upon next login.');
+          handleShowSuccess('Password setup link has been sent to staff email.');
           loadStaff();
         }}
       />

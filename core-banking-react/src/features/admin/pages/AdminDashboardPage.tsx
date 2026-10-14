@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
               <div className="px-6 py-8 text-center text-sm text-gray-400">No announcements.</div>
             ) : (
               announcements.slice(0, 5).map((a) => (
-                <div key={a.id} className="px-6 py-3">
+                <div key={a.announcementId} className="px-6 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-medium text-gray-800 leading-snug">{a.title}</p>
                     <span
@@ -285,7 +285,7 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-gray-400">
-                    By {a.createdBy} · {new Date(a.createdAt).toLocaleDateString()}
+                    Audience: {a.audience} · {new Date(a.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               ))
