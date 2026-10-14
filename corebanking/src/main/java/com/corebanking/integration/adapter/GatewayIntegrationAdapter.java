@@ -5,10 +5,15 @@ import com.corebanking.exception.TransactionException;
 import com.corebanking.integration.port.GatewayOutboundPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -20,7 +25,11 @@ public class GatewayIntegrationAdapter implements GatewayOutboundPort {
 
     private final RestTemplate restTemplate;
     
-    private final String gatewayBaseUrl = "http://localhost:8081"; 
+    @Value("${group3.gateway.base-url:http://localhost:8081}")
+    private String gatewayBaseUrl;
+
+    @Value("${group3.gateway.internal-key:MMSPG-SEC-KEY-2026}")
+    private String internalApiKey;
 
     @Override
     public PaymentDetailsResponse fetchPaymentDetails(String paymentToken) {
@@ -61,7 +70,12 @@ public class GatewayIntegrationAdapter implements GatewayOutboundPort {
                 request.put("errorMessage", errorMessage);
             }
 
-            ResponseEntity<Void> response = restTemplate.postForEntity(url, request, Void.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Internal-Service-Key", internalApiKey);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(request, headers);
+            ResponseEntity<Void> response = restTemplate.postForEntity(url, requestEntity, Void.class);
             
             if (response.getStatusCode() != HttpStatus.OK) {
                 throw new TransactionException("Payment Authorization rejected by Gateway.");

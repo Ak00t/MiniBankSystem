@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MerchantAuthorizationEngine {
 
-    private final SecurityValidationService securityValidationService;
+    private final MerchantSecurityValidationService merchantSecurityValidationService;
     private final LedgerFacadePort ledgerFacadePort; 
     private final GatewayOutboundPort gatewayOutboundPort;
 
@@ -41,7 +41,7 @@ public class MerchantAuthorizationEngine {
             }
 
             // 1. Security: PIN Validation (Group 1's main job)
-            securityValidationService.validateTransactionPin(request.getCustomerId(), request.getTransactionPin());
+            merchantSecurityValidationService.validateTransactionPin(request.getCustomerId(), request.getTransactionPin());
 
             // 2. UX Pre-Check: Read-only balance check using the REAL amount for the selected account
             ledgerFacadePort.validateSufficientFundsAndLimits(request.getCustomerId(), request.getAccountId(), realAmount);

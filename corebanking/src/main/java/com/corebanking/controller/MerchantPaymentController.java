@@ -15,7 +15,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/customer/merchant-payment")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:5173")
 public class MerchantPaymentController {
 
     private final MerchantAuthorizationEngine authorizationEngine;
