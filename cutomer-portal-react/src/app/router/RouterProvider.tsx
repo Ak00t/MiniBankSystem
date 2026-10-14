@@ -34,6 +34,7 @@ import MainLayout from "../../components/layout/MainLayout";
 import MyAccountsPage from "../../features/customer-account/accounts/MyaccountPage";
 import ProfilePage from "../../features/customer-account/profile/ProfilePage";
 import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
+import SettingsPage from "../../features/customer-account/settings/pages/SettingsPage";
 
 // ======================================================
 // ROUTER
@@ -138,6 +139,11 @@ const router = createBrowserRouter([
           {
             path: "/profile",
             element: <ProfilePage />,
+          },
+
+          {
+            path: "/settings",
+            element: <SettingsPage />,
           },
 
           //pin reset pages

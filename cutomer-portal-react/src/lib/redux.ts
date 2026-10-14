@@ -5,18 +5,18 @@ import {
 } from "react-redux";
 
 import profileReducer from "../features/customer-account/profile/ProfileSlice";
+import settingsReducer from "../features/customer-account/settings/store/SettingsSlice";
 
 export const store = configureStore({
   reducer: {
     profile: profileReducer,
+    settings: settingsReducer,
   },
 });
 
-export type RootState =
-  ReturnType<typeof store.getState>;
+export type RootState = ReturnType<typeof store.getState>;
 
-export type AppDispatch =
-  typeof store.dispatch;
+export type AppDispatch = typeof store.dispatch;
 
 export const useAppDispatch =
   useDispatch.withTypes<AppDispatch>();
