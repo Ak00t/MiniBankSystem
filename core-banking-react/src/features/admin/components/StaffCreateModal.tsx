@@ -13,9 +13,9 @@ interface StaffCreateModalProps {
 }
 
 const AVAILABLE_ROLES = [
-  { id: 1, name: 'ADMIN', description: 'Full system administration and oversight' },
-  { id: 2, name: 'TELLER', description: 'Customer service, deposits, and withdrawals' },
-  { id: 3, name: 'AUDITOR', description: 'Compliance, reporting, and audit log inspection' },
+  { id: 1, name: 'ADMIN', description: 'Full system administration, security and rules oversight' },
+  { id: 2, name: 'TELLER', description: 'Customer onboarding, accounts management, and transfers' },
+  { id: 3, name: 'AUDITOR', description: 'Read-only compliance, reporting, and audit log inspection' },
 ];
 
 export default function StaffCreateModal({
@@ -29,7 +29,6 @@ export default function StaffCreateModal({
     fullName: '',
     email: '',
     phone: '',
-    password: '',
     roleId: 2, // Default: TELLER
   });
 
@@ -44,7 +43,6 @@ export default function StaffCreateModal({
       fullName: '',
       email: '',
       phone: '',
-      password: '',
       roleId: 2,
     });
     setErrors({});
@@ -67,11 +65,6 @@ export default function StaffCreateModal({
       errs.email = 'Please enter a valid email address.';
     }
     if (!formData.phone.trim()) errs.phone = 'Phone number is required.';
-    if (!formData.password) {
-      errs.password = 'Initial password is required.';
-    } else if (formData.password.length < 6) {
-      errs.password = 'Password must be at least 6 characters.';
-    }
     if (!formData.roleId) errs.roleId = 'Role selection is required.';
 
     setErrors(errs);
@@ -92,7 +85,6 @@ export default function StaffCreateModal({
         fullName: formData.fullName.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
-        password: formData.password,
         roleId: Number(formData.roleId),
       });
 
@@ -103,10 +95,10 @@ export default function StaffCreateModal({
       const error = err as AxiosError<{ message?: string }>;
       if (error.response?.data?.message) {
         setApiError(error.response.data.message);
-      } else if (error.response?.status === 403) {
-        setApiError('Access denied. Administrator privileges required.');
+      } else if (error.response?.status === 409) {
+        setApiError('A staff member with this username, staff number, or email already exists.');
       } else {
-        setApiError('Failed to create staff account. Please check the inputs.');
+        setApiError('Failed to create staff account. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -117,7 +109,7 @@ export default function StaffCreateModal({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Create New Staff Account"
+      title="Create New Staff Member"
       size="lg"
       footer={
         <>
@@ -144,18 +136,23 @@ export default function StaffCreateModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {apiError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 flex items-start gap-2">
-            <svg className="h-5 w-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            <span>{apiError}</span>
+          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {apiError}
           </div>
         )}
 
+        {/* Security / Password Notice */}
+        <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
+          <p className="font-semibold">Automated Credential Setup</p>
+          <p className="mt-0.5">
+            Upon creation, the Core Banking backend will generate an invitation setup link and send it to the staff member's email address. They will set their initial password securely via the setup link.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input
-            label="Staff No."
-            placeholder="e.g. STF-0010"
+            label="Staff Number / ID"
+            placeholder="e.g. STF-00124"
             value={formData.staffNo}
             onChange={(e) => {
               setFormData({ ...formData, staffNo: e.target.value });
@@ -168,7 +165,7 @@ export default function StaffCreateModal({
 
           <Input
             label="Username"
-            placeholder="e.g. jdoe"
+            placeholder="e.g. john.doe"
             value={formData.username}
             onChange={(e) => {
               setFormData({ ...formData, username: e.target.value });
@@ -197,7 +194,7 @@ export default function StaffCreateModal({
           <Input
             label="Email Address"
             type="email"
-            placeholder="johndoe@bank.com"
+            placeholder="e.g. jdoe@corebank.internal"
             value={formData.email}
             onChange={(e) => {
               setFormData({ ...formData, email: e.target.value });
@@ -211,7 +208,7 @@ export default function StaffCreateModal({
           <Input
             label="Phone Number"
             type="tel"
-            placeholder="0912345678"
+            placeholder="e.g. +1 555-0199"
             value={formData.phone}
             onChange={(e) => {
               setFormData({ ...formData, phone: e.target.value });
@@ -223,40 +220,40 @@ export default function StaffCreateModal({
           />
         </div>
 
-        <Input
-          label="Temporary Password"
-          type="password"
-          placeholder="Minimum 6 characters"
-          value={formData.password}
-          onChange={(e) => {
-            setFormData({ ...formData, password: e.target.value });
-            if (errors.password) setErrors({ ...errors, password: '' });
-          }}
-          error={errors.password}
-          showPasswordToggle
-          disabled={isLoading}
-          required
-        />
-
-        <div className="flex flex-col gap-1">
-          <label htmlFor="staff-role" className="text-sm font-medium text-gray-700">
-            Initial Role
+        {/* Role Selection */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Initial System Role <span className="text-red-500">*</span>
           </label>
-          <select
-            id="staff-role"
-            value={formData.roleId}
-            onChange={(e) => setFormData({ ...formData, roleId: Number(e.target.value) })}
-            disabled={isLoading}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {AVAILABLE_ROLES.map((role) => (
-              <option key={role.id} value={role.id}>
-                {role.name} — {role.description}
-              </option>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+            {AVAILABLE_ROLES.map((r) => (
+              <label
+                key={r.id}
+                className={[
+                  'flex flex-col rounded-lg border p-3 cursor-pointer transition-colors',
+                  formData.roleId === r.id
+                    ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500'
+                    : 'border-gray-200 hover:bg-gray-50',
+                ].join(' ')}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="roleId"
+                    value={r.id}
+                    checked={formData.roleId === r.id}
+                    onChange={() => setFormData({ ...formData, roleId: r.id })}
+                    className="text-blue-600 focus:ring-blue-500"
+                    disabled={isLoading}
+                  />
+                  <span className="text-sm font-semibold text-gray-900">{r.name}</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500 leading-normal">{r.description}</p>
+              </label>
             ))}
-          </select>
+          </div>
           {errors.roleId && (
-            <p className="text-xs text-red-600">{errors.roleId}</p>
+            <p className="text-xs text-red-500 mt-1">{errors.roleId}</p>
           )}
         </div>
       </form>

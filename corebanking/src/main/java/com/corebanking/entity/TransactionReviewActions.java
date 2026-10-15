@@ -2,55 +2,67 @@ package com.corebanking.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal;
-import java.time.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
+ * Entity tracking staff-initiated transaction review, suspicious activity flagging,
+ * and managerial overrides (release/reject).
+ */
 @Entity
 @Table(name = "transaction_review_actions")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TransactionReviewActions {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false)
-    private Long review_action_id;
+    @UuidGenerator(style = UuidGenerator.Style.TIME)
+    @Column(name = "review_id", columnDefinition = "BINARY(16)", nullable = false)
+    @JdbcTypeCode(SqlTypes.BINARY)
+    private UUID reviewId;
 
-    @Column(nullable = false)
-    private Long transaction_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "transaction_id", nullable = false,
+            foreignKey = @ForeignKey(name = "fk_review_transaction"))
+    private BankTransactions transaction;
 
-    @Column(nullable = false)
-    // Enum values: 
-    private String action;
+    @Column(name = "action", nullable = false, length = 32)
+    private String action; // FLAG, RELEASE, REJECT
 
-    @Column
-    // Enum values: NULL
-    private String risk_level;
+    @Column(name = "old_status", length = 32)
+    private String oldStatus;
 
-    @Column
-    private String old_status;
+    @Column(name = "new_status", length = 32, nullable = false)
+    private String newStatus;
 
-    @Column
-    private String new_status;
+    @Column(name = "risk_level", length = 32)
+    private String riskLevel; // LOW, MEDIUM, HIGH, CRITICAL
 
-    @Column(nullable = false)
+    @Column(name = "reason", length = 255, nullable = false)
     private String reason;
 
-    @Column
-    private String resolution_note;
+    @Column(name = "resolution_note", length = 500)
+    private String resolutionNote;
 
-    @Column(nullable = false)
-    private Long performed_by_staff_id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "performed_by_staff_id",
+            foreignKey = @ForeignKey(name = "fk_review_staff"))
+    private StaffUsers performedByStaff;
 
-    @Column(nullable = false)
-    private LocalDateTime performed_at;
+    @Column(name = "performed_at", nullable = false, updatable = false)
+    private LocalDateTime performedAt;
 
-    @Column
-    // Enum values: NULL
-    private String updated_by_type;
-
-    @Column
-    private Long updated_by_id;
-
-    @Column(nullable = false)
-    private LocalDateTime updated_at;
-
+    @PrePersist
+    protected void onCreate() {
+        if (performedAt == null) {
+            performedAt = LocalDateTime.now();
+        }
+    }
 }

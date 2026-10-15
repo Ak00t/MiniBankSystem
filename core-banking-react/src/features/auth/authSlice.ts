@@ -1,21 +1,36 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { AuthState, AuthUser } from '../../types/common.types';
-import type { LoginRequest, LoginResponse } from '../../types/api.types';
+import type { LoginRequest, LoginResponse, CoreApiResponse } from '../../types/api.types';
 import { STORAGE_KEYS } from '../../config/api.config';
 import axiosInstance from '../../lib/axios';
 import { API_ENDPOINTS } from '../../config/api.config';
 import type { AxiosError } from 'axios';
 
 // ============================================================
-// Helpers — localStorage persistence
+// Helpers — localStorage persistence & role normalization
 // ============================================================
 
+export function normalizeRoles(roles: string[] = []): string[] {
+  const normalizedSet = new Set<string>();
+  for (const r of roles) {
+    normalizedSet.add(r);
+    // If 'ROLE_ADMIN', also add 'ADMIN'. If 'ADMIN', also add 'ROLE_ADMIN'
+    if (r.startsWith('ROLE_')) {
+      normalizedSet.add(r.replace(/^ROLE_/, ''));
+    } else {
+      normalizedSet.add(`ROLE_${r}`);
+    }
+  }
+  return Array.from(normalizedSet);
+}
+
 function persistAuth(response: LoginResponse): void {
+  const normalized = normalizeRoles(response.roles);
   localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken);
   localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken);
   localStorage.setItem(STORAGE_KEYS.USERNAME, response.username);
-  localStorage.setItem(STORAGE_KEYS.ROLES, JSON.stringify(response.roles));
+  localStorage.setItem(STORAGE_KEYS.ROLES, JSON.stringify(normalized));
 }
 
 function clearPersistedAuth(): void {
@@ -39,9 +54,9 @@ function loadAuthFromStorage(): {
     return { accessToken: null, refreshToken: null, user: null };
   }
 
-  let roles: string[] = [];
+  let roles: string[];
   try {
-    roles = rolesRaw ? (JSON.parse(rolesRaw) as string[]) : [];
+    roles = rolesRaw ? normalizeRoles(JSON.parse(rolesRaw) as string[]) : [];
   } catch {
     roles = [];
   }
@@ -63,22 +78,38 @@ export const loginThunk = createAsyncThunk<
   { rejectValue: string }
 >('auth/login', async (credentials, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.post<LoginResponse>(
+    const response = await axiosInstance.post<CoreApiResponse<LoginResponse> | LoginResponse>(
       API_ENDPOINTS.AUTH.LOGIN,
       credentials,
     );
-    return response.data;
+
+    // Backend Spring Boot wraps payload in CoreApiResponse<CoreLoginResponse>:
+    // { success: true, message: "Login successful", data: { accessToken, ... } }
+    const rawData = response.data as unknown as Record<string, unknown>;
+    const payload = (
+      rawData?.data && typeof rawData.data === 'object' && 'accessToken' in (rawData.data as Record<string, unknown>)
+        ? rawData.data
+        : rawData
+    ) as LoginResponse;
+
+    if (!payload?.accessToken) {
+      return rejectWithValue('Invalid authentication response from server.');
+    }
+
+    return payload;
   } catch (err) {
     const error = err as AxiosError<{ message?: string }>;
     if (error.response?.status === 401 || error.response?.status === 403) {
-      return rejectWithValue('Invalid username or password.');
+      return rejectWithValue(
+        error.response?.data?.message || 'Invalid username or password.',
+      );
     }
     if (error.response?.data?.message) {
       return rejectWithValue(error.response.data.message);
     }
     if (error.code === 'ECONNABORTED' || !error.response) {
       return rejectWithValue(
-        'Cannot connect to server. Please check your connection.',
+        'Cannot connect to server. Please verify the backend is running on port 8080.',
       );
     }
     return rejectWithValue('Login failed. Please try again.');
@@ -92,10 +123,8 @@ export const logoutThunk = createAsyncThunk<
 >('auth/logout', async (_, { rejectWithValue }) => {
   const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
   try {
-    // Call backend logout API — requires Authorization header (auto-attached) + refreshToken body
     await axiosInstance.post(API_ENDPOINTS.AUTH.LOGOUT, { refreshToken });
   } catch (err) {
-    // Even if the backend call fails, we still clear the local auth state
     const error = err as AxiosError;
     if (error.response?.status !== 401) {
       return rejectWithValue('Logout request failed, but session has been cleared locally.');
@@ -129,7 +158,6 @@ const authSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
-    // Direct logout without API call (e.g., token expiry)
     forceLogout(state) {
       state.user = null;
       state.accessToken = null;
@@ -156,14 +184,15 @@ const authSlice = createSlice({
     });
     builder.addCase(loginThunk.fulfilled, (state, action) => {
       const data = action.payload;
+      const normalizedRoles = normalizeRoles(data.roles);
       state.isLoading = false;
       state.isAuthenticated = true;
       state.accessToken = data.accessToken;
       state.refreshToken = data.refreshToken;
       state.user = {
         username: data.username,
-        roles: data.roles,
-        permissions: data.permissions,
+        roles: normalizedRoles,
+        permissions: data.permissions ?? [],
       };
       state.error = null;
       persistAuth(data);
@@ -191,7 +220,6 @@ const authSlice = createSlice({
       clearPersistedAuth();
     });
     builder.addCase(logoutThunk.rejected, (state) => {
-      // Clear anyway even if backend call failed
       state.user = null;
       state.accessToken = null;
       state.refreshToken = null;

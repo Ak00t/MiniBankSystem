@@ -55,7 +55,7 @@ function StatCard({ title, value, icon, color, subtitle, onClick }: StatCardProp
 // ============================================================
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth();
+  const { user, isAdmin, isAuditor } = useAuth();
   const navigate = useNavigate();
 
   const [staff, setStaff] = useState<StaffResponse[]>([]);
@@ -188,6 +188,22 @@ export default function AdminDashboardPage() {
             </svg>
           }
         />
+
+        {/* Reporting (Admin and Auditor only; hidden from Teller) */}
+        {(isAdmin || isAuditor) && (
+          <StatCard
+            title="Reporting & Analytics"
+            value="Reports"
+            subtitle="Ledger, accounts & audit logs"
+            color="bg-emerald-100 text-emerald-700"
+            onClick={() => navigate('/admin/reporting')}
+            icon={
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+              </svg>
+            }
+          />
+        )}
       </div>
 
       {/* Two column panels */}
@@ -270,7 +286,7 @@ export default function AdminDashboardPage() {
               <div className="px-6 py-8 text-center text-sm text-gray-400">No announcements.</div>
             ) : (
               announcements.slice(0, 5).map((a) => (
-                <div key={a.id} className="px-6 py-3">
+                <div key={a.announcementId} className="px-6 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-medium text-gray-800 leading-snug">{a.title}</p>
                     <span
@@ -285,7 +301,7 @@ export default function AdminDashboardPage() {
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-gray-400">
-                    By {a.createdBy} · {new Date(a.createdAt).toLocaleDateString()}
+                    Audience: {a.audience} · {new Date(a.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               ))
