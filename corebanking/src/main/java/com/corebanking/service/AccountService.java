@@ -1,5 +1,6 @@
 package com.corebanking.service;
 
+import com.corebanking.dto.AccessibleAccountDTO;
 import com.corebanking.dto.AccountCreateDTO;
 import com.corebanking.dto.AccountResponseDTO;
 import com.corebanking.dto.AccountStatusUpdateDTO;
@@ -36,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -429,5 +431,57 @@ public class AccountService {
         System.out.println("✅ Successfully deposited " + dto.getAmount() + " MMK into Account: " + savedAccount.getAccountNumber());
 
         return mapToResponseDTO(savedAccount);
+    }
+    
+    /**
+     * Group 2 Logic:
+     * Customer တစ်ဦးတည်း၏ Login ဖြင့် Personal Account ရော Company Account ပါ
+     * တစ်ခါတည်း ကြည့်ရှုခွင့်ပြုသော Method
+     */
+    @Transactional(readOnly = true)
+    public List<AccessibleAccountDTO> getAccessibleAccountsForCustomer(String customerCode) {
+        Customers customer = customerRepository.findByCustomerCode(customerCode)
+                .orElseThrow(() -> new RuntimeException("Customer not found: " + customerCode));
+
+        List<AccessibleAccountDTO> accountList = new ArrayList<>();
+
+        // ၁။ မိမိ၏ ကိုယ်ပိုင် Personal Accounts များကို ထည့်သွင်းခြင်း
+        List<Accounts> personalAccounts = accountRepository.findByCustomer(customer);
+        for (Accounts acc : personalAccounts) {
+            accountList.add(AccessibleAccountDTO.builder()
+                    .accountNumber(acc.getAccountNumber())
+                    .accountType(acc.getAccountType().name())
+                    .accountCategory("PERSONAL")
+                    .companyName(null)
+                    .role("OWNER")
+                    .currentBalance(acc.getCurrentBalance())
+                    .availableBalance(acc.getAvailableBalance())
+                    .currency(acc.getCurrency())
+                    .canInitiate(true)
+                    .canApprove(true)
+                    .build());
+        }
+
+        // ၂။ မိမိအား Signatory (CEO/Accountant) အဖြစ် ချိတ်ဆက်ထားသော Company Accounts များကို ထည့်သွင်းခြင်း
+        List<AccountSignatories> corporateSignatories = 
+                accountSignatoriesRepository.findByCustomerAndStatus(customer, SignatoryStatus.ACTIVE);
+
+        for (AccountSignatories sig : corporateSignatories) {
+            Accounts compAcc = sig.getAccount();
+            accountList.add(AccessibleAccountDTO.builder()
+                    .accountNumber(compAcc.getAccountNumber())
+                    .accountType(compAcc.getAccountType().name())
+                    .accountCategory("CORPORATE")
+                    .companyName(compAcc.getCustomer().getFullName()) // ကုမ္ပဏီ အမည်
+                    .role(sig.getSignatoryRole().name())
+                    .currentBalance(compAcc.getCurrentBalance())
+                    .availableBalance(compAcc.getAvailableBalance())
+                    .currency(compAcc.getCurrency())
+                    .canInitiate(sig.isCanInitiate()) // Accountant ဆိုလျှင် true
+                    .canApprove(sig.isCanApprove())   // CEO ဆိုလျှင် true
+                    .build());
+        }
+
+        return accountList;
     }
 }

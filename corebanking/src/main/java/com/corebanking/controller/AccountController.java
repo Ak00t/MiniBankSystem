@@ -1,5 +1,6 @@
 package com.corebanking.controller;
 
+import com.corebanking.dto.AccessibleAccountDTO;
 import com.corebanking.dto.AccountCreateDTO;
 import com.corebanking.dto.AccountResponseDTO;
 import com.corebanking.dto.AccountStatusUpdateDTO;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/accounts")
+@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class AccountController {
 
@@ -72,8 +74,8 @@ public class AccountController {
         return ResponseEntity.ok(accounts);
     }
 
-    // ၆။ Account Status အခြေအနေ ပြင်ဆင်ခြင်း (PATCH Request)
-    @PatchMapping("/{accountNumber}/status")
+    // ၆။ Account Status အခြေအနေ ပြင်ဆင်ခြင်း (PATCH / PUT Request)
+    @RequestMapping(value = "/{accountNumber}/status", method = {RequestMethod.PATCH, RequestMethod.PUT})
     public ResponseEntity<AccountResponseDTO> updateAccountStatus(
             @PathVariable String accountNumber,
             @RequestBody AccountStatusUpdateDTO dto) {
@@ -93,5 +95,12 @@ public class AccountController {
     public ResponseEntity<AccountResponseDTO> depositFunds(@Valid @RequestBody DepositRequestDTO dto) {
         AccountResponseDTO response = accountService.depositFunds(dto);
         return ResponseEntity.ok(response);
+    }
+    @GetMapping("/my-accounts/{customerCode}")
+    public ResponseEntity<List<AccessibleAccountDTO>> getMyAccounts(
+            @PathVariable String customerCode) {
+
+        List<AccessibleAccountDTO> accounts = accountService.getAccessibleAccountsForCustomer(customerCode);
+        return ResponseEntity.ok(accounts);
     }
 }
