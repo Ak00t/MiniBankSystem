@@ -34,10 +34,12 @@ import DashboardPage from "../../features/customer-account/dashboard/DashboardPa
 import MainLayout from "../../components/layout/MainLayout";
 import MyAccountsPage from "../../features/customer-account/accounts/MyaccountPage";
 import ProfilePage from "../../features/customer-account/profile/ProfilePage";
+import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
 import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
 import SettingsPage from "../../features/customer-account/settings/pages/SettingsPage";
 import AnnouncementsPage from "../../features/customer-account/announcements/AnnouncementsPage";
 
+import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
 
 // ======================================================
 // ROUTER
@@ -169,6 +171,16 @@ const router = createBrowserRouter([
           {
             path: "/pin-reset/new-pin",
             element: <PinResetNewPinPage />,
+          },
+
+          {
+            path: "/transfer",
+            element: <P2PTransferForm />,
+          },
+
+          {
+            path: "/beneficiaries",
+            element: <BeneficiariesPage />,
           },
 
         ],
