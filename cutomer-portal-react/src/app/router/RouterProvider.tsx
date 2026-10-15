@@ -38,6 +38,9 @@ import { MerchantPaymentAuthorize } from "../../features/merchant-payment/pages/
 import ProfilePage from "../../features/customer-account/profile/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
 import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
+import SettingsPage from "../../features/customer-account/settings/pages/SettingsPage";
+import AnnouncementsPage from "../../features/customer-account/announcements/AnnouncementsPage";
+
 import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
 
 // ======================================================
@@ -120,13 +123,13 @@ const router = createBrowserRouter([
 
     children: [
 
-      
-       {
-          element: (
-            <SessionTimeoutProvider>
-              <MainLayout />
-            </SessionTimeoutProvider>
-          ),
+
+      {
+        element: (
+          <SessionTimeoutProvider>
+            <MainLayout />
+          </SessionTimeoutProvider>
+        ),
 
         children: [
 
@@ -158,6 +161,16 @@ const router = createBrowserRouter([
           {
             path: "/profile",
             element: <ProfilePage />,
+          },
+
+          {
+            path: "/settings",
+            element: <SettingsPage />,
+          },
+
+          {
+            path: "/announcements",
+            element: <AnnouncementsPage />,
           },
 
           //pin reset pages
