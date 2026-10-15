@@ -8,6 +8,7 @@ import MyAccountsPage from "./features/customer-account/accounts/MyaccountPage";
 import ProfilePage from "./features/customer-account/profile/ProfilePage";
 import MainLayout from "./components/layout/MainLayout";
 import AccountDetailPage from "./features/customer-account/accounts/AccountDetailPage";
+import AnnouncementsPage from "./features/customer-account/announcements/AnnouncementsPage";
 
 function App() {
   return (
@@ -44,6 +45,11 @@ function App() {
           path="/profile"
           element={<ProfilePage />}
         />
+
+        <Route
+  path="/announcements"
+  element={<AnnouncementsPage />}
+/>
 
         {/* Account Details */}
         {/* <Route

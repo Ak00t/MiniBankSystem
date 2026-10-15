@@ -36,6 +36,8 @@ import MyAccountsPage from "../../features/customer-account/accounts/MyaccountPa
 import ProfilePage from "../../features/customer-account/profile/ProfilePage";
 import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
 import SettingsPage from "../../features/customer-account/settings/pages/SettingsPage";
+import AnnouncementsPage from "../../features/customer-account/announcements/AnnouncementsPage";
+
 
 // ======================================================
 // ROUTER
@@ -112,13 +114,13 @@ const router = createBrowserRouter([
 
     children: [
 
-      
-       {
-          element: (
-            <SessionTimeoutProvider>
-              <MainLayout />
-            </SessionTimeoutProvider>
-          ),
+
+      {
+        element: (
+          <SessionTimeoutProvider>
+            <MainLayout />
+          </SessionTimeoutProvider>
+        ),
 
         children: [
 
@@ -150,6 +152,11 @@ const router = createBrowserRouter([
           {
             path: "/settings",
             element: <SettingsPage />,
+          },
+
+          {
+            path: "/announcements",
+            element: <AnnouncementsPage />,
           },
 
           //pin reset pages
