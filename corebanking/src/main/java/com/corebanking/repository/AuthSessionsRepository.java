@@ -19,14 +19,12 @@ public interface AuthSessionsRepository
             String sessionUuid
     );
 
-   
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<AuthSession> findByRefreshTokenHash(
             String refreshTokenHash
     );
     
-    
     @Modifying
-    @Query("UPDATE AuthSessions a SET a.revokedAt = CURRENT_TIMESTAMP, a.revokeReason = 'Security Breach: Token Reuse Detected' WHERE a.staff.staffId = :staffId AND a.revokedAt IS NULL")
+    @Query("UPDATE AuthSession a SET a.revokedAt = CURRENT_TIMESTAMP, a.revokeReason = 'Security Breach: Token Reuse Detected' WHERE a.staff.staffId = :staffId AND a.revokedAt IS NULL")
     void revokeAllActiveSessionsByStaffId(@Param("staffId") UUID staffId);
 }

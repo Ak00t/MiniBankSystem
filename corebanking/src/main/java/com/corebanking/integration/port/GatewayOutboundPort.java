@@ -5,5 +5,5 @@ import java.util.UUID;
 
 public interface GatewayOutboundPort {
     PaymentDetailsResponse fetchPaymentDetails(String paymentToken);
-    void dispatchAuthorizationOutcome(String paymentToken, String transactionStatus, String sourceAccountNumber, String errorCode, String errorMessage);
+    String dispatchAuthorizationOutcome(String paymentToken, String transactionStatus, String sourceAccountNumber, String errorCode, String errorMessage);
 }

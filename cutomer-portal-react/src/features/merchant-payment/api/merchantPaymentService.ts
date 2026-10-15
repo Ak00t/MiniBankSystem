@@ -2,7 +2,7 @@ import api from '../../../config/api';
 import type{ PaymentDetails, CustomerAccount, PaymentReceipt, AuthorizePaymentPayload } from '../types/merchantPayment';
 
 export const fetchPaymentDetails = async (token: string): Promise<PaymentDetails> => {
-  const response = await api.get(`/merchant-payment/request/${token}`);
+  const response = await api.get(`/merchant-payment/request/${encodeURIComponent(token)}`);
   return response.data;
 };
 

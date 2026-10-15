@@ -1,5 +1,6 @@
 package com.corebanking.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,11 +14,14 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PaymentDetailsResponse {
+
+    @JsonAlias({"businessName", "merchant_name"})
     private String merchantName;
+
     private String merchantAccountNumber;
-    private String orderId; 
+    private String orderId;
     private String description;
     private BigDecimal amount;
     private String currency;
-    private String status; 
+    private String status;
 }

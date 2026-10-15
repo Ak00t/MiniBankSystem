@@ -49,7 +49,8 @@ export const MerchantPaymentAuthorize: React.FC = () => {
       }
 
       if (!hasTokens()) {
-        window.location.href = `/login?redirect=/checkout?token=${token}`;
+        const currentPath = encodeURIComponent(`/checkout?token=${token}`);
+        window.location.href = `/login?redirect=${currentPath}`;
         return; 
       }
 

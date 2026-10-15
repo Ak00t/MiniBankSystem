@@ -16,6 +16,8 @@ export const PinInput = <T extends PinFormValues>({ register, errors, disabled }
       <label className="block text-sm font-semibold text-gray-700 mb-2">Transaction PIN</label>
       <input 
         type="password" 
+        inputMode="numeric"
+        autoComplete="one-time-code"
         maxLength={6}
         disabled={disabled}
         {...register("transactionPin" as Path<T>)}

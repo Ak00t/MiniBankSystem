@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * MerchantSecurityValidationService
@@ -26,41 +28,64 @@ public class MerchantSecurityValidationService {
     private final CustomerCredentialsRepository credentialsRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW, noRollbackFor = {SecurityException.class, CusAccountLockedException.class, InvalidPinException.class})
+    private final ConcurrentHashMap<UUID, ReentrantLock> customerPinLocks = new ConcurrentHashMap<>();
+
+    @Transactional(
+            propagation = Propagation.REQUIRES_NEW,
+            noRollbackFor = {SecurityException.class, CusAccountLockedException.class, InvalidPinException.class}
+    )
     public void validateTransactionPin(UUID customerId, String rawPin) {
-        CustomerCredentials credentials = credentialsRepository.findById(customerId)
-                .orElseThrow(() -> new SecurityException("Customer credentials not found"));
+        ReentrantLock lock = customerPinLocks.computeIfAbsent(customerId, k -> new ReentrantLock());
+        lock.lock();
+        try {
+            CustomerCredentials credentials = credentialsRepository.findById(customerId)
+                    .orElseThrow(() -> new SecurityException("Customer credentials not found"));
 
-        if (credentials.getPinLockedUntil() != null && credentials.getPinLockedUntil().isAfter(LocalDateTime.now())) {
-            log.warn("PIN validation blocked: Customer {} is locked until {}", customerId, credentials.getPinLockedUntil());
-            throw new CusAccountLockedException("PIN locked due to excessive failed attempts. Please try again after 5 minutes.");
+            LocalDateTime now = LocalDateTime.now();
+
+            if (credentials.getPinLockedUntil() != null) {
+                if (credentials.getPinLockedUntil().isAfter(now)) {
+                    log.warn("PIN validation blocked: Customer {} is locked until {}", customerId, credentials.getPinLockedUntil());
+                    throw new CusAccountLockedException("PIN locked due to excessive failed attempts. Please try again after 5 minutes.");
+                } else {
+                    // 5-minute lock has expired -> reset counter back to 0 so customer gets 3 fresh attempts
+                    credentials.setFailedPinAttemptCount(0);
+                    credentials.setPinLockedUntil(null);
+                }
+            }
+
+            if (credentials.getTransactionPinHash() == null || !passwordEncoder.matches(rawPin, credentials.getTransactionPinHash())) {
+                log.warn("Invalid transaction PIN for customer {}", customerId);
+                recordFailedPinAttemptAndCheckLock(credentials, now);
+            }
+
+            // PIN is correct, reset failure counter
+            resetFailedPinCount(credentials);
+        } finally {
+            lock.unlock();
         }
-
-        if (credentials.getTransactionPinHash() == null || !passwordEncoder.matches(rawPin, credentials.getTransactionPinHash())) {
-            log.warn("Invalid transaction PIN for customer {}", customerId);
-            recordFailedPinAttemptAndCheckLock(credentials);
-            throw new InvalidPinException("Invalid Transaction PIN. Please try again.");
-        }
-
-        // PIN is correct, reset failure counter
-        resetFailedPinCount(credentials);
     }
 
-    private void recordFailedPinAttemptAndCheckLock(CustomerCredentials credentials) {
+    private void recordFailedPinAttemptAndCheckLock(CustomerCredentials credentials, LocalDateTime now) {
         int attempts = credentials.getFailedPinAttemptCount() + 1;
         credentials.setFailedPinAttemptCount(attempts);
+
         if (attempts >= 3) {
-            credentials.setPinLockedUntil(LocalDateTime.now().plusMinutes(5));
+            credentials.setPinLockedUntil(now.plusMinutes(5));
+            credentialsRepository.saveAndFlush(credentials);
             log.warn("Customer {} exceeded max PIN attempts. Locked until {}", credentials.getCustomerId(), credentials.getPinLockedUntil());
+            throw new CusAccountLockedException("PIN locked due to 3 failed attempts. Please try again after 5 minutes.");
         }
-        credentialsRepository.save(credentials);
+
+        credentialsRepository.saveAndFlush(credentials);
+        throw new InvalidPinException("Invalid Transaction PIN. Please try again. (" + (3 - attempts) + " attempt(s) remaining)");
     }
 
     private void resetFailedPinCount(CustomerCredentials credentials) {
         if (credentials.getFailedPinAttemptCount() > 0 || credentials.getPinLockedUntil() != null) {
             credentials.setFailedPinAttemptCount(0);
             credentials.setPinLockedUntil(null);
-            credentialsRepository.save(credentials);
+            credentialsRepository.saveAndFlush(credentials);
         }
     }
 }
