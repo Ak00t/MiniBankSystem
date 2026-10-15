@@ -10,7 +10,8 @@ import com.corebanking.repository.StaffUsersRepository;
 import com.corebanking.security.audit.dto.AuditSearchCriteria;
 import com.corebanking.security.audit.specification.AuditSearchSpecification;
 import com.corebanking.security.audit.util.AuditContextUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
+//import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -40,7 +41,8 @@ public class AuditTrailServiceImpl implements AuditTrailService {
     private final AuditLogsRepository auditLogsRepository;
     private final StaffUsersRepository staffUsersRepository;
     private final CustomerRepository customerRepository;
-    private final ObjectMapper objectMapper;
+    //private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     /**
      * {@inheritDoc}
