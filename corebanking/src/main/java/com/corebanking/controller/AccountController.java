@@ -5,7 +5,6 @@ import com.corebanking.dto.AccountCreateDTO;
 import com.corebanking.dto.AccountResponseDTO;
 import com.corebanking.dto.AccountStatusUpdateDTO;
 import com.corebanking.dto.CorporateAccountCreateDTO;
-import com.corebanking.dto.DepositRequestDTO;
 import com.corebanking.dto.JointHolderAddDTO;
 import com.corebanking.service.AccountService;
 

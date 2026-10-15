@@ -1,90 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, User, LogOut, Clock } from 'lucide-react';
-import { Breadcrumbs } from '../common/Breadcrumbs';
-import { useAuth } from '../../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 
 interface NavbarProps {
-  onToggleSidebar: () => void;
+  onToggleSidebar?: () => void;
+  pageTitle?: string;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
+export default function Navbar({ onToggleSidebar, pageTitle = 'Dashboard' }: NavbarProps) {
   const { user, logout } = useAuth();
-  const [time, setTime] = useState(new Date());
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-8 bg-white border-b border-slate-200/90 shadow-xs">
-      {/* Left section: Hamburger & Breadcrumbs */}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          className="p-2 text-slate-600 rounded-lg hover:bg-slate-100 lg:hidden"
-          aria-label="Toggle menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-
-        <div className="hidden sm:block">
-          <Breadcrumbs />
-        </div>
+    <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
+      {/* Left — hamburger + page title */}
+      <div className="flex items-center gap-4">
+        {onToggleSidebar && (
+          <button
+            onClick={onToggleSidebar}
+            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Toggle sidebar"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
+        <h1 className="text-lg font-semibold text-gray-800">{pageTitle}</h1>
       </div>
 
-      {/* Right section: System status, Time, Profile, Logout */}
-      <div className="flex items-center gap-3 md:gap-4">
-        {/* Backend Status indicator */}
-        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>API 8080 Connected</span>
+      {/* Right — user info + logout */}
+      <div className="flex items-center gap-4">
+        {/* Role badges */}
+        <div className="hidden sm:flex items-center gap-2">
+          {user?.roles?.map((role) => (
+            <span
+              key={role}
+              className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700"
+            >
+              {role}
+            </span>
+          ))}
         </div>
 
-        {/* Live Clock */}
-        <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 font-mono">
-          <Clock className="w-3.5 h-3.5 text-slate-400" />
-          {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-        </div>
-
-        {/* Quick action buttons */}
-        <Link
-          to="/customers/new"
-          className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors"
-        >
-          + New Customer
-        </Link>
-        <Link
-          to="/accounts/new"
-          className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors"
-        >
-          + Open Account
-        </Link>
-
-        {/* User Chip */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-          <div className="w-8 h-8 rounded-full bg-[#0B192C] text-white flex items-center justify-center text-xs font-bold">
-            <User className="w-4 h-4" />
+        {/* Username */}
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+            {user?.username?.charAt(0).toUpperCase() ?? 'A'}
           </div>
-          <div className="hidden md:block text-left">
-            <div className="text-xs font-bold text-slate-800 leading-tight">
-              {user?.fullName || user?.username || 'Bank Officer'}
-            </div>
-            <div className="text-[10px] text-slate-500 font-medium">Core Teller</div>
-          </div>
-
-          <button
-            type="button"
-            onClick={logout}
-            title="Sign Out"
-            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ml-1"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <span className="hidden md:block text-sm font-medium text-gray-700">
+            {user?.username}
+          </span>
         </div>
+
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          className="hidden sm:flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:border-red-300 hover:bg-red-50 hover:text-red-600 transition-colors"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Logout
+        </button>
       </div>
     </header>
   );
-};
+}

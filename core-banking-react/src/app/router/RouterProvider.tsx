@@ -1,94 +1,105 @@
-import {
-  createBrowserRouter,
-  RouterProvider as ReactRouterProvider,
-  Navigate,
-} from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from '../../features/auth/pages/LoginPage';
+import StaffPasswordSetupPage from '../../features/auth/pages/StaffPasswordSetupPage';
+import AdminDashboardPage from '../../features/admin/pages/AdminDashboardPage';
+import StaffListPage from '../../features/admin/pages/StaffListPage';
+import SystemRulesPage from '../../features/admin/pages/SystemRulesPage';
+import AnnouncementsPage from '../../features/admin/pages/AnnouncementsPage';
+import CustomersPage from '../../features/admin/pages/CustomersPage';
+import AccountsPage from '../../features/operations/pages/AccountsPage';
+import TransfersPage from '../../features/operations/pages/TransfersPage';
+import UnauthorizedPage from '../../components/common/UnauthorizedPage';
+import ProtectedRoute from './ProtectedRoute';
 
-import AppLayout from '../../components/layout/AppLayout';
-import DashboardView from '../../pages/DashboardView';
-import CustomerListView from '../../pages/CustomerListView';
-import CustomerRegistrationView from '../../pages/CustomerRegistrationView';
-import CustomerEditView from '../../pages/CustomerEditView';
-import RetailAccountCreateView from '../../pages/RetailAccountCreateView';
-import CorporateAccountCreateView from '../../pages/CorporateAccountCreateView';
-import DepositFundsView from '../../pages/DepositFundsView';
-import AccountStatusView from '../../pages/AccountStatusView';
-import AccountListView from '../../pages/AccountListView';
-import LoginView from '../../pages/LoginView';
+export default function RouterProvider() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/setup-password" element={<StaffPasswordSetupPage />} />
 
-// Existing transaction report component preserved
-import { TransactionReport } from '../../features/auth/reports/TransactionReport';
+        <Route path="/set-password" element={<StaffPasswordSetupPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-const router = createBrowserRouter([
-  {
-    path: '/login',
-    element: <LoginView />,
-  },
-  {
-    path: '/',
-    element: <AppLayout />,
-    children: [
-      {
-        index: true,
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: 'dashboard',
-        element: <DashboardView />,
-      },
-      // Customer Management
-      {
-        path: 'customers',
-        element: <CustomerListView />,
-      },
-      {
-        path: 'customers/new',
-        element: <CustomerRegistrationView />,
-      },
-      {
-        path: 'customers/:customerCode/edit',
-        element: <CustomerEditView />,
-      },
-      // Account Management
-      {
-        path: 'accounts',
-        element: <AccountListView />,
-      },
-      {
-        path: 'accounts/new',
-        element: <RetailAccountCreateView />,
-      },
-      {
-        path: 'accounts/corporate/new',
-        element: <CorporateAccountCreateView />,
-      },
-      {
-        path: 'accounts/deposit',
-        element: <DepositFundsView />,
-      },
-      {
-        path: 'accounts/status',
-        element: <AccountStatusView />,
-      },
-      // Reports
-      {
-        path: 'reports/transactions',
-        element: <TransactionReport />,
-      },
-      {
-        path: '*',
-        element: <Navigate to="/dashboard" replace />,
-      },
-    ],
-  },
-  {
-    path: '*',
-    element: <Navigate to="/dashboard" replace />,
-  },
-]);
+        {/* Protected Dashboard (available to authenticated staff) */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute>
+              <AdminDashboardPage />
+            </ProtectedRoute>
+          }
+        />
 
-export function RouterProvider() {
-  return <ReactRouterProvider router={router} />;
+        {/* Admin / Auditor: Staff Management */}
+        <Route
+          path="/admin/staff"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <StaffListPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin: System Rules */}
+        <Route
+          path="/admin/system-rules"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <SystemRulesPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Announcements (Accessible to authenticated staff) */}
+        <Route
+          path="/admin/announcements"
+          element={
+            <ProtectedRoute>
+              <AnnouncementsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Customers (Accessible to staff) */}
+        <Route
+          path="/admin/customers"
+          element={
+            <ProtectedRoute>
+              <CustomersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Bank Accounts */}
+        <Route
+          path="/admin/accounts"
+          element={
+            <ProtectedRoute>
+              <AccountsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Transfers (Teller or Admin) */}
+        <Route
+          path="/admin/transfers"
+          element={
+            <ProtectedRoute>
+              <TransfersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* 404 fallback */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default RouterProvider;

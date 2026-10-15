@@ -1,16 +1,10 @@
-import React from 'react';
-import { AuthProvider } from '../context/AuthContext';
-import { ToastProvider } from '../context/ToastContext';
-import { RouterProvider } from './router/RouterProvider';
+import ReduxProvider from './providers/ReduxProvider';
+import RouterProvider from './router/RouterProvider';
 
-export const App: React.FC = () => {
+export default function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <RouterProvider />
-      </ToastProvider>
-    </AuthProvider>
+    <ReduxProvider>
+      <RouterProvider />
+    </ReduxProvider>
   );
-};
-
-export default App;
+}
