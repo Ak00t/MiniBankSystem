@@ -159,13 +159,16 @@ export const announcementsApi = {
   update: (id: number, data: AnnouncementUpdateRequest) =>
     axiosInstance.put<AnnouncementResponse>(API_ENDPOINTS.ADMIN.ANNOUNCEMENT_BY_ID(id), data),
 
-  delete: (id: number) =>
-    axiosInstance.delete<string>(API_ENDPOINTS.ADMIN.ANNOUNCEMENT_BY_ID(id)),
+  // ပြင်ဆင်ထားသော အပိုင်း (patch အစား delete ကို အသုံးပြုထားပါသည်)
+  softDelete: (id: number) =>
+    axiosInstance.delete(API_ENDPOINTS.ADMIN.ANNOUNCEMENT_SOFT_DELETE(id)),
+
+  bulkSoftDeleteExpired: () =>
+    axiosInstance.delete(API_ENDPOINTS.ADMIN.ANNOUNCEMENT_BULK_SOFT_DELETE_EXPIRED),
 
   deactivate: (id: number) =>
     axiosInstance.patch<AnnouncementResponse>(API_ENDPOINTS.ADMIN.ANNOUNCEMENT_DEACTIVATE(id)),
 };
-
 // ============================================================
 // Customers API
 // ============================================================

@@ -160,6 +160,7 @@ export interface AnnouncementResponse {
   message: string;
   audience: AnnouncementAudience;
   isActive: boolean;
+  isDeleted: boolean;
   startsAt: string | null;
   endsAt: string | null;
   createdByStaffId: string | null;
