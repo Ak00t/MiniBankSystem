@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Bell,
   CheckCheck,
@@ -17,6 +17,7 @@ import {
   markAllNotificationsAsRead,
 } from "../services/notificationService";
 import type { NotificationItem } from "../types/notificationTypes";
+import { useNotificationWebSocket } from "../hooks/useNotificationWebSocket";
 
 export const NotificationDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,6 +27,24 @@ export const NotificationDropdown: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Real-time WebSocket hook integration
+  const handleRealtimeNotification = useCallback((newNoti: NotificationItem) => {
+    // Increment unread count in real-time
+    setUnreadCount((prev) => prev + 1);
+
+    // Prepend new incoming notification directly to list
+    setNotifications((prev) => {
+      if (prev.some((item) => item.notificationId === newNoti.notificationId)) {
+        return prev;
+      }
+      return [newNoti, ...prev];
+    });
+  }, []);
+
+  const { isConnected: isWsConnected } = useNotificationWebSocket({
+    onNotificationReceived: handleRealtimeNotification,
+  });
 
   // Helper for relative time
   const formatTimeAgo = (dateStr: string) => {
@@ -235,8 +254,14 @@ export const NotificationDropdown: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/70">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-black text-slate-800 tracking-tight">
+              <h3 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-1.5">
                 Notifications
+                {isWsConnected && (
+                  <span
+                    className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"
+                    title="Real-time live WebSocket connected"
+                  />
+                )}
               </h3>
               {unreadCount > 0 && (
                 <span className="bg-blue-100 text-blue-700 text-[11px] font-bold px-2 py-0.5 rounded-full">

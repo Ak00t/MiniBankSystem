@@ -37,6 +37,7 @@ public class P2PTransferService {
     private final LedgerAccountRepository ledgerAccountRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final AsyncNotificationService asyncNotificationService;
+    private final TransferLimitService transferLimitService;
     
 
     /**
@@ -131,27 +132,8 @@ public class P2PTransferService {
         }
 
 
-        // Cumulative Daily Transfer Limit Check
-        if (sourceAccount.getDailyTransferLimit() != null && sourceAccount.getDailyTransferLimit().compareTo(BigDecimal.ZERO) > 0) {
-            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-            LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
-
-            BigDecimal todayTransferred = bankTransactionRepository.findTodayTotalTransferredAmount(
-                    sourceAccount.getAccountId(), startOfDay, endOfDay);
-
-            BigDecimal newTotalDaily = todayTransferred.add(request.getAmount());
-
-            if (newTotalDaily.compareTo(sourceAccount.getDailyTransferLimit()) > 0) {
-                BigDecimal remainingLimit = sourceAccount.getDailyTransferLimit().subtract(todayTransferred);
-                if (remainingLimit.compareTo(BigDecimal.ZERO) < 0) {
-                    remainingLimit = BigDecimal.ZERO;
-                }
-
-                throw new TransactionException(String.format(
-                        "Transfer exceeds daily limit of %s MMK. Transferred today: %s MMK. Remaining limit for today: %s MMK.",
-                        sourceAccount.getDailyTransferLimit(), todayTransferred, remainingLimit));
-            }
-        }
+        // Multi-tier Transfer Limit Validations (Bank Max, One-Time Limit, Beneficiary vs Stranger, Cumulative Daily Limit)
+        transferLimitService.validateTransferLimits(sourceAccount, destAccount, request.getAmount());
 
         // =========================================================================
         // STEP 4: ATOMIC BALANCE UPDATES
