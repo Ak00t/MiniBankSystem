@@ -18,6 +18,7 @@ import { Link, useParams } from "react-router-dom";
 import { getMyAccount } from "../api/customerAccountApi";
 import type { CustomerAccount } from "../types/accountTypes";
 import AccountStatus from "./components/AccountStatus";
+import { TransferLimitCard } from "./components/TransferLimitCard";
 
 function formatLabel(value: string): string {
   return value
@@ -511,6 +512,12 @@ export default function AccountDetailPage() {
           )}
         </dl>
       </section>
+
+      {/* Transfer Limits & Security Management */}
+      <TransferLimitCard
+        accountNumber={account.accountNumber}
+        currency={account.currency}
+      />
 
       {/* Security Note */}
       <div className="flex items-start gap-2.5 rounded-lg border border-blue-100 bg-blue-50/60 p-3">
