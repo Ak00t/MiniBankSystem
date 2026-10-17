@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import AdminLayout from '../../../components/layout/AdminLayout';
 import DataTable from '../../../components/common/DataTable';
+import Button from '../../../components/common/Button';
 import { customersApi } from '../../../services/apiClient';
-import type { CustomerResponse } from '../../../types/api.types';
+import type { CustomerResponse, CustomerDetailResponse } from '../../../types/api.types';
 import type { AxiosError } from 'axios';
+import CustomerCreateModal from '../components/CustomerCreateModal';
+import CustomerDetailModal from '../components/CustomerDetailModal';
 
 // ── Constants ────────────────────────────────────────────────────────
 const PAGE_SIZE = 10;
@@ -17,6 +20,12 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // ── Customer Detail State ─────────────────────────────────────────
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerDetailResponse | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // ── Search / filter / sort / page state ──────────────────────────
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +46,20 @@ export default function CustomersPage() {
         console.error(err);
       })
       .finally(() => setIsLoading(false));
+  };
+
+  const handleOpenDetail = async (customerCode: string) => {
+    setIsDetailModalOpen(true);
+    setIsDetailLoading(true);
+    setSelectedCustomer(null);
+    try {
+      const res = await customersApi.getByCode(customerCode);
+      setSelectedCustomer(res.data);
+    } catch (err) {
+      console.error('Failed to load customer details:', err);
+    } finally {
+      setIsDetailLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
@@ -93,6 +116,22 @@ export default function CustomersPage() {
   const columns = [
     { key: 'customerCode', header: 'Customer Code' },
     { key: 'fullName', header: 'Full Name' },
+    {
+      key: 'customerType',
+      header: 'Type',
+      render: (row: CustomerResponse) => (
+        <span
+          className={[
+            'rounded-full px-2.5 py-0.5 text-xs font-semibold',
+            row.customerType === 'COMPANY'
+              ? 'bg-purple-100 text-purple-700'
+              : 'bg-blue-50 text-blue-700',
+          ].join(' ')}
+        >
+          {row.customerType}
+        </span>
+      ),
+    },
     { key: 'email', header: 'Email' },
     { key: 'phone', header: 'Phone' },
     {
@@ -119,6 +158,23 @@ export default function CustomersPage() {
       render: (row: CustomerResponse) =>
         new Date(row.createdAt).toLocaleDateString(),
     },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row: CustomerResponse) => (
+        <button
+          onClick={() => handleOpenDetail(row.customerCode)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors"
+          title="View detailed customer information"
+        >
+          <svg className="h-3.5 w-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          Details
+        </button>
+      ),
+    },
   ];
 
   // ── Render ──────────────────────────────────────────────────────
@@ -130,15 +186,27 @@ export default function CustomersPage() {
           <h2 className="text-xl font-bold text-gray-900">Customers</h2>
           <p className="mt-0.5 text-sm text-gray-500">All registered customers.</p>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={load}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
+          <Button
+            variant="primary"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Register Customer
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -295,6 +363,24 @@ export default function CustomersPage() {
           )}
         </div>
       )}
+
+      {/* Customer Registration Modal */}
+      <CustomerCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={load}
+      />
+
+      {/* Customer Detail Modal */}
+      <CustomerDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedCustomer(null);
+        }}
+        customer={selectedCustomer}
+        isLoading={isDetailLoading}
+      />
     </AdminLayout>
   );
 }

@@ -19,8 +19,11 @@ import type {
   AnnouncementUpdateRequest,
   CustomerResponse,
   CustomerDetailResponse,
+  CustomerCreateDTO,
+  CustomerCreateResponse,
   AccountResponse,
   AccountCreateDTO,
+  CorporateAccountCreateDTO,
   AccountStatusUpdateDTO,
   P2PTransferRequestDto,
   P2PTransferResponseDto,
@@ -179,6 +182,9 @@ export const customersApi = {
 
   getByCode: (code: string) =>
     axiosInstance.get<CustomerDetailResponse>(API_ENDPOINTS.CUSTOMER_BY_CODE(code)),
+
+  create: (data: CustomerCreateDTO) =>
+    axiosInstance.post<CustomerCreateResponse>(API_ENDPOINTS.CUSTOMERS, data),
 };
 
 // ============================================================
@@ -186,8 +192,17 @@ export const customersApi = {
 // ============================================================
 
 export const accountsApi = {
+  getAll: () =>
+    axiosInstance.get<AccountResponse[]>(API_ENDPOINTS.ACCOUNTS),
+
   create: (data: AccountCreateDTO) =>
     axiosInstance.post<AccountResponse>(API_ENDPOINTS.ACCOUNTS, data),
+
+  createCorporate: (data: CorporateAccountCreateDTO) =>
+    axiosInstance.post<{ status: string; message: string; accountNumber: string }>(
+      `${API_ENDPOINTS.ACCOUNTS}/corporate`,
+      data,
+    ),
 
   getByNumber: (accountNumber: string) =>
     axiosInstance.get<AccountResponse>(API_ENDPOINTS.ACCOUNT_BY_NUMBER(accountNumber)),

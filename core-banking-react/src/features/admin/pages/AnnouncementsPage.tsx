@@ -3,6 +3,7 @@ import AdminLayout from '../../../components/layout/AdminLayout';
 import Button from '../../../components/common/Button';
 import Modal from '../../../components/common/Modal';
 import { announcementsApi } from '../../../services/apiClient';
+import { useAuth } from '../../auth/hooks/useAuth';
 import type {
   AnnouncementResponse,
   AnnouncementAudience,
@@ -58,6 +59,7 @@ function isAnnouncementActive(a: AnnouncementResponse): boolean {
 }
 
 export default function AnnouncementsPage() {
+  const { isTeller } = useAuth();
   const [announcements, setAnnouncements] = useState<AnnouncementResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,8 +91,9 @@ export default function AnnouncementsPage() {
   const loadAnnouncements = () => {
     setIsLoading(true);
     setError(null);
-    announcementsApi
-      .getAll()
+    // Tellers use the public endpoint; Admins/Auditors use the admin endpoint
+    const fetch = isTeller ? announcementsApi.getActive() : announcementsApi.getAll();
+    fetch
       .then((res) => setAnnouncements(res.data))
       .catch((err: AxiosError) => {
         if (err.response?.status === 403) {
@@ -104,7 +107,7 @@ export default function AnnouncementsPage() {
 
   useEffect(() => {
     loadAnnouncements();
-  }, []);
+  }, [isTeller]);
 
   // ── Derived: filtered list ───────────────────────────────────────
   const filtered = useMemo(() => {
@@ -242,30 +245,35 @@ export default function AnnouncementsPage() {
             Refresh
           </button>
 
-          {/* Bulk Soft-Delete Expired button */}
-          <Button
-            variant="danger"
-            size="md"
-            disabled={expiredCount === 0 || bulkDeleting}
-            isLoading={bulkDeleting}
-            onClick={handleBulkSoftDeleteExpired}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete Expired{expiredCount > 0 && ` (${expiredCount})`}
-          </Button>
+          {/* Bulk Soft-Delete Expired button — Admin/Auditor only */}
+          {!isTeller && (
+            <Button
+              variant="danger"
+              size="md"
+              disabled={expiredCount === 0 || bulkDeleting}
+              isLoading={bulkDeleting}
+              onClick={handleBulkSoftDeleteExpired}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete Expired{expiredCount > 0 && ` (${expiredCount})`}
+            </Button>
+          )}
 
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => {
-              setCreateError(null);
-              setShowCreateModal(true);
-            }}
-          >
-            + New Announcement
-          </Button>
+          {/* New Announcement button — Admin/Auditor only */}
+          {!isTeller && (
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                setCreateError(null);
+                setShowCreateModal(true);
+              }}
+            >
+              + New Announcement
+            </Button>
+          )}
         </div>
       </div>
 
@@ -307,12 +315,14 @@ export default function AnnouncementsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
           </svg>
           <p className="mt-4 text-sm font-medium text-gray-500">No announcements published yet.</p>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="mt-3 text-sm font-medium text-blue-600 hover:underline"
-          >
-            Create your first announcement →
-          </button>
+          {!isTeller && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="mt-3 text-sm font-medium text-blue-600 hover:underline"
+            >
+              Create your first announcement →
+            </button>
+          )}
         </div>
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 bg-white px-8 py-16 text-center">
@@ -368,24 +378,27 @@ export default function AnnouncementsPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      {active && (
+                    {/* Action buttons — hidden from Tellers */}
+                    {!isTeller && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        {active && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleDeactivate(a.announcementId)}
+                          >
+                            Deactivate
+                          </Button>
+                        )}
                         <Button
-                          variant="secondary"
+                          variant="danger"
                           size="sm"
-                          onClick={() => handleDeactivate(a.announcementId)}
+                          onClick={() => handleSoftDelete(a.announcementId)}
                         >
-                          Deactivate
+                          Delete
                         </Button>
-                      )}
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleSoftDelete(a.announcementId)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
