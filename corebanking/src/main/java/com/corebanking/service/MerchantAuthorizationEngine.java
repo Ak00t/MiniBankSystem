@@ -11,7 +11,7 @@ import com.corebanking.exception.InvalidPinException;
 import com.corebanking.exception.TransactionException;
 import com.corebanking.integration.port.GatewayOutboundPort;
 import com.corebanking.integration.port.LedgerFacadePort;
-import com.corebanking.security.audit.service.AuditTrailService;
+import com.corebanking.service.AuditTrailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

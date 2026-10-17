@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +23,7 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 
 export const MerchantPaymentAuthorize: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const token = searchParams.get('token');
 
   const [details, setDetails] = useState<PaymentDetails | null>(null);
@@ -34,7 +35,7 @@ export const MerchantPaymentAuthorize: React.FC = () => {
   const [errorCode, setErrorCode] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<CheckoutFormData>({
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, setValue } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: { transactionPin: '' }
   });
@@ -49,8 +50,10 @@ export const MerchantPaymentAuthorize: React.FC = () => {
       }
 
       if (!hasTokens()) {
-        const currentPath = encodeURIComponent(`/checkout?token=${token}`);
-        window.location.href = `/login?redirect=${currentPath}`;
+        const returnUrl = `/checkout?token=${encodeURIComponent(token)}`;
+        sessionStorage.setItem("redirectUrl", returnUrl);
+        sessionStorage.setItem("paymentToken", token);
+        window.location.href = `/login?redirect=${encodeURIComponent(returnUrl)}`;
         return; 
       }
 
@@ -114,8 +117,17 @@ export const MerchantPaymentAuthorize: React.FC = () => {
     reset(); // Clear PIN field
   };
 
+  if (!hasTokens()) {
+    return null;
+  }
+
   if (loading) {
-    return <div className="p-8 text-center text-gray-500 animate-pulse mt-20">Loading Secure Checkout...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-slate-500 dark:text-slate-400 animate-pulse mt-12">
+        <div className="h-10 w-10 border-4 border-[#0878E8] border-t-transparent rounded-full animate-spin mb-4" />
+        <span className="text-sm font-medium">Loading Secure Checkout...</span>
+      </div>
+    );
   }
 
   // TERMINAL ERRORS: Show the massive Failure Screen for everything EXCEPT "INVALID_PIN"
@@ -154,20 +166,26 @@ export const MerchantPaymentAuthorize: React.FC = () => {
             <span className="text-slate-500 text-xs font-medium">Merchant</span>
             <span className="font-semibold text-slate-900 text-sm">{details.merchantName}</span>
           </div>
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-slate-500 text-xs font-medium">Order ID</span>
-            <span className="font-mono text-xs text-slate-700">{details.orderId}</span>
-          </div>
+          {details.orderId && (
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-slate-500 text-xs font-medium">Order ID</span>
+              <span className="font-mono text-xs text-slate-700">{details.orderId}</span>
+            </div>
+          )}
           <div className="flex justify-between items-center pt-3 border-t border-slate-200/60">
             <span className="text-slate-500 text-xs font-medium">Total Amount</span>
-            <span className="text-xl font-bold text-blue-600">{details.amount.toLocaleString()} <span className="text-xs font-semibold text-slate-500">{details.currency}</span></span>
+            <span className="text-xl font-bold text-blue-600">
+              {details.amount.toLocaleString()} <span className="text-xs font-semibold text-slate-500">{details.currency}</span>
+            </span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           {accounts.length > 0 ? (
             <div className="mb-6 text-left">
-              <label className="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wider">Pay From</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wider">
+                Pay From
+              </label>
               <div className="w-full py-3 px-4 border border-slate-200 bg-slate-50/80 rounded-xl text-slate-800 text-sm font-medium flex justify-between items-center">
                 <div className="flex items-center space-x-3">
                   <div className="h-9 w-9 rounded-xl bg-blue-100/70 text-blue-600 flex items-center justify-center font-bold">
@@ -192,6 +210,7 @@ export const MerchantPaymentAuthorize: React.FC = () => {
 
           <PinInput 
             register={register} 
+            setValue={setValue}
             errors={errors} 
             disabled={isSubmitting || accounts.length === 0} 
           />
@@ -199,7 +218,7 @@ export const MerchantPaymentAuthorize: React.FC = () => {
           <div className="flex gap-3 mt-6">
             <button 
               type="button"
-              onClick={() => window.location.href = '/dashboard'}
+              onClick={() => navigate('/dashboard')}
               disabled={isSubmitting}
               className="flex-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3.5 transition-colors text-sm"
             >

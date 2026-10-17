@@ -13,6 +13,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,8 +57,30 @@ public class CoreBankingLedgerAdapter implements LedgerFacadePort {
             throw new InsufficientFundsException("Insufficient available balance");
         }
         
-        if (dailyLimit != null && amount.compareTo(dailyLimit) > 0) {
-            throw new TransactionException("Transaction exceeds your daily transfer limit");
+        // Cumulative Daily Transfer Limit Check (Enforces consistency with Group 2 and Member 3)
+        if (dailyLimit != null && dailyLimit.compareTo(BigDecimal.ZERO) > 0) {
+            LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+            LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
+
+            BigDecimal todayTotal = bankTransactionRepository.findTodayTotalTransferredAmount(
+                    sourceAccount.getAccountId(), startOfDay, endOfDay);
+
+            BigDecimal totalAttempted = todayTotal.add(amount);
+
+            if (totalAttempted.compareTo(dailyLimit) > 0) {
+                BigDecimal remainingLimit = dailyLimit.subtract(todayTotal);
+                if (remainingLimit.compareTo(BigDecimal.ZERO) < 0) {
+                    remainingLimit = BigDecimal.ZERO;
+                }
+
+                log.warn("Daily limit exceeded for account {}. Limit: {}, Used Today: {}, Attempted: {}, Remaining: {}",
+                        sourceAccount.getAccountNumber(), dailyLimit, todayTotal, amount, remainingLimit);
+
+                throw new TransactionException(String.format(
+                        "Payment breaches daily limit of %s %s. Transferred today: %s, Remaining: %s, Attempted: %s",
+                        dailyLimit, sourceAccount.getCurrency(), todayTotal, remainingLimit, amount
+                ));
+            }
         }
         
         log.info("Read-only pre-check passed for customer {}", customerId);
