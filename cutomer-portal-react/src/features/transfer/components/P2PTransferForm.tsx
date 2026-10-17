@@ -7,6 +7,8 @@ import { lookupDestinationAccount } from "../services/transferService";
 import { getBeneficiaries, addBeneficiary } from "../../beneficiaries/services/beneficiaryService";
 import type { Beneficiary } from "../../beneficiaries/types/beneficiaryTypes";
 import type { P2PTransferRequest } from "../types/transferTypes";
+import { getAccountTransferLimits } from "../../customer-account/api/customerAccountApi";
+import type { TransferLimitInfo } from "../../customer-account/types/accountTypes";
 import {
   Loader2,
   AlertCircle,
@@ -24,6 +26,8 @@ import {
   Home,
   UserPlus,
   Users,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 
@@ -182,6 +186,7 @@ interface FormStepProps {
   validationError: string;
   recentAccounts: string[];
   beneficiaries?: Beneficiary[];
+  transferLimits?: TransferLimitInfo | null;
   onContinue: () => void;
 }
 
@@ -194,10 +199,21 @@ function FormStep({
   description, setDescription,
   validationError, recentAccounts,
   beneficiaries = [],
+  transferLimits = null,
   onContinue,
 }: FormStepProps) {
   const selectedAcc = accounts.find((a) => a.accountNumber === sourceAccount);
   const quickAmounts = [10000, 50000, 100000, 500000];
+
+  const isBeneficiary = beneficiaries.some(
+    (b) => b.beneficiaryAccountNumber === destinationAccount
+  );
+  const effectiveOneTimeLimit = transferLimits
+    ? isBeneficiary
+      ? transferLimits.effectiveOneTimeLimitBeneficiary
+      : transferLimits.effectiveOneTimeLimitStranger
+    : null;
+  const amountNum = Number(amount) || 0;
 
   return (
     <div className="space-y-5">
@@ -309,14 +325,41 @@ function FormStep({
         )}
 
         {!lookupLoading && recipientName && (
-          <div className="mt-2 px-3.5 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 font-medium text-emerald-900">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Recipient: <strong className="font-bold text-emerald-950 text-sm">{recipientName}</strong></span>
+          <div className="mt-2 space-y-1.5">
+            <div className="px-3.5 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 font-medium text-emerald-900">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Recipient: <strong className="font-bold text-emerald-950 text-sm">{recipientName}</strong></span>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md">
+                Verified
+              </span>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md">
-              Verified
-            </span>
+
+            {/* Beneficiary vs Stranger Status Pill */}
+            {transferLimits && (
+              <div
+                className={`px-3 py-1.5 rounded-xl border text-[11px] flex items-center justify-between transition-all ${
+                  isBeneficiary
+                    ? "bg-emerald-50/80 border-emerald-200 text-emerald-800"
+                    : "bg-amber-50/80 border-amber-200 text-amber-800"
+                }`}
+              >
+                <div className="flex items-center gap-1.5">
+                  {isBeneficiary ? (
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  ) : (
+                    <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  )}
+                  <span className="font-semibold">
+                    {isBeneficiary ? "Saved Beneficiary" : "Unsaved Recipient (Stranger)"}
+                  </span>
+                </div>
+                <span className="font-bold">
+                  Max: {effectiveOneTimeLimit?.toLocaleString()} MMK
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -342,16 +385,19 @@ function FormStep({
         <div className="relative">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">MMK</span>
           <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            type="text"
+            inputMode="numeric"
+            value={amount ? Number(amount).toLocaleString("en-US") : ""}
+            onChange={(e) => {
+              const raw = e.target.value.replace(/\D/g, "");
+              setAmount(raw);
+            }}
             placeholder="0"
-            min="10000"
-            step="1"
             className="w-full pl-14 pr-4 py-3 border-2 border-gray-100 rounded-2xl text-lg font-bold text-gray-800 placeholder-gray-300 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-gray-50"
             required
           />
         </div>
+
         {/* Quick amount buttons */}
         <div className="flex gap-2 mt-2">
           {quickAmounts.map((q) => (
@@ -365,6 +411,39 @@ function FormStep({
             </button>
           ))}
         </div>
+
+        {/* Real-time Transfer Limit Guidance Badges */}
+        {transferLimits && (
+          <div className="mt-2.5 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[11px] flex flex-wrap items-center justify-between gap-1 text-slate-600">
+            <span className="flex items-center gap-1">
+              <span>One-Time Limit:</span>
+              <strong className="text-slate-800">
+                {effectiveOneTimeLimit ? `${effectiveOneTimeLimit.toLocaleString()} MMK` : "—"}
+              </strong>
+            </span>
+            <span className="flex items-center gap-1">
+              <span>Remaining Today:</span>
+              <strong className="text-emerald-700">
+                {transferLimits.remainingDailyLimit.toLocaleString()} MMK
+              </strong>
+            </span>
+          </div>
+        )}
+
+        {/* Real-time Inline Amount Limit Warnings */}
+        {amountNum > 0 && effectiveOneTimeLimit && amountNum > effectiveOneTimeLimit && (
+          <p className="mt-1.5 text-xs font-semibold text-red-600 flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            Amount exceeds one-time limit ({effectiveOneTimeLimit.toLocaleString()} MMK)
+          </p>
+        )}
+        {amountNum > 0 && transferLimits && amountNum > transferLimits.remainingDailyLimit && (
+          <p className="mt-1 text-xs font-semibold text-red-600 flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            Amount exceeds today's remaining daily limit ({transferLimits.remainingDailyLimit.toLocaleString()} MMK)
+          </p>
+        )}
+
         <p className="text-xs text-gray-400 mt-1.5 pl-1">Minimum transfer: 10,000 MMK</p>
       </div>
 
@@ -702,6 +781,18 @@ export const P2PTransferForm = () => {
   const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
   const [savingBeneficiary, setSavingBeneficiary] = useState(false);
   const [beneficiarySaved, setBeneficiarySaved] = useState(false);
+  const [transferLimits, setTransferLimits] = useState<TransferLimitInfo | null>(null);
+
+  // Load transfer limits when sourceAccount changes
+  useEffect(() => {
+    if (sourceAccount) {
+      getAccountTransferLimits(sourceAccount)
+        .then(setTransferLimits)
+        .catch(() => setTransferLimits(null));
+    } else {
+      setTransferLimits(null);
+    }
+  }, [sourceAccount]);
 
   // Load beneficiaries on mount
   useEffect(() => {
@@ -804,6 +895,35 @@ export const P2PTransferForm = () => {
     if (lookupError) return setValidationError(lookupError);
     if (!recipientName) return setValidationError("Please enter a valid destination account number.");
     if (!amount || Number(amount) < 1) return setValidationError("Minimum transfer amount is 1 MMK.");
+
+    const transferNum = Number(amount);
+    if (transferLimits) {
+      const isBeneficiary = beneficiaries.some(
+        (b) => b.beneficiaryAccountNumber === destinationAccount
+      );
+      const effectiveOneTime = isBeneficiary
+        ? transferLimits.effectiveOneTimeLimitBeneficiary
+        : transferLimits.effectiveOneTimeLimitStranger;
+
+      if (transferNum > effectiveOneTime) {
+        if (!isBeneficiary) {
+          return setValidationError(
+            `Transfer amount of ${transferNum.toLocaleString()} MMK exceeds stranger one-time limit of ${effectiveOneTime.toLocaleString()} MMK. Add this account to beneficiaries to transfer up to ${transferLimits.effectiveOneTimeLimitBeneficiary.toLocaleString()} MMK.`
+          );
+        } else {
+          return setValidationError(
+            `Transfer amount of ${transferNum.toLocaleString()} MMK exceeds your one-time transfer limit of ${effectiveOneTime.toLocaleString()} MMK.`
+          );
+        }
+      }
+
+      if (transferNum > transferLimits.remainingDailyLimit) {
+        return setValidationError(
+          `Transfer exceeds your remaining daily limit of ${transferLimits.remainingDailyLimit.toLocaleString()} MMK. Transferred today: ${transferLimits.todayTransferredAmount.toLocaleString()} MMK.`
+        );
+      }
+    }
+
     setStep("review");
   };
 
@@ -907,6 +1027,7 @@ export const P2PTransferForm = () => {
               validationError={validationError}
               recentAccounts={recentAccounts}
               beneficiaries={beneficiaries}
+              transferLimits={transferLimits}
               onContinue={handleContinue}
             />
           )}
