@@ -59,6 +59,12 @@ export const API_ENDPOINTS = {
   // Transfers
   TRANSFER_P2P: "/api/transfers/p2p",
 
+  // Over-the-Counter (OTC) Transactions
+  OTC: {
+    DEPOSIT: "/api/transactions/otc/deposit",
+    WITHDRAW: "/api/transactions/otc/withdraw",
+  },
+
   // Announcements (active, for authenticated staff / all)
   ANNOUNCEMENTS: "/api/announcements",
 } as const;

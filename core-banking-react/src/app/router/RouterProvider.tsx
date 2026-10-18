@@ -8,6 +8,7 @@ import AnnouncementsPage from '../../features/admin/pages/AnnouncementsPage';
 import CustomersPage from '../../features/admin/pages/CustomersPage';
 import AccountsPage from '../../features/operations/pages/AccountsPage';
 import TransfersPage from '../../features/operations/pages/TransfersPage';
+import OtcTransactionPage from '../../features/operations/pages/OtcTransactionPage';
 import ReportingPage from '../../features/reporting/pages/ReportingPage';
 import UnauthorizedPage from '../../components/common/UnauthorizedPage';
 import ProtectedRoute from './ProtectedRoute';
@@ -79,6 +80,16 @@ export default function RouterProvider() {
           element={
             <ProtectedRoute>
               <AccountsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* OTC Banking (Deposit & Withdrawal) */}
+        <Route
+          path="/admin/otc"
+          element={
+            <ProtectedRoute>
+              <OtcTransactionPage />
             </ProtectedRoute>
           }
         />
