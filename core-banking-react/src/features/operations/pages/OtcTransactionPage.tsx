@@ -6,6 +6,7 @@ import { otcApi, accountsApi } from '../../../services/apiClient';
 import type { OtcTransactionResponseDto, AccountResponse } from '../../../types/api.types';
 import { formatCurrency } from '../../../utils/formatCurrency';
 import type { AxiosError } from 'axios';
+import TellerDailyCashSummaryWidget from '../components/TellerDailyCashSummaryWidget';
 
 type OtcOperationType = 'DEPOSIT' | 'WITHDRAW';
 
@@ -134,6 +135,9 @@ export default function OtcTransactionPage() {
           </p>
         </div>
       </div>
+
+      {/* Top Teller Daily Cash Summary Widget */}
+      <TellerDailyCashSummaryWidget />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left 2 Cols: Operations Form */}

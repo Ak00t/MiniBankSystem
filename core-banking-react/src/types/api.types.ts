@@ -340,3 +340,19 @@ export interface OtcTransactionResponseDto {
   description?: string;
   transactedAt: string;
 }
+
+// --- Teller Cash Summary DTO ---
+
+export interface DailyCashSummaryResponse {
+  tellerUsername: string;
+  tellerFullName: string;
+  reportDate: string;
+  openingCash: number;
+  totalCashIn: number;
+  totalCashOut: number;
+  netCashInDrawer: number;
+  totalTransactions: number;
+  depositCount: number;
+  withdrawalCount: number;
+  currency: string;
+}

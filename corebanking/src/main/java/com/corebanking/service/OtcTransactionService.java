@@ -1,5 +1,6 @@
 package com.corebanking.service;
 
+import com.corebanking.dto.DailyCashSummaryDto;
 import com.corebanking.dto.OtcTransactionRequestDto;
 import com.corebanking.dto.OtcTransactionResponseDto;
 import com.corebanking.entity.*;
@@ -344,6 +345,51 @@ public class OtcTransactionService {
                 .depositorOrWithdrawerName(personName)
                 .description(txn.getDescription())
                 .transactedAt(txn.getCompletedAt() != null ? txn.getCompletedAt() : txn.getInitiatedAt())
+                .build();
+    }
+
+    /**
+     * Calculates today's cash summary for the currently authenticated Teller.
+     */
+    @Transactional(readOnly = true)
+    public DailyCashSummaryDto getDailyCashSummary() {
+        StaffUsers teller = getCurrentAuthenticatedStaff();
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay();
+        LocalDateTime endOfDay = today.atTime(23, 59, 59, 999999999);
+
+        java.util.List<BankTransactions> todayTxns = bankTransactionRepository
+                .findTodayOtcTransactionsByStaff(teller.getStaffId(), startOfDay, endOfDay);
+
+        BigDecimal cashIn = BigDecimal.ZERO;
+        BigDecimal cashOut = BigDecimal.ZERO;
+        long depositCount = 0;
+        long withdrawalCount = 0;
+
+        for (BankTransactions t : todayTxns) {
+            if (t.getTransactionType() == TransactionType.OTC_DEPOSIT) {
+                cashIn = cashIn.add(t.getAmount());
+                depositCount++;
+            } else if (t.getTransactionType() == TransactionType.OTC_WITHDRAWAL) {
+                cashOut = cashOut.add(t.getAmount());
+                withdrawalCount++;
+            }
+        }
+
+        BigDecimal netCash = cashIn.subtract(cashOut);
+
+        return DailyCashSummaryDto.builder()
+                .tellerUsername(teller.getUsername())
+                .tellerFullName(teller.getFullName())
+                .reportDate(today)
+                .openingCash(BigDecimal.ZERO)
+                .totalCashIn(cashIn)
+                .totalCashOut(cashOut)
+                .netCashInDrawer(netCash)
+                .totalTransactions(todayTxns.size())
+                .depositCount(depositCount)
+                .withdrawalCount(withdrawalCount)
+                .currency("MMK")
                 .build();
     }
 }

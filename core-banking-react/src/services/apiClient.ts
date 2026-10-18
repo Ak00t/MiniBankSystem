@@ -29,6 +29,7 @@ import type {
   P2PTransferResponseDto,
   OtcTransactionRequestDto,
   OtcTransactionResponseDto,
+  DailyCashSummaryResponse,
 } from '../types/api.types';
 
 // ============================================================
@@ -266,3 +267,13 @@ export const otcApi = {
         : undefined,
     ),
 };
+
+// ============================================================
+// Teller Daily Operations API
+// ============================================================
+
+export const tellerApi = {
+  getDailyCashSummary: () =>
+    axiosInstance.get<DailyCashSummaryResponse>(API_ENDPOINTS.TELLER.DAILY_CASH_SUMMARY),
+};
+

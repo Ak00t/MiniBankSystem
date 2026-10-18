@@ -65,6 +65,11 @@ export const API_ENDPOINTS = {
     WITHDRAW: "/api/transactions/otc/withdraw",
   },
 
+  // Teller Operations
+  TELLER: {
+    DAILY_CASH_SUMMARY: "/api/v1/teller/daily-cash-summary",
+  },
+
   // Announcements (active, for authenticated staff / all)
   ANNOUNCEMENTS: "/api/announcements",
 } as const;

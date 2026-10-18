@@ -11,6 +11,7 @@ import type {
   SystemParameterResponse,
 } from '../../../types/api.types';
 import type { AxiosError } from 'axios';
+import TellerDailyCashSummaryWidget from '../../operations/components/TellerDailyCashSummaryWidget';
 
 // ============================================================
 // Stat card component
@@ -140,6 +141,9 @@ export default function AdminDashboardPage() {
           })}
         </p>
       </div>
+
+      {/* Teller Daily Cash Summary (Visible only to TELLER role) */}
+      {isTeller && <TellerDailyCashSummaryWidget />}
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 mb-8">
