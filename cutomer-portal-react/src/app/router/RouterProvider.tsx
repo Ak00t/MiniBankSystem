@@ -33,6 +33,8 @@ import PinResetNewPinPage from "../../features/auth/pages/PinResetNewPinPage";
 import DashboardPage from "../../features/customer-account/dashboard/DashboardPage";
 import MainLayout from "../../components/layout/MainLayout";
 import MyAccountsPage from "../../features/customer-account/accounts/MyaccountPage";
+import { MerchantPaymentAuthorize } from "../../features/merchant-payment/pages/MerchantPaymentAuthorize";
+
 import ProfilePage from "../../features/customer-account/profile/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
 import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
@@ -47,6 +49,9 @@ import AccountStatementPage from "../../features/customer-account/statements/pag
 
 const router = createBrowserRouter([
 
+  // =========================================
+  // PUBLIC AUTH PAGES & STANDALONE PAGES
+  // =========================================
   // ====================================================
   // PUBLIC AUTH PAGES
   // ====================================================
@@ -87,6 +92,8 @@ const router = createBrowserRouter([
   },
 
 
+
+  // =========================================
   // ====================================================
   // FORGOT PASSWORD / PASSWORD RESET
   // ====================================================
@@ -125,6 +132,11 @@ const router = createBrowserRouter([
         ),
 
         children: [
+
+          {
+            path: "/checkout",
+            element: <MerchantPaymentAuthorize />,
+          },
 
           {
             path: "/dashboard",
