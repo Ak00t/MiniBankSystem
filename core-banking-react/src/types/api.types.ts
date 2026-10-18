@@ -311,3 +311,32 @@ export interface ApiError {
   timestamp?: string;
   path?: string;
 }
+
+// --- OTC Transaction DTOs ---
+
+export interface OtcTransactionRequestDto {
+  accountNumber: string;
+  amount: number;
+  currency?: string;
+  remark?: string;
+  depositorOrWithdrawerName?: string;
+  nrcOrId?: string;
+}
+
+export interface OtcTransactionResponseDto {
+  transactionRef: string;
+  transactionType: 'OTC_DEPOSIT' | 'OTC_WITHDRAWAL';
+  status: string;
+  accountNumber: string;
+  customerCode: string;
+  customerName: string;
+  amount: number;
+  serviceFee: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  currency: string;
+  tellerUsername: string;
+  depositorOrWithdrawerName?: string;
+  description?: string;
+  transactedAt: string;
+}

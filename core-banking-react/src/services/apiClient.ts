@@ -27,6 +27,8 @@ import type {
   AccountStatusUpdateDTO,
   P2PTransferRequestDto,
   P2PTransferResponseDto,
+  OtcTransactionRequestDto,
+  OtcTransactionResponseDto,
 } from '../types/api.types';
 
 // ============================================================
@@ -222,6 +224,38 @@ export const transfersApi = {
   p2pTransfer: (data: P2PTransferRequestDto, idempotencyKey?: string) =>
     axiosInstance.post<P2PTransferResponseDto>(
       API_ENDPOINTS.TRANSFER_P2P,
+      data,
+      idempotencyKey
+        ? {
+            headers: {
+              'Idempotency-Key': idempotencyKey,
+            },
+          }
+        : undefined,
+    ),
+};
+
+// ============================================================
+// Over-the-Counter (OTC) Transactions API (Deposit & Withdraw)
+// ============================================================
+
+export const otcApi = {
+  deposit: (data: OtcTransactionRequestDto, idempotencyKey?: string) =>
+    axiosInstance.post<OtcTransactionResponseDto>(
+      API_ENDPOINTS.OTC.DEPOSIT,
+      data,
+      idempotencyKey
+        ? {
+            headers: {
+              'Idempotency-Key': idempotencyKey,
+            },
+          }
+        : undefined,
+    ),
+
+  withdraw: (data: OtcTransactionRequestDto, idempotencyKey?: string) =>
+    axiosInstance.post<OtcTransactionResponseDto>(
+      API_ENDPOINTS.OTC.WITHDRAW,
       data,
       idempotencyKey
         ? {
