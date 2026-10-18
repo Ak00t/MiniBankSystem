@@ -60,24 +60,7 @@
                         <pen lineWidth="0.5" lineColor="#CBD5E1"/>
                     </graphicElement>
                 </rectangle>
-                <staticText>
-                    <reportElement x="5" y="0" width="105" height="20" forecolor="#64748B" uuid="885ec7bf-c689-48fe-a521-4ebdf760a9f5">
-                        <property name="com.jaspersoft.studio.unit.height" value="px"/>
-                    </reportElement>
-                    <textElement verticalAlignment="Middle">
-                        <font fontName="SansSerif" size="8"/>
-                    </textElement>
-                    <text><![CDATA[-]]></text>
-                </staticText>
-                <staticText>
-                    <reportElement x="110" y="0" width="90" height="20" forecolor="#64748B" uuid="8a61427a-4c28-48b4-9273-e380f2adfb2a">
-                        <property name="com.jaspersoft.studio.unit.height" value="px"/>
-                    </reportElement>
-                    <textElement verticalAlignment="Middle">
-                        <font fontName="SansSerif" size="8"/>
-                    </textElement>
-                    <text><![CDATA[-]]></text>
-                </staticText>
+                <!-- Detailed Description: Opening Balance -->
                 <staticText>
                     <reportElement x="200" y="0" width="145" height="20" forecolor="#08295C" uuid="60f06518-ff35-43ea-8316-0925e0a6d598">
                         <property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -87,24 +70,7 @@
                     </textElement>
                     <text><![CDATA[Opening Balance]]></text>
                 </staticText>
-                <staticText>
-                    <reportElement x="345" y="0" width="70" height="20" forecolor="#64748B" uuid="1c8a14b5-ca31-4835-bca0-fa833c846f49">
-                        <property name="com.jaspersoft.studio.unit.height" value="px"/>
-                    </reportElement>
-                    <textElement textAlignment="Right" verticalAlignment="Middle">
-                        <font fontName="SansSerif" size="8"/>
-                    </textElement>
-                    <text><![CDATA[-]]></text>
-                </staticText>
-                <staticText>
-                    <reportElement x="415" y="0" width="70" height="20" forecolor="#64748B" uuid="098f98ec-6895-467f-9f79-37e1933e49e2">
-                        <property name="com.jaspersoft.studio.unit.height" value="px"/>
-                    </reportElement>
-                    <textElement textAlignment="Right" verticalAlignment="Middle">
-                        <font fontName="SansSerif" size="8"/>
-                    </textElement>
-                    <text><![CDATA[-]]></text>
-                </staticText>
+                <!-- Balance: formatted OPENING_BALANCE -->
                 <textField>
                     <reportElement x="485" y="0" width="65" height="20" forecolor="#08295C" uuid="ad616efb-2c59-4d69-8bc3-3b6833b3bdf2">
                         <property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -408,7 +374,7 @@
                 <textElement textAlignment="Right" verticalAlignment="Middle">
                     <font fontName="SansSerif" size="8" isBold="false"/>
                 </textElement>
-                <textFieldExpression><![CDATA[$F{creditAmount} != null ? new java.text.DecimalFormat("#,##0.00").format($F{creditAmount}) : "-"]]></textFieldExpression>
+                <textFieldExpression><![CDATA[($F{creditAmount} != null && $F{creditAmount}.compareTo(java.math.BigDecimal.ZERO) > 0) ? new java.text.DecimalFormat("#,##0.00").format($F{creditAmount}) : "0.00"]]></textFieldExpression>
             </textField>
 
             <!-- Debit Amount -->
@@ -419,7 +385,7 @@
                 <textElement textAlignment="Right" verticalAlignment="Middle">
                     <font fontName="SansSerif" size="8" isBold="false"/>
                 </textElement>
-                <textFieldExpression><![CDATA[$F{debitAmount} != null ? new java.text.DecimalFormat("#,##0.00").format($F{debitAmount}) : "-"]]></textFieldExpression>
+                <textFieldExpression><![CDATA[($F{debitAmount} != null && $F{debitAmount}.compareTo(java.math.BigDecimal.ZERO) > 0) ? ("-" + new java.text.DecimalFormat("#,##0.00").format($F{debitAmount})) : "-0.00"]]></textFieldExpression>
             </textField>
 
             <!-- Running Balance -->
@@ -467,87 +433,121 @@
     <!-- SUMMARY BAND: Closing Balance & Two Custom Summary Rows             -->
     <!-- =================================================================== -->
     <summary>
-        <band height="110" splitType="Prevent">
-            <!-- Closing Balance Row -->
+        <band height="60" splitType="Prevent">
+            <!-- =========================================================== -->
+            <!-- ROW 1: CLOSING BALANCE TABLE ROW                            -->
+            <!-- =========================================================== -->
             <rectangle>
-                <reportElement x="0" y="4" width="555" height="22" backcolor="#F8FAFC" uuid="d82b4a59-b1d5-4519-94bc-696615b13861">
+                <reportElement x="0" y="0" width="555" height="20" backcolor="#F8FAFC" uuid="d82b4a59-b1d5-4519-94bc-696615b13861">
                     <property name="com.jaspersoft.studio.unit.height" value="px"/>
                 </reportElement>
                 <graphicElement>
-                    <pen lineWidth="0.8" lineColor="#CBD5E1"/>
+                    <pen lineWidth="0.5" lineColor="#CBD5E1"/>
                 </graphicElement>
             </rectangle>
+            <!-- Column 3: Detailed Description -> Closing Balance -->
             <staticText>
-                <reportElement x="10" y="4" width="470" height="22" forecolor="#08295C" uuid="8d641d40-f1d2-43bb-a53b-0164c414bb44"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
+                <reportElement x="200" y="0" width="145" height="20" forecolor="#08295C" uuid="8d641d40-f1d2-43bb-a53b-0164c414bb44">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
-                <text><![CDATA[Closing Balance:]]></text>
+                <text><![CDATA[Closing Balance]]></text>
             </staticText>
+            <!-- Column 6: Balance -> formatted CLOSING_BALANCE -->
             <textField>
-                <reportElement x="485" y="4" width="65" height="22" forecolor="#08295C" uuid="45465e90-c20e-436e-b3f4-e7529853a48e"/>
+                <reportElement x="485" y="0" width="65" height="20" forecolor="#08295C" uuid="45465e90-c20e-436e-b3f4-e7529853a48e">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
+                    <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.00").format($P{CLOSING_BALANCE} != null ? $P{CLOSING_BALANCE} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
             </textField>
 
             <!-- =========================================================== -->
-            <!-- CUSTOM SUMMARY ROWS (Strict Side-by-Side Requirement)        -->
-            <!-- Row 1: [ No. of Credit: <count> ]  [ Credit Total: <amount> ] -->
-            <!-- Row 2: [ No. of Debit: <count> ]   [ Debit Total: <amount> ]  -->
+            <!-- ROW 2: CREDIT TOTAL TABLE ROW                               -->
             <!-- =========================================================== -->
-
-            <!-- Row 1 Container (Credit Summary) -->
-            <rectangle radius="4">
-                <reportElement x="0" y="34" width="555" height="24" backcolor="#F8FAFC" uuid="559d814f-3760-482a-a92c-c5e317c2a7e1">
+            <rectangle>
+                <reportElement x="0" y="20" width="555" height="20" backcolor="#F8FAFC" uuid="559d814f-3760-482a-a92c-c5e317c2a7e1">
                     <property name="com.jaspersoft.studio.unit.height" value="px"/>
                 </reportElement>
                 <graphicElement>
-                    <pen lineWidth="0.6" lineColor="#E2E8F0"/>
+                    <pen lineWidth="0.5" lineColor="#CBD5E1"/>
                 </graphicElement>
             </rectangle>
-            <!-- Left: No. of Credit -->
+            <!-- Column 2: Trn_Ref_No -> No. of Credit: <count> -->
             <textField>
-                <reportElement x="12" y="34" width="250" height="24" forecolor="#0F172A" uuid="a63e2617-bb19-482f-87eb-4cb928787f81"/>
+                <reportElement x="110" y="20" width="90" height="20" forecolor="#0F172A" uuid="a63e2617-bb19-482f-87eb-4cb928787f81">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
                 <textElement verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
+                    <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA["No. of Credit: " + ($P{NUMBER_OF_CREDIT_ENTRIES} != null ? $P{NUMBER_OF_CREDIT_ENTRIES} : 0)]]></textFieldExpression>
             </textField>
-            <!-- Right: Credit Total -->
-            <textField>
-                <reportElement x="270" y="34" width="275" height="24" forecolor="#08295C" uuid="ef17bb3a-a1fb-4299-8cf0-2ca0f074be91"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
+            <!-- Column 3: Detailed Description -> Credit Total -->
+            <staticText>
+                <reportElement x="200" y="20" width="145" height="20" forecolor="#08295C" uuid="f04b2b2a-19fb-449e-b7a4-1e5ff017f911">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
-                <textFieldExpression><![CDATA["Credit Total: " + $P{CURRENCY} + " " + new java.text.DecimalFormat("#,##0.00").format($P{TOTAL_CREDIT} != null ? $P{TOTAL_CREDIT} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
+                <text><![CDATA[Credit Total]]></text>
+            </staticText>
+            <!-- Column 4: Credit -> formatted TOTAL_CREDIT -->
+            <textField>
+                <reportElement x="345" y="20" width="70" height="20" forecolor="#08295C" uuid="ef17bb3a-a1fb-4299-8cf0-2ca0f074be91">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.00").format($P{TOTAL_CREDIT} != null ? $P{TOTAL_CREDIT} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
             </textField>
 
-            <!-- Row 2 Container (Debit Summary) -->
-            <rectangle radius="4">
-                <reportElement x="0" y="64" width="555" height="24" backcolor="#F8FAFC" uuid="c24a2ef3-5a02-4fe7-b716-1f61882c5ae2">
+            <!-- =========================================================== -->
+            <!-- ROW 3: DEBIT TOTAL TABLE ROW                                -->
+            <!-- =========================================================== -->
+            <rectangle>
+                <reportElement x="0" y="40" width="555" height="20" backcolor="#F8FAFC" uuid="c24a2ef3-5a02-4fe7-b716-1f61882c5ae2">
                     <property name="com.jaspersoft.studio.unit.height" value="px"/>
                 </reportElement>
                 <graphicElement>
-                    <pen lineWidth="0.6" lineColor="#E2E8F0"/>
+                    <pen lineWidth="0.5" lineColor="#CBD5E1"/>
                 </graphicElement>
             </rectangle>
-            <!-- Left: No. of Debit -->
+            <!-- Column 2: Trn_Ref_No -> No. of Debit: <count> -->
             <textField>
-                <reportElement x="12" y="64" width="250" height="24" forecolor="#0F172A" uuid="603caeb1-9ff4-4ff5-bba4-1e5ff017f9e2"/>
+                <reportElement x="110" y="40" width="90" height="20" forecolor="#0F172A" uuid="603caeb1-9ff4-4ff5-bba4-1e5ff017f9e2">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
                 <textElement verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
+                    <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA["No. of Debit: " + ($P{NUMBER_OF_DEBIT_ENTRIES} != null ? $P{NUMBER_OF_DEBIT_ENTRIES} : 0)]]></textFieldExpression>
             </textField>
-            <!-- Right: Debit Total -->
-            <textField>
-                <reportElement x="270" y="64" width="275" height="24" forecolor="#08295C" uuid="885ecb2a-6058-45b9-b5f7-640fb0db8be2"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
+            <!-- Column 3: Detailed Description -> Debit Total -->
+            <staticText>
+                <reportElement x="200" y="40" width="145" height="20" forecolor="#08295C" uuid="998ecb2a-6058-45b9-b5f7-640fb0db8b33">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
-                <textFieldExpression><![CDATA["Debit Total: " + $P{CURRENCY} + " " + new java.text.DecimalFormat("#,##0.00").format($P{TOTAL_DEBIT} != null ? $P{TOTAL_DEBIT} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
+                <text><![CDATA[Debit Total]]></text>
+            </staticText>
+            <!-- Column 5: Debit -> formatted TOTAL_DEBIT with leading minus sign -->
+            <textField>
+                <reportElement x="415" y="40" width="70" height="20" forecolor="#08295C" uuid="885ecb2a-6058-45b9-b5f7-640fb0db8be2">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[($P{TOTAL_DEBIT} != null && $P{TOTAL_DEBIT}.compareTo(java.math.BigDecimal.ZERO) > 0 ? ("-" + new java.text.DecimalFormat("#,##0.00").format($P{TOTAL_DEBIT})) : "0.00")]]></textFieldExpression>
             </textField>
         </band>
     </summary>
