@@ -1,0 +1,23 @@
+{
+  "customerPortal": "Customer Portal",
+  "sections": {
+    "banking": "Banking",
+    "account": "Account"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "accounts": "My Accounts",
+    "transfer": "Transfer & Payments",
+    "transactionHistory": "Transaction History",
+    "beneficiaries": "Beneficiaries",
+    "announcements": "Announcements",
+    "profile": "Profile",
+    "settings": "Settings",
+    "support": "Help & Support",
+    "logout": "Logout",
+    "loggingOut": "Logging out..."
+  },
+  "accessibility": {
+    "unreadAnnouncements": "{{count}} unread announcements"
+  }
+}

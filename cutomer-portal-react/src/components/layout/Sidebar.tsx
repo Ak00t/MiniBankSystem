@@ -23,6 +23,8 @@ import {
   useState,
 } from "react";
 
+import { useTranslation } from "react-i18next";
+
 import {
   logoutCustomer,
 } from "../../services/authService";
@@ -34,42 +36,44 @@ import { useAppDispatch ,useAppSelector } from "../../lib/redux";
 import { fetchAnnouncements } from "../../features/customer-account/announcements/store/announcementSlice";
 
 
+
+
 // ======================================================
 // MAIN MENU
 // ======================================================
 
 const mainMenuItems = [
   {
-    name: "Dashboard",
+    labelKey: "navigation.dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "My Accounts",
+    labelKey: "navigation.accounts",
     path: "/accounts",
     icon: WalletCards,
   },
   {
-    name: "Transfer & Payments",
+    labelKey: "navigation.transfer",
     path: "/transfer",
     icon: ArrowLeftRight,
   },
   {
-    name: "Transaction History",
+    labelKey: "navigation.transactionHistory",
     path: "/transaction",
     icon: History,
   },
   {
-    name: "Beneficiaries",
+    labelKey: "navigation.beneficiaries",
     path: "/beneficiaries",
     icon: Users,
   },
-    {
-    name: "Announcements",
+  {
+    labelKey: "navigation.announcements",
     path: "/announcements",
     icon: Megaphone,
   },
-];
+] as const;
 
 
 // ======================================================
@@ -78,21 +82,21 @@ const mainMenuItems = [
 
 const accountMenuItems = [
   {
-    name: "Profile",
+    labelKey: "navigation.profile",
     path: "/profile",
     icon: User,
   },
   {
-    name: "Settings",
+    labelKey: "navigation.settings",
     path: "/settings",
     icon: Settings,
   },
   {
-    name: "Help & Support",
+    labelKey: "navigation.support",
     path: "/support",
     icon: HelpCircle,
   },
-];
+] as const;
 
 
 // ======================================================
@@ -105,6 +109,8 @@ export default function Sidebar() {
     useNavigate();
 
    const dispatch = useAppDispatch();
+
+    const { t } = useTranslation("common");
 
   const [
     loggingOut,
@@ -209,6 +215,90 @@ export default function Sidebar() {
 
     };
 
+      // ====================================================
+  // SHARED NAV LINK CLASS
+  // ====================================================
+
+  const getNavLinkClass = (isActive: boolean) =>
+    `
+      group flex items-center gap-3 rounded-xl px-3 py-2.5
+      text-sm transition-all duration-200
+      ${
+        isActive
+          ? "bg-[#EAF3FF] font-semibold text-[#0878E8]"
+          : "font-medium text-slate-600 hover:bg-slate-50 hover:text-[#08295C]"
+      }
+    `;
+
+  const getIconContainerClass = (isActive: boolean) =>
+    `
+      flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
+      transition-all duration-200
+      ${
+        isActive
+          ? "bg-[#0878E8] text-white shadow-sm"
+          : "bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-[#08295C]"
+      }
+    `;
+
+  // ====================================================
+  // NAV ITEM RENDERER
+  // ====================================================
+
+  const renderNavItem = (
+    item: (typeof mainMenuItems)[number] | (typeof accountMenuItems)[number],
+  ) => {
+    const Icon = item.icon;
+    const isAnnouncement = item.path === "/announcements";
+
+    return (
+      <NavLink
+        key={item.path}
+        to={item.path}
+        className={({ isActive }) => getNavLinkClass(isActive)}
+      >
+        {({ isActive }) => (
+          <>
+            <div className={getIconContainerClass(isActive)}>
+              <Icon
+                size={17}
+                strokeWidth={isActive ? 2.3 : 2}
+                aria-hidden="true"
+              />
+            </div>
+
+            <span className="min-w-0 flex-1 truncate">
+              {t(item.labelKey)}
+            </span>
+
+            {isAnnouncement && unreadAnnouncementCount > 0 && (
+              <span
+                aria-label={t("accessibility.unreadAnnouncements", {
+                  count: unreadAnnouncementCount,
+                })}
+                className="inline-flex min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-white"
+              >
+                {unreadAnnouncementCount > 99
+                  ? "99+"
+                  : unreadAnnouncementCount}
+              </span>
+            )}
+
+            {isActive && (
+              <ChevronRight
+                size={15}
+                strokeWidth={2.5}
+                className="shrink-0 text-[#0878E8]"
+                aria-hidden="true"
+              />
+            )}
+          </>
+        )}
+      </NavLink>
+    );
+  };
+
+
 
   // ====================================================
   // UI
@@ -296,7 +386,7 @@ export default function Sidebar() {
                 text-slate-400
               "
             >
-              Customer Portal
+              {t("customerPortal")}
             </p>
 
           </div>
@@ -336,7 +426,7 @@ export default function Sidebar() {
               text-slate-400
             "
           >
-            Banking
+            {t("navigation.banking")}
           </p>
 
 
@@ -447,7 +537,7 @@ export default function Sidebar() {
                             truncate
                           "
                         >
-                          {item.name}
+                          {t(item.labelKey)}
                         </span>
 
                                          {/* Announcements unread count badge */}
@@ -511,7 +601,7 @@ export default function Sidebar() {
               text-slate-400
             "
           >
-            Account
+            {t("navigation.account")}
           </p>
 
 
@@ -619,7 +709,7 @@ export default function Sidebar() {
                             truncate
                           "
                         >
-                          {item.name}
+                          {t(item.labelKey)}
                         </span>
 
 
@@ -736,9 +826,10 @@ export default function Sidebar() {
 
             {
               loggingOut
-                ? "Logging out..."
-                : "Logout"
-            }
+                ? t("navigation.loggingOut")
+              : t("navigation.logout")
+              }
+            
 
           </span>
 
