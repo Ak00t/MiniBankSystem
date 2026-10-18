@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -22,6 +23,7 @@ public class NotificationResponseDto {
     private boolean isRead;
     private LocalDateTime readAt;
     private LocalDateTime createdAt;
+    private UUID transactionId;
     private String transactionRef;
     private BigDecimal amount;
     private String currency;

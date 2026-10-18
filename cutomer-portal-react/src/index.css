@@ -68,3 +68,39 @@ button {
 button:hover {
   background-color: #004c99;
 } */
+
+@media print {
+  @page {
+    margin: 12mm;
+    size: auto;
+  }
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  header,
+  aside,
+  nav,
+  input[type="search"],
+  .no-print,
+  button:not(.print-include) {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  main > div {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .print-receipt-container {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 20px !important;
+    max-width: 620px !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+  }
+}
