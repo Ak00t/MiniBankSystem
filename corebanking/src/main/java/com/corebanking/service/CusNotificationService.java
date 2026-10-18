@@ -68,6 +68,7 @@ public class CusNotificationService {
             try {
                 if (n.getTransaction() != null) {
                     BankTransactions txn = n.getTransaction();
+                    builder.transactionId(txn.getTransactionId());
                     builder.transactionRef(txn.getTransactionRef());
                     if (txn.getAmount() != null) {
                         builder.amount(txn.getAmount());

@@ -9,6 +9,7 @@ export interface NotificationItem {
   read?: boolean;
   readAt: string | null;
   createdAt: string;
+  transactionId?: string | null;
   transactionRef?: string | null;
   amount?: number | null;
   currency?: string | null;
