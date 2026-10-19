@@ -3,6 +3,7 @@ import {
 } from "react";
 
 import {
+  Navigate,
   useNavigate,
 } from "react-router-dom";
 
@@ -432,6 +433,16 @@ function OtpPage() {
   // =========================================
   // UI
   // =========================================
+
+  // Login challenges are UUIDs. Never restore the form from browser history
+  // after successful verification or logout has removed the challenge.
+  const challengeGroupId = sessionStorage.getItem("challengeGroupId");
+  if (
+    !challengeGroupId ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(challengeGroupId)
+  ) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
 
