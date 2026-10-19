@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -141,26 +141,37 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
   const [progress, setProgress] = useState<number>(100);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const duration = toast.duration || 5000;
+  const remainingRef = useRef<number>(duration);
+  const lastTickRef = useRef<number>(Date.now());
+  const onDismissRef = useRef(onDismiss);
+
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   useEffect(() => {
     if (isPaused) return;
 
-    const intervalTime = 50;
-    const decrement = (intervalTime / duration) * 100;
+    lastTickRef.current = Date.now();
 
     const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev <= 0) {
-          clearInterval(timer);
-          onDismiss();
-          return 0;
-        }
-        return prev - decrement;
-      });
-    }, intervalTime);
+      const now = Date.now();
+      const delta = now - lastTickRef.current;
+      lastTickRef.current = now;
+
+      remainingRef.current = Math.max(0, remainingRef.current - delta);
+      const newProgress = (remainingRef.current / duration) * 100;
+
+      if (remainingRef.current <= 0) {
+        clearInterval(timer);
+        onDismissRef.current();
+      } else {
+        setProgress(newProgress);
+      }
+    }, 50);
 
     return () => clearInterval(timer);
-  }, [isPaused, duration, onDismiss]);
+  }, [isPaused, duration]);
 
   const titleLower = toast.title.toLowerCase();
   const isError =

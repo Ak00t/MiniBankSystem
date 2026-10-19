@@ -278,6 +278,7 @@ export default function Navbar() {
   return (
     <header
       className="
+        no-print
         fixed left-64 right-0 top-0 z-20
         flex h-20 items-center justify-between
         border-b border-slate-200

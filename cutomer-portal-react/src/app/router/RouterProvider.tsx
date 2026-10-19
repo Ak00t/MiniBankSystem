@@ -40,8 +40,8 @@ import { P2PTransferForm } from "../../features/transfer/components/P2PTransferF
 import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
 import SettingsPage from "../../features/customer-account/settings/pages/SettingsPage";
 import AnnouncementsPage from "../../features/customer-account/announcements/AnnouncementsPage";
-
 import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
+import AccountStatementPage from "../../features/customer-account/statements/pages/AccountStatementPage";
 
 // ======================================================
 // ROUTER
@@ -149,13 +149,13 @@ const router = createBrowserRouter([
           },
 
           {
-            path: "/accounts",
-            element: <MyAccountsPage />,
+            path: "/accounts/:accountNumber",
+            element: <AccountDetailPage />,
           },
 
           {
-            path: "/accounts/:accountNumber",
-            element: <AccountDetailPage />,
+            path: "/statements",
+            element: <AccountStatementPage />,
           },
 
           {
