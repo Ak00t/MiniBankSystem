@@ -116,6 +116,9 @@ public class SecurityConfig {
                 ).permitAll()
 
                 // WebSocket endpoints (Handshake authentication handled by HandshakeInterceptor)
+              )
+
+                // WebSocket endpoints (Handshake authentication handled by HandshakeInterceptor)
                 
 
                 // All other endpoints require authentication
