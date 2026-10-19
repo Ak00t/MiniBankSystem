@@ -114,6 +114,11 @@ public class SecurityConfig {
                     "/api/accounts/**"
                 ).permitAll()
 
+                // WebSocket endpoints (Handshake authentication handled by HandshakeInterceptor)
+                .requestMatchers(
+                    "/ws/**"
+                ).permitAll()
+
                 // All other endpoints require authentication
                 .anyRequest().authenticated()
             )

@@ -30,7 +30,7 @@ public class AuthSession {
     private String sessionUuid;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "subject_type", nullable = false, length = 10)
+    @Column(name = "subject_type", nullable = false, length = 20)
     private SessionSubjectType subjectType;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,7 +79,7 @@ public class AuthSession {
     private String userAgent;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "updated_by_type", length = 10)
+    @Column(name = "updated_by_type", length = 20)
     private UpdatedByType updatedByType;
 
     @Column(name = "updated_by_id", columnDefinition = "BINARY(16)")

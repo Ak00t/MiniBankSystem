@@ -13,6 +13,20 @@ public class CusEmailService {
 
     private final JavaMailSender mailSender;
 
+    public void sendCorporateLoginOtp(String email, String otp) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("Corporate Banking Login OTP");
+        message.setText(
+                "Your Corporate Banking login OTP code is: "
+                        + otp
+                        + "\n\nThis OTP will expire in 5 minutes."
+                        + "\n\nDo not share this OTP with anyone."
+                        + "\n\nIf you did not request this login, please ignore this email."
+        );
+        mailSender.send(message);
+    }
+
 
     // =========================================================
     // LOGIN OTP EMAIL
