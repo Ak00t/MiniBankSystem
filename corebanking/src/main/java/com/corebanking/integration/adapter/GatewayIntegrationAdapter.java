@@ -26,7 +26,7 @@ public class GatewayIntegrationAdapter implements GatewayOutboundPort {
 
     private final RestTemplate restTemplate;
 
-    @Value("${group3.gateway.base-url:http://localhost:8081}")
+    @Value("${group3.gateway.base-url:http://localhost:8004}")
     private String gatewayBaseUrl;
 
     @Value("${group3.gateway.internal-key:MMSPG-SEC-KEY-2026}")

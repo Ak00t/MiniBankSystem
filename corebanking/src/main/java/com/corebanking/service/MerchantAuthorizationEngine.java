@@ -44,6 +44,8 @@ public class MerchantAuthorizationEngine {
             throw new DuplicateTransactionException("This payment request is already being processed.");
         }
 
+        boolean shouldNotifyGatewayOnTxError = false;
+
         try {
             // Check for Duplicate Payment early to save processing
             if (ledgerFacadePort.isDuplicatePayment(token)) {
@@ -51,6 +53,8 @@ public class MerchantAuthorizationEngine {
             }
 
             PaymentDetailsResponse realDetails = gatewayOutboundPort.fetchPaymentDetails(token);
+            shouldNotifyGatewayOnTxError = true;
+
             BigDecimal realAmount = realDetails.getAmount();
 
             if (realAmount == null || realAmount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -64,6 +68,7 @@ public class MerchantAuthorizationEngine {
             ledgerFacadePort.validateSufficientFundsAndLimits(request.getCustomerId(), request.getAccountId(), realAmount);
 
             // 3. Dispatch AUTHORIZED outcome to Group 3 and obtain real transaction reference
+            shouldNotifyGatewayOnTxError = false;
             String ledgerReference = gatewayOutboundPort.dispatchAuthorizationOutcome(token, "AUTHORIZED", request.getAccountId(), null, null);
 
             safeAuditLog("TRANSACTION", "MERCHANT_PAYMENT_AUTHORIZED", token,
@@ -113,7 +118,9 @@ public class MerchantAuthorizationEngine {
         } catch (TransactionException transEx) {
             log.error("Payment authorization failed (Transaction) for token {}. Reason: {}", token, transEx.getMessage());
             safeAuditLog("TRANSACTION", "MERCHANT_PAYMENT_FAILED", token, transEx.getMessage());
-            notifyGatewayFailure(token, "TRANSACTION_FAILED", transEx.getMessage());
+            if (shouldNotifyGatewayOnTxError) {
+                notifyGatewayFailure(token, "TRANSACTION_FAILED", transEx.getMessage());
+            }
             throw transEx;
 
         } catch (DuplicateTransactionException dupEx) {
