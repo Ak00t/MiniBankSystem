@@ -1166,11 +1166,28 @@ export const P2PTransferForm = () => {
 
   // Debounced recipient account lookup
   useEffect(() => {
-    setRecipientName("");
-    setLookupError("");
-
     const acc = destinationAccount.trim();
-    if (!acc || acc.length < 5) return;
+    if (!acc || acc.length < 5) {
+      setRecipientName("");
+      setLookupError("");
+      return;
+    }
+
+    // Check if it matches a known saved beneficiary immediately to prevent flicker
+    const matchedBeneficiary = beneficiaries.find(
+      (b) => b.beneficiaryAccountNumber?.trim() === acc
+    );
+    if (matchedBeneficiary) {
+      setRecipientName(
+        matchedBeneficiary.nickname ||
+        matchedBeneficiary.beneficiaryAccountName ||
+        ""
+      );
+      setLookupError("");
+    } else {
+      setRecipientName("");
+      setLookupError("");
+    }
 
     const timer = setTimeout(async () => {
       try {
@@ -1183,15 +1200,23 @@ export const P2PTransferForm = () => {
           setLookupError("Account not found");
         }
       } catch (err: any) {
-        setRecipientName("");
-        setLookupError(err.response?.data?.message || "Account not found or inactive.");
+        if (!err.response) {
+          setLookupError("Cannot connect to server. Please ensure backend is running.");
+        } else if (err.response.status === 401) {
+          setLookupError("Session expired. Please log in again.");
+        } else {
+          setLookupError(err.response?.data?.message || "Account not found or inactive.");
+          if (!matchedBeneficiary) {
+            setRecipientName("");
+          }
+        }
       } finally {
         setLookupLoading(false);
       }
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [destinationAccount]);
+  }, [destinationAccount, beneficiaries]);
 
   // Step transition on success
   useEffect(() => {

@@ -27,6 +27,10 @@ export const API_ENDPOINTS = {
     ANNOUNCEMENT_BY_ID: (id: number) => `/api/admin/announcements/${id}`,
     ANNOUNCEMENT_DEACTIVATE: (id: number) =>
       `/api/admin/announcements/${id}/deactivate`,
+    ANNOUNCEMENT_SOFT_DELETE: (id: number) =>
+      `/api/admin/announcements/${id}/soft-delete`,
+    ANNOUNCEMENT_BULK_SOFT_DELETE_EXPIRED:
+      "/api/admin/announcements/bulk-soft-delete-expired",
 
     // System Rules Configuration
     SYSTEM_RULES: {
@@ -54,6 +58,17 @@ export const API_ENDPOINTS = {
 
   // Transfers
   TRANSFER_P2P: "/api/transfers/p2p",
+
+  // Over-the-Counter (OTC) Transactions
+  OTC: {
+    DEPOSIT: "/api/transactions/otc/deposit",
+    WITHDRAW: "/api/transactions/otc/withdraw",
+  },
+
+  // Teller Operations
+  TELLER: {
+    DAILY_CASH_SUMMARY: "/api/v1/teller/daily-cash-summary",
+  },
 
   // Announcements (active, for authenticated staff / all)
   ANNOUNCEMENTS: "/api/announcements",
