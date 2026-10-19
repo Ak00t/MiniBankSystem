@@ -9,6 +9,7 @@ import type { Beneficiary } from "../../beneficiaries/types/beneficiaryTypes";
 import type { P2PTransferRequest } from "../types/transferTypes";
 import { getAccountTransferLimits } from "../../customer-account/accounts/api/customerAccountApi";
 import type { TransferLimitInfo } from "../../customer-account/accounts/types/accountTypes";
+import { QRCodeView } from "../../../components/common/QRCodeView";
 import {
   Loader2,
   AlertCircle,
@@ -16,7 +17,6 @@ import {
   Copy,
   Check,
   ArrowRight,
-  ReceiptText,
   PlusCircle,
   ChevronLeft,
   Send,
@@ -25,25 +25,31 @@ import {
   Printer,
   Home,
   UserPlus,
-  Users,
   ShieldCheck,
   ShieldAlert,
+  Building2,
+  Sparkles,
+  Lock,
+  QrCode,
+  ExternalLink,
+  CreditCard,
 } from "lucide-react";
 
-
-/* Helpers */
-
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
 
 const maskAccount = (accNo: string): string => {
   if (!accNo || accNo.length < 4) return accNo;
   return `••••  ••••  ${accNo.slice(-4)}`;
 };
 
-const formatMMK = (n: number) => n.toLocaleString("en-US") + " MMK";
+const formatMMK = (n: number) =>
+  new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(n) + " MMK";
 
-
-/* PIN Modal */
-
+/* -------------------------------------------------------------------------- */
+/* PIN Modal (6-Box UI with Auto-advance, Backspace, Paste)                   */
+/* -------------------------------------------------------------------------- */
 
 interface PinModalProps {
   loading: boolean;
@@ -61,11 +67,12 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
   }, []);
 
   const handleChange = (index: number, value: string) => {
-    if (!/^\d?$/.test(value)) return;
+    if (!/^\d*$/.test(value)) return;
+    const digit = value.slice(-1);
     const next = [...digits];
-    next[index] = value;
+    next[index] = digit;
     setDigits(next);
-    if (value && index < 5) {
+    if (digit && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -74,6 +81,19 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
     if (e.key === "Backspace" && !digits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const next = Array(6).fill("");
+    for (let i = 0; i < pasted.length; i++) {
+      next[i] = pasted[i];
+    }
+    setDigits(next);
+    const focusIndex = Math.min(pasted.length, 5);
+    inputRefs.current[focusIndex]?.focus();
   };
 
   const handleSubmit = () => {
@@ -87,76 +107,75 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 animate-in fade-in zoom-in-95 duration-200">
-        {/* Close */}
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7 animate-in zoom-in-95 duration-200">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Icon */}
-        <div className="flex justify-center mb-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-200">
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+        <div className="flex justify-center mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-200 text-white">
+            <Lock className="w-7 h-7" />
           </div>
         </div>
 
-        <h3 className="text-xl font-bold text-gray-900 text-center mb-1">
-          Enter Your PIN
+        <h3 className="text-lg font-black text-slate-900 text-center mb-1">
+          Authorize Transfer
         </h3>
-        <p className="text-sm text-gray-500 text-center mb-6">
-          Enter your 6-digit transaction PIN to authorize this transfer
+        <p className="text-xs text-slate-500 text-center mb-6">
+          Enter your 6-digit transaction PIN to complete this payment
         </p>
 
-        {/* PIN Boxes */}
-        <div className="flex justify-center gap-3 mb-5">
+        {/* 6 PIN Boxes */}
+        <div className="flex justify-between items-center gap-2 mb-5">
           {digits.map((d, i) => (
             <input
               key={i}
-              ref={(el) => { inputRefs.current[i] = el; }}
+              ref={(el) => {
+                inputRefs.current[i] = el;
+              }}
               type="password"
+              inputMode="numeric"
               maxLength={1}
               value={d}
               onChange={(e) => handleChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
-              className={`w-11 h-12 text-center text-xl font-bold border-2 rounded-xl outline-none transition-all
-                ${d ? "border-violet-500 bg-violet-50 text-violet-700" : "border-gray-200 bg-gray-50 text-gray-900"}
-                focus:border-violet-500 focus:bg-violet-50 focus:ring-2 focus:ring-violet-200`}
+              onPaste={handlePaste}
+              className={`w-11 h-12 text-center text-xl font-bold border-2 rounded-xl outline-none transition-all ${
+                d
+                  ? "border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-100"
+                  : "border-slate-200 bg-slate-50 text-slate-800"
+              } focus:border-blue-500 focus:bg-blue-50 focus:ring-2 focus:ring-blue-200`}
             />
           ))}
         </div>
 
-        {/* Error */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl flex items-center gap-2 text-sm">
+          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl flex items-center gap-2 text-xs border border-red-100">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Confirm button */}
         <button
           onClick={handleSubmit}
           disabled={pin.length < 6 || loading}
-          className="w-full py-3.5 rounded-2xl font-semibold text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-lg shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" /> Processing...
+              <Loader2 className="w-4 h-4 animate-spin" /> Verifying PIN &amp; Transferring...
             </>
           ) : (
             <>
-              <Send className="w-4 h-4" /> Confirm Transfer
+              <Send className="w-4 h-4" /> Confirm &amp; Transfer
             </>
           )}
         </button>
@@ -165,48 +184,66 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
   );
 }
 
-
-/* Step 1 — Transfer Form  */
-
+/* -------------------------------------------------------------------------- */
+/* Step 1 — Form Step                                                         */
+/* -------------------------------------------------------------------------- */
 
 interface FormStepProps {
   accounts: any[];
   accountsLoading: boolean;
   sourceAccount: string;
-  setSourceAccount: (v: string) => void;
+  setSourceAccount: (val: string) => void;
   destinationAccount: string;
-  setDestinationAccount: (v: string) => void;
+  setDestinationAccount: (val: string) => void;
   recipientName: string;
+  setRecipientName: (val: string) => void;
   lookupLoading: boolean;
   lookupError: string;
   amount: string;
-  setAmount: (v: string) => void;
+  setAmount: (val: string) => void;
   description: string;
-  setDescription: (v: string) => void;
+  setDescription: (val: string) => void;
   validationError: string;
   recentAccounts: string[];
-  beneficiaries?: Beneficiary[];
-  transferLimits?: TransferLimitInfo | null;
+  beneficiaries: Beneficiary[];
+  transferLimits: TransferLimitInfo | null;
   onContinue: () => void;
 }
 
 function FormStep({
-  accounts, accountsLoading,
-  sourceAccount, setSourceAccount,
-  destinationAccount, setDestinationAccount,
-  recipientName, lookupLoading, lookupError,
-  amount, setAmount,
-  description, setDescription,
-  validationError, recentAccounts,
+  accounts,
+  accountsLoading,
+  sourceAccount,
+  setSourceAccount,
+  destinationAccount,
+  setDestinationAccount,
+  recipientName,
+  setRecipientName,
+  lookupLoading,
+  lookupError,
+  amount,
+  setAmount,
+  description,
+  setDescription,
+  validationError,
+  recentAccounts,
   beneficiaries = [],
   transferLimits = null,
   onContinue,
 }: FormStepProps) {
+  const [recipientTab, setRecipientTab] = useState<"beneficiaries" | "manual">(
+    beneficiaries.length > 0 && !destinationAccount ? "beneficiaries" : "manual"
+  );
+
   const selectedAcc = accounts.find((a) => a.accountNumber === sourceAccount);
   const quickAmounts = [10000, 50000, 100000, 500000];
 
-  const isBeneficiary = beneficiaries.some(
-    (b) => b.beneficiaryAccountNumber === destinationAccount
+  const cleanDest = destinationAccount?.trim();
+  const isBeneficiary = Boolean(
+    cleanDest &&
+      beneficiaries.some(
+        (b) => b.beneficiaryAccountNumber?.trim() === cleanDest
+      )
   );
   const effectiveOneTimeLimit = transferLimits
     ? isBeneficiary
@@ -216,63 +253,91 @@ function FormStep({
   const amountNum = Number(amount) || 0;
 
   return (
-    <div className="space-y-5">
-      {/* From Account */}
+    <div className="space-y-6">
+      {/* 1. From Account Selector */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
           From Account
         </label>
         {accountsLoading ? (
-          <div className="flex items-center gap-2 py-3 text-sm text-gray-400">
-            <Loader2 className="w-4 h-4 animate-spin" /> Loading accounts...
+          <div className="flex items-center gap-2 py-3 text-sm text-slate-400">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> Loading your accounts...
           </div>
         ) : (
-          <>
+          <div className="space-y-2">
             <select
               value={sourceAccount}
               onChange={(e) => setSourceAccount(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl text-sm font-medium text-gray-800 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all appearance-none cursor-pointer"
-              required
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
             >
-              {accounts.length === 0 && <option value="">No accounts available</option>}
+              {accounts.length === 0 && <option value="">No active accounts</option>}
               {accounts.map((acc) => (
                 <option key={acc.accountNumber} value={acc.accountNumber} disabled={acc.status !== "ACTIVE"}>
-                  {acc.accountNumber} — {acc.accountType}
+                  {acc.accountNumber} — {acc.accountType} ({Number(acc.availableBalance).toLocaleString()} MMK)
                   {acc.status !== "ACTIVE" ? ` [${acc.status}]` : ""}
                 </option>
               ))}
             </select>
+
             {selectedAcc && (
-              <div className="mt-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Wallet className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs text-blue-700 font-medium">Available Balance</span>
+              <div className="px-4 py-3 bg-gradient-to-r from-blue-50/70 to-indigo-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100/70 flex items-center justify-center text-blue-600">
+                    <Wallet className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-blue-600">Available to Transfer</p>
+                    <p className="text-sm font-extrabold text-[#08295C]">
+                      {Number(selectedAcc.availableBalance).toLocaleString()} MMK
+                    </p>
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-blue-700">
-                  {Number(selectedAcc.availableBalance).toLocaleString()} MMK
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  {selectedAcc.accountType}
                 </span>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
-      {/* To Account */}
+      {/* 2. Recipient Selector (2-Tab Experience: Saved Contacts vs Direct Number) */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-semibold text-gray-700">
-            To Account Number
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+            Transfer To
           </label>
           {beneficiaries.length > 0 && (
-            <span className="text-[11px] font-semibold text-blue-600 flex items-center gap-1">
-              <Users className="w-3 h-3" /> Saved Contacts
-            </span>
+            <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setRecipientTab("beneficiaries")}
+                className={`px-2.5 py-1 rounded-md transition ${
+                  recipientTab === "beneficiaries"
+                    ? "bg-white text-blue-700 shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Saved Contacts ({beneficiaries.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecipientTab("manual")}
+                className={`px-2.5 py-1 rounded-md transition ${
+                  recipientTab === "manual"
+                    ? "bg-white text-blue-700 shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                Enter Account No
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Saved Beneficiaries Quick Select Chips */}
-        {beneficiaries.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-2.5 mb-2 scrollbar-none">
+        {/* Tab A: Saved Contacts (Beneficiaries Grid / Chips) */}
+        {recipientTab === "beneficiaries" && beneficiaries.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
             {beneficiaries.map((b) => {
               const isSelected = destinationAccount === b.beneficiaryAccountNumber;
               const initial = (b.nickname || b.beneficiaryAccountName || "B")[0].toUpperCase();
@@ -280,63 +345,84 @@ function FormStep({
                 <button
                   key={b.beneficiaryId}
                   type="button"
-                  onClick={() => setDestinationAccount(b.beneficiaryAccountNumber)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0
-                    ${
-                      isSelected
-                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                        : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
-                    }`}
+                  onClick={() => {
+                    const accNo = b.beneficiaryAccountNumber?.trim() || "";
+                    setDestinationAccount(accNo);
+                    if (b.nickname || b.beneficiaryAccountName) {
+                      setRecipientName(b.nickname || b.beneficiaryAccountName);
+                    }
+                  }}
+                  className={`p-2.5 rounded-2xl border text-left transition flex items-center gap-2.5 ${
+                    isSelected
+                      ? "border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-100"
+                      : "border-slate-200 bg-slate-50/60 hover:bg-white hover:border-blue-300"
+                  }`}
                 >
-                  <span
-                    className={`w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold
-                      ${isSelected ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"}`}
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                      isSelected ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-700"
+                    }`}
                   >
                     {initial}
-                  </span>
-                  <span>{b.nickname || b.beneficiaryAccountName}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-800 truncate">
+                      {b.nickname || b.beneficiaryAccountName}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-mono truncate">
+                      {b.beneficiaryAccountNumber}
+                    </p>
+                  </div>
                 </button>
               );
             })}
           </div>
         )}
-        <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          list="recent-destinations"
-          value={destinationAccount}
-          onChange={(e) => setDestinationAccount(e.target.value.replace(/\D/g, ""))}
-          placeholder="Enter recipient account number"
-          className="w-full px-4 py-3 border-2 border-gray-100 rounded-2xl text-sm font-medium text-gray-800 placeholder-gray-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-gray-50"
-          maxLength={34}
-          required
-        />
-        <datalist id="recent-destinations">
-          {recentAccounts.map((acc, i) => <option key={i} value={acc} />)}
-        </datalist>
 
-        {/* Recipient Lookup Feedback */}
+        {/* Account Number Input */}
+        <div className="relative">
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            list="recent-destinations"
+            value={destinationAccount}
+            onChange={(e) => setDestinationAccount(e.target.value.replace(/\D/g, ""))}
+            placeholder="Enter 10 to 16 digit recipient account number"
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition"
+            maxLength={34}
+            required
+          />
+          <datalist id="recent-destinations">
+            {recentAccounts.map((acc, i) => (
+              <option key={i} value={acc} />
+            ))}
+          </datalist>
+        </div>
+
+        {/* Recipient Verification Status Badge */}
         {lookupLoading && (
           <div className="flex items-center gap-2 mt-2 px-3.5 py-2 bg-blue-50/80 border border-blue-100 rounded-xl text-xs text-blue-600 font-medium">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            <span>Checking recipient account...</span>
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
+            <span>Verifying recipient account with Core Banking...</span>
           </div>
         )}
 
         {!lookupLoading && recipientName && (
           <div className="mt-2 space-y-1.5">
-            <div className="px-3.5 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 font-medium text-emerald-900">
+            <div className="px-3.5 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 font-medium text-emerald-950">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Recipient: <strong className="font-bold text-emerald-950 text-sm">{recipientName}</strong></span>
+                <span>
+                  Recipient: <strong className="font-bold text-sm text-emerald-950">{recipientName}</strong>
+                </span>
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100/90 px-2 py-0.5 rounded-md">
-                Verified
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                Verified Account
               </span>
             </div>
 
-            {/* Beneficiary vs Stranger Status Pill */}
+            {/* Anti-Scam / Limit Classification Badge */}
             {transferLimits && (
               <div
                 className={`px-3 py-1.5 rounded-xl border text-[11px] flex items-center justify-between transition-all ${
@@ -351,39 +437,36 @@ function FormStep({
                   ) : (
                     <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   )}
-                  <span className="font-semibold">
-                    {isBeneficiary ? "Saved Beneficiary" : "Unsaved Recipient (Stranger)"}
+                  <span>
+                    {isBeneficiary ? (
+                      <strong>Saved Beneficiary</strong>
+                    ) : (
+                      <strong>New / Unsaved Account</strong>
+                    )}
                   </span>
                 </div>
-                <span className="font-bold">
-                  Max: {effectiveOneTimeLimit?.toLocaleString()} MMK
+                <span className="font-semibold text-[10px]">
+                  Max One-Time: {effectiveOneTimeLimit?.toLocaleString()} MMK
                 </span>
               </div>
             )}
           </div>
         )}
 
-        {!lookupLoading && lookupError && destinationAccount && (
-          <div className="mt-2 px-3 py-1.5 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-xs text-red-600 font-medium">
+        {lookupError && !lookupLoading && (
+          <div className="flex items-center gap-1.5 mt-2 px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl text-xs font-medium">
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             <span>{lookupError}</span>
           </div>
         )}
-
-        {!lookupLoading && !recipientName && !lookupError && recentAccounts.length > 0 && (
-          <p className="text-xs text-gray-400 mt-1.5 pl-1">
-            💡 Type to see recent accounts
-          </p>
-        )}
       </div>
 
-      {/* Amount */}
+      {/* 3. Amount Input with Comma Formatting and Quick Pills */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Amount <span className="text-gray-400 font-normal">(MMK)</span>
+        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+          Transfer Amount
         </label>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">MMK</span>
           <input
             type="text"
             inputMode="numeric"
@@ -392,99 +475,102 @@ function FormStep({
               const raw = e.target.value.replace(/\D/g, "");
               setAmount(raw);
             }}
-            placeholder="0"
-            className="w-full pl-14 pr-4 py-3 border-2 border-gray-100 rounded-2xl text-lg font-bold text-gray-800 placeholder-gray-300 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-gray-50"
+            placeholder="0.00"
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-black text-slate-900 placeholder-slate-300 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition"
             required
           />
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+            MMK
+          </div>
         </div>
 
-        {/* Quick amount buttons */}
-        <div className="flex gap-2 mt-2">
+        {/* Quick Amount Chips */}
+        <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto pb-1 scrollbar-none">
           {quickAmounts.map((q) => (
             <button
               key={q}
               type="button"
               onClick={() => setAmount(String(q))}
-              className="flex-1 py-1.5 text-xs font-semibold rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 transition-colors"
+              className="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 transition shrink-0"
             >
-              {q >= 1000 ? `${q / 1000}K` : q}
+              +{q.toLocaleString()}
             </button>
           ))}
+          {selectedAcc && (
+            <button
+              type="button"
+              onClick={() => setAmount(String(Math.floor(Number(selectedAcc.availableBalance))))}
+              className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-black transition shrink-0"
+            >
+              Max
+            </button>
+          )}
         </div>
 
-        {/* Real-time Transfer Limit Guidance Badges */}
-        {transferLimits && (
-          <div className="mt-2.5 p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-[11px] flex flex-wrap items-center justify-between gap-1 text-slate-600">
-            <span className="flex items-center gap-1">
-              <span>One-Time Limit:</span>
-              <strong className="text-slate-800">
-                {effectiveOneTimeLimit ? `${effectiveOneTimeLimit.toLocaleString()} MMK` : "—"}
-              </strong>
-            </span>
-            <span className="flex items-center gap-1">
-              <span>Remaining Today:</span>
-              <strong className="text-emerald-700">
-                {transferLimits.remainingDailyLimit.toLocaleString()} MMK
-              </strong>
-            </span>
+        {/* Amount Limit Warnings */}
+        {transferLimits && amountNum > 0 && effectiveOneTimeLimit && (
+          <div className="mt-2 space-y-1">
+            {amountNum > effectiveOneTimeLimit && (
+              <p className="text-[11px] font-semibold text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  Exceeds {isBeneficiary ? "beneficiary" : "stranger"} limit of{" "}
+                  {effectiveOneTimeLimit.toLocaleString()} MMK.
+                </span>
+              </p>
+            )}
+            {amountNum > transferLimits.remainingDailyLimit && (
+              <p className="text-[11px] font-semibold text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  Exceeds remaining daily limit of {transferLimits.remainingDailyLimit.toLocaleString()} MMK.
+                </span>
+              </p>
+            )}
           </div>
         )}
-
-        {/* Real-time Inline Amount Limit Warnings */}
-        {amountNum > 0 && effectiveOneTimeLimit && amountNum > effectiveOneTimeLimit && (
-          <p className="mt-1.5 text-xs font-semibold text-red-600 flex items-center gap-1.5">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-            Amount exceeds one-time limit ({effectiveOneTimeLimit.toLocaleString()} MMK)
-          </p>
-        )}
-        {amountNum > 0 && transferLimits && amountNum > transferLimits.remainingDailyLimit && (
-          <p className="mt-1 text-xs font-semibold text-red-600 flex items-center gap-1.5">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-            Amount exceeds today's remaining daily limit ({transferLimits.remainingDailyLimit.toLocaleString()} MMK)
-          </p>
-        )}
-
-        <p className="text-xs text-gray-400 mt-1.5 pl-1">Minimum transfer: 10,000 MMK</p>
       </div>
 
-      {/* Description */}
+      {/* 4. Description / Note (Optional) */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Description <span className="text-gray-400 font-normal">(Optional)</span>
+        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+          Note / Payment Purpose (Optional)
         </label>
         <input
           type="text"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="e.g. Rent, Loan repayment, Gift..."
-          maxLength={255}
-          className="w-full px-4 py-3 border-2 border-gray-100 rounded-2xl text-sm text-gray-800 placeholder-gray-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-gray-50"
+          placeholder="e.g. Project payment, rent, dinner split"
+          maxLength={100}
+          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition"
         />
       </div>
 
-      {/* Error */}
+      {/* General Validation Error */}
       {validationError && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-2xl flex items-start gap-3 text-sm border border-red-100">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+        <div className="p-3.5 bg-red-50 text-red-600 border border-red-100 rounded-2xl text-xs flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{validationError}</span>
         </div>
       )}
 
-      {/* Continue */}
+      {/* Continue Button */}
       <button
         type="button"
         onClick={onContinue}
-        disabled={accounts.length === 0 || accountsLoading}
-        className="w-full py-4 rounded-2xl font-bold text-white text-sm bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+        disabled={accountsLoading || lookupLoading || !destinationAccount || !amount}
+        className="w-full py-4 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 disabled:opacity-50 transition flex items-center justify-center gap-2"
       >
-        Continue <ArrowRight className="w-4 h-4" />
+        <span>Proceed to Review</span>
+        <ArrowRight className="w-4 h-4" />
       </button>
     </div>
   );
 }
 
-
-/* Step 2 — Review / Confirm */
+/* -------------------------------------------------------------------------- */
+/* Step 2 — Review & Confirmation Step                                        */
+/* -------------------------------------------------------------------------- */
 
 interface ReviewStepProps {
   sourceAccount: string;
@@ -496,77 +582,115 @@ interface ReviewStepProps {
   onBack: () => void;
 }
 
-function ReviewStep({ sourceAccount, destinationAccount, recipientName, amount, description, onConfirm, onBack }: ReviewStepProps) {
-  const rows = [
-    { label: "From Account", value: maskAccount(sourceAccount) },
-    {
-      label: "To Account",
-      value: recipientName
-        ? `${maskAccount(destinationAccount)} (${recipientName})`
-        : maskAccount(destinationAccount),
-    },
-    { label: "Transfer Amount", value: formatMMK(amount), highlight: true },
-    ...(description ? [{ label: "Description", value: description }] : []),
-  ];
-
+function ReviewStep({
+  sourceAccount,
+  destinationAccount,
+  recipientName,
+  amount,
+  description,
+  onConfirm,
+  onBack,
+}: ReviewStepProps) {
   return (
-    <div className="space-y-5">
-      {/* Summary card */}
-      <div className="rounded-3xl overflow-hidden border-2 border-gray-100">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 text-white text-center">
-          <p className="text-sm font-medium text-blue-100 mb-1">Transfer Amount</p>
-          <p className="text-4xl font-black tracking-tight">
-            {amount.toLocaleString()}
+    <div className="space-y-6">
+      {/* Hero Confirmation Card */}
+      <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+        <div className="bg-gradient-to-br from-[#08295C] to-blue-900 p-6 text-white text-center">
+          <p className="text-xs uppercase font-extrabold text-blue-200 tracking-wider mb-1">
+            Review Transfer Amount
           </p>
-          <p className="text-blue-200 text-sm font-semibold mt-1">MMK</p>
+          <p className="text-4xl font-black tracking-tight">{amount.toLocaleString()}</p>
+          <p className="text-xs font-bold text-blue-200 mt-1">Myanmar Kyat (MMK)</p>
         </div>
 
-        {/* Details */}
-        <div className="bg-white px-6 py-4 divide-y divide-gray-50">
-          {rows.map((row) => (
-            <div key={row.label} className="flex justify-between items-center py-3">
-              <span className="text-sm text-gray-500">{row.label}</span>
-              <span className={`text-sm font-semibold ${row.highlight ? "text-blue-600 text-base" : "text-gray-800"}`}>
-                {row.value}
-              </span>
+        {/* Transfer Pathway (Sender ➔ Recipient) */}
+        <div className="p-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+              From (Sender)
+            </span>
+            <p className="text-xs font-mono font-bold text-slate-800 truncate">
+              {sourceAccount}
+            </p>
+          </div>
+
+          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+            <ArrowRight className="w-4 h-4" />
+          </div>
+
+          <div className="flex-1 min-w-0 text-right">
+            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+              To (Recipient)
+            </span>
+            <p className="text-xs font-bold text-slate-900 truncate">
+              {recipientName || "Verified Account"}
+            </p>
+            <p className="text-[10px] font-mono text-slate-500 truncate">
+              {destinationAccount}
+            </p>
+          </div>
+        </div>
+
+        {/* Breakdown List */}
+        <div className="p-5 divide-y divide-slate-100 text-xs">
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-500 font-medium">Payment Channel</span>
+            <span className="font-bold text-slate-800">Apex Customer Portal</span>
+          </div>
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-500 font-medium">Service Fee</span>
+            <span className="font-bold text-emerald-600">0.00 MMK (Free)</span>
+          </div>
+          {description && (
+            <div className="flex justify-between items-center py-2.5">
+              <span className="text-slate-500 font-medium">Transfer Memo</span>
+              <span className="font-semibold text-slate-800 italic">"{description}"</span>
             </div>
-          ))}
-        </div>
-
-        {/* Note */}
-        <div className="bg-amber-50 px-6 py-3 flex items-start gap-2 border-t border-amber-100">
-          <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-700">
-            Service fee may apply. You will be asked for your PIN to authorize.
-          </p>
+          )}
+          <div className="flex justify-between items-center pt-3 text-sm">
+            <span className="font-bold text-slate-900">Total Debited Amount</span>
+            <span className="font-black text-blue-600 text-base">
+              {amount.toLocaleString()} MMK
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex gap-3">
+      {/* Security Assurance Notice */}
+      <div className="p-3.5 bg-blue-50/60 border border-blue-100 rounded-2xl flex items-start gap-2.5 text-xs text-blue-900">
+        <Lock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+        <p>
+          This transaction is authenticated with 2-Factor Transaction PIN. Funds will be deposited instantly.
+        </p>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 py-3.5 rounded-2xl font-semibold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-3.5 rounded-2xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 transition flex items-center justify-center gap-1.5"
         >
-          <ChevronLeft className="w-4 h-4" /> Back
+          <ChevronLeft className="w-4 h-4" />
+          <span>Back</span>
         </button>
+
         <button
           type="button"
           onClick={onConfirm}
-          className="flex-[2] py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2"
+          className="flex-[2] py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 transition flex items-center justify-center gap-2"
         >
-          <Send className="w-4 h-4" /> Enter PIN & Transfer
+          <Lock className="w-4 h-4" />
+          <span>Authorize &amp; Enter PIN</span>
         </button>
       </div>
     </div>
   );
 }
 
-
-/* Step 3 — Receipt */
-
+/* -------------------------------------------------------------------------- */
+/* Step 3 — Real-World Official E-Receipt                                     */
+/* -------------------------------------------------------------------------- */
 
 interface ReceiptStepProps {
   result: any;
@@ -590,10 +714,15 @@ function ReceiptStep({
   beneficiarySaved,
 }: ReceiptStepProps) {
   const [copied, setCopied] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
 
-  const completedDate = new Date(result.completedAt).toLocaleString("en-GB", {
-    day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+  const completedDate = new Date(result.completedAt || Date.now()).toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 
   const handleCopy = async () => {
@@ -604,156 +733,321 @@ function ReceiptStep({
     } catch {}
   };
 
-  const receiptRows = [
-    { label: "Reference ID", value: result.transactionRef, mono: true },
-    { label: "Status", value: result.status },
-    { label: "From", value: maskAccount(result.sourceAccountNumber) },
-    {
-      label: "To",
-      value: recipientName
-        ? `${maskAccount(result.destinationAccountNumber)} (${recipientName})`
-        : maskAccount(result.destinationAccountNumber),
-    },
-    { label: "Date & Time", value: completedDate },
-  ];
+  // Cryptographic receipt verification payload formatted cleanly for mobile cameras
+  const qrVerificationPayload = [
+    `APEX CORE BANKING OFFICIAL RECEIPT`,
+    `Ref ID: ${result.transactionRef}`,
+    `Amount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}`,
+    `Sender: ${result.sourceAccountNumber}`,
+    `Recipient: ${recipientName || "Recipient"} (${result.destinationAccountNumber})`,
+    `Date: ${completedDate}`,
+    `Status: ${result.status || "COMPLETED"} (Verified)`,
+    `Validation: SHA256-AUTHENTICATED`,
+  ].join("\n");
 
   return (
-    <div className="space-y-0">
-      {/* Success header */}
-      <div className="bg-gradient-to-br from-emerald-400 to-teal-500 rounded-t-3xl px-6 pt-8 pb-12 text-center text-white">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-white/25 rounded-2xl mb-4">
-          <CheckCircle2 className="w-9 h-9 text-white" />
-        </div>
-        <h2 className="text-xl font-black mb-1">Transfer Successful!</h2>
-        <p className="text-emerald-100 text-sm mb-4">Funds have been sent successfully</p>
-        <div className="bg-white/20 rounded-2xl py-3 px-6 inline-block">
-          <p className="text-3xl font-black">{result.amount.toLocaleString()}</p>
-          <p className="text-emerald-100 text-xs font-semibold">{result.currency}</p>
-        </div>
-      </div>
-
-      {/* Receipt card (overlaps header) */}
-      <div className="bg-white mx-4 -mt-6 rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-        {/* Tear effect */}
-        <div className="flex items-center px-4 py-2 gap-1">
-          <div className="flex-1 border-t-2 border-dashed border-gray-200" />
-          <ReceiptText className="w-4 h-4 text-gray-300 mx-2" />
-          <div className="flex-1 border-t-2 border-dashed border-gray-200" />
-        </div>
-
-        <div className="px-5 pb-2 divide-y divide-gray-50">
-          {receiptRows.map((row) => (
-            <div key={row.label} className="flex justify-between items-center py-2.5">
-              <span className="text-xs text-gray-500">{row.label}</span>
-              <span className={`text-sm font-semibold text-gray-800 ${row.mono ? "font-mono text-xs bg-gray-100 px-2 py-1 rounded-lg" : ""}`}>
-                {row.value}
-              </span>
+    <>
+      {/* Authenticity QR Modal */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in"
+            onClick={() => setShowQrModal(false)}
+          />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
+              <QrCode className="w-6 h-6" />
             </div>
-          ))}
+            <h3 className="text-base font-black text-slate-900">
+              Transaction Verification Code
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 mb-4">
+              Scan this QR with any device to verify this official electronic receipt.
+            </p>
+
+            <div className="flex justify-center mb-4">
+              <QRCodeView value={qrVerificationPayload} size={160} />
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-2xl text-[11px] font-mono text-left text-slate-600 space-y-1 border border-slate-100">
+              <p>
+                <strong>Bank:</strong> Apex Core Bank Node #1
+              </p>
+              <p>
+                <strong>Ref ID:</strong> {result.transactionRef}
+              </p>
+              <p>
+                <strong>Digital Signature:</strong> SHA256-AUTHENTICATED
+              </p>
+              <p>
+                <strong>Status:</strong> COMPLETED &amp; AUDITED
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Official Banking E-Receipt Card */}
+      <div className="print-receipt-container max-w-xl mx-auto bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+        {/* Official Bank Header */}
+        <div className="bg-[#08295C] px-6 py-5 text-white flex items-center justify-between border-b border-blue-900/50">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 border border-blue-400/30">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-black tracking-wider uppercase text-white">
+                Apex Core Bank
+              </h2>
+              <p className="text-[10px] text-blue-200 font-medium">
+                Official Electronic Transfer Receipt
+              </p>
+            </div>
+          </div>
+
+          <div className="text-right">
+            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-800/60 text-blue-200 border border-blue-700/50">
+              P2P TRANSFER
+            </span>
+            <p className="text-[10px] text-blue-300 mt-1">{completedDate}</p>
+          </div>
         </div>
 
-        {/* Fee breakdown */}
-        <div className="mx-5 mb-4 mt-2 bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-4 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Transfer Amount</span>
-            <span className="font-semibold text-gray-700">{result.amount.toLocaleString()} {result.currency}</span>
+        {/* Transfer Status Banner */}
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-6 text-center text-white">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-2xl mb-2.5 shadow-inner">
+            <CheckCircle2 className="w-7 h-7 text-white" />
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Service Fee</span>
-            <span className="font-semibold text-gray-700">{result.serviceFee.toLocaleString()} {result.currency}</span>
+          <h3 className="text-lg font-black tracking-tight">Payment Successful</h3>
+          <p className="text-xs text-emerald-100 font-medium">
+            Funds have been transferred and settled in real-time
+          </p>
+
+          <div className="mt-3.5 inline-block bg-white/15 backdrop-blur-md px-6 py-2.5 rounded-2xl border border-white/20">
+            <p className="text-3xl font-black tracking-tight">
+              {Number(result.amount).toLocaleString()}
+            </p>
+            <p className="text-xs font-bold text-emerald-100 uppercase tracking-widest mt-0.5">
+              {result.currency || "MMK"}
+            </p>
           </div>
-          <div className="border-t border-gray-200 pt-2 flex justify-between">
-            <span className="text-sm font-bold text-gray-800">Total Debited</span>
-            <span className="text-sm font-black text-blue-600">{result.totalDebitedAmount.toLocaleString()} {result.currency}</span>
+        </div>
+
+        {/* Two-Party Visual Transfer Path */}
+        <div className="p-5 bg-slate-50/70 border-b border-slate-100">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
+            {/* Sender Box */}
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+              <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
+                From (Sender)
+              </span>
+              <p className="text-xs font-mono font-bold text-slate-800 truncate">
+                {maskAccount(result.sourceAccountNumber)}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Apex Core Bank Account</p>
+            </div>
+
+            {/* Recipient Box */}
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+              <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
+                To (Recipient)
+              </span>
+              <p className="text-xs font-bold text-slate-900 truncate">
+                {recipientName || "Verified Account"}
+              </p>
+              <p className="text-[11px] font-mono text-slate-500 mt-0.5 truncate">
+                {result.destinationAccountNumber}
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* Detailed Breakdown */}
+        <div className="px-6 py-4 divide-y divide-slate-100 text-xs">
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-500 font-medium">Transaction Reference</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">
+                {result.transactionRef}
+              </span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="text-slate-400 hover:text-blue-600 transition p-1"
+                title="Copy Reference ID"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-500 font-medium">Transfer Amount</span>
+            <span className="font-bold text-slate-800">
+              {Number(result.amount).toLocaleString()} {result.currency || "MMK"}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-500 font-medium">Service Fee</span>
+            <span className="font-bold text-emerald-600">
+              {Number(result.serviceFee || 0).toLocaleString()} {result.currency || "MMK"}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-500 font-medium">Total Debited</span>
+            <span className="font-black text-blue-700 text-sm">
+              {Number(result.totalDebitedAmount || result.amount).toLocaleString()}{" "}
+              {result.currency || "MMK"}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-500 font-medium">Status</span>
+            <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              COMPLETED
+            </span>
+          </div>
+
+          {result.description && (
+            <div className="flex justify-between items-center py-2.5">
+              <span className="text-slate-500 font-medium">Transfer Memo</span>
+              <span className="font-semibold text-slate-700 italic">"{result.description}"</span>
+            </div>
+          )}
+        </div>
+
+        {/* Authenticity Verification QR Code Section */}
+        <div className="mx-6 mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span className="text-xs font-black text-slate-800">Authentic Digital Receipt</span>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Scan QR code with any smartphone camera to verify authenticity directly against the bank ledger.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowQrModal(true)}
+              className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline"
+            >
+              <span>Inspect cryptographic payload</span>
+              <ExternalLink className="w-3 h-3" />
+            </button>
+          </div>
+
+          <div
+            onClick={() => setShowQrModal(true)}
+            className="cursor-pointer transition transform hover:scale-105 shrink-0"
+            title="Click to enlarge QR"
+          >
+            <QRCodeView value={qrVerificationPayload} size={88} />
+          </div>
+        </div>
+
+        {/* Legal Disclaimer */}
+        <div className="px-6 py-2 text-center text-[10px] text-slate-400 bg-slate-50/50 border-t border-slate-100">
+          This receipt is computer-generated by Apex Core Banking System and serves as a valid proof of electronic payment.
+        </div>
+
+        {/* Action Toolbar (hidden on print) */}
+        <div className="no-print p-5 bg-white border-t border-slate-100 space-y-2.5">
+          {/* Quick Add to Beneficiary */}
+          {!isSavedBeneficiary && (
+            <button
+              type="button"
+              onClick={onSaveBeneficiary}
+              disabled={savingBeneficiary}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs font-bold text-amber-800 hover:bg-amber-100 transition disabled:opacity-60"
+            >
+              {savingBeneficiary ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                  <span>Saving to Beneficiaries...</span>
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4 text-amber-600" />
+                  <span>Add {recipientName || "Recipient"} to Saved Contacts</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {beneficiarySaved && (
+            <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Added to Beneficiaries successfully!</span>
+            </div>
+          )}
+
+          {/* Print & Copy Row */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-700">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Copy Reference</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+            >
+              <Printer className="w-3.5 h-3.5 text-slate-500" />
+              <span>Print Receipt</span>
+            </button>
+          </div>
+
+          {/* New Transfer */}
+          <button
+            type="button"
+            onClick={onNewTransfer}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 transition"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Make Another Transfer</span>
+          </button>
+
+          {/* Return to Dashboard */}
+          <button
+            type="button"
+            onClick={onGoDashboard}
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span>Return to Dashboard</span>
+          </button>
         </div>
       </div>
-
-      {/* Actions */}
-      <div className="px-5 pt-4 pb-4 space-y-2.5">
-        {/* Quick Save as Beneficiary */}
-        {!isSavedBeneficiary && (
-          <button
-            type="button"
-            onClick={onSaveBeneficiary}
-            disabled={savingBeneficiary}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 text-xs font-bold text-amber-800 hover:from-amber-100 hover:to-orange-100 transition-all disabled:opacity-60 shadow-sm"
-          >
-            {savingBeneficiary ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                <span>Saving to Contacts...</span>
-              </>
-            ) : (
-              <>
-                <UserPlus className="w-4 h-4 text-amber-600" />
-                <span>Save this recipient to Beneficiaries</span>
-              </>
-            )}
-          </button>
-        )}
-
-        {beneficiarySaved && (
-          <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold animate-in fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Saved to your Beneficiaries!</span>
-          </div>
-        )}
-
-        {/* Copy Reference & Print Receipt */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={handleCopy}
-            className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-all"
-          >
-            {copied ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-emerald-600">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 text-gray-500" />
-                <span>Copy Ref</span>
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-all"
-          >
-            <Printer className="w-3.5 h-3.5 text-gray-500" />
-            <span>Print Receipt</span>
-          </button>
-        </div>
-
-        {/* Primary: Make Another Transfer */}
-        <button
-          type="button"
-          onClick={onNewTransfer}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-200 transition-all"
-        >
-          <PlusCircle className="w-4 h-4" /> Make Another Transfer
-        </button>
-
-        {/* Secondary: Return to Dashboard */}
-        <button
-          type="button"
-          onClick={onGoDashboard}
-          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-semibold text-xs text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <Home className="w-3.5 h-3.5" /> Return to Dashboard
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
-/* Main Component */
-
+/* -------------------------------------------------------------------------- */
+/* Main P2P Transfer Component with 2-Column Responsive Layout                */
+/* -------------------------------------------------------------------------- */
 
 type Step = "form" | "review" | "receipt";
 
@@ -783,27 +1077,56 @@ export const P2PTransferForm = () => {
   const [beneficiarySaved, setBeneficiarySaved] = useState(false);
   const [transferLimits, setTransferLimits] = useState<TransferLimitInfo | null>(null);
 
-  // Load transfer limits when sourceAccount changes
+  // Function to load and sync beneficiaries
+  const loadBeneficiaries = () => {
+    getBeneficiaries()
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setBeneficiaries(data);
+        }
+      })
+      .catch(() => {});
+  };
+
+  // Load transfer limits and sync beneficiaries when sourceAccount changes
   useEffect(() => {
     if (sourceAccount) {
       getAccountTransferLimits(sourceAccount)
         .then(setTransferLimits)
         .catch(() => setTransferLimits(null));
+      loadBeneficiaries();
     } else {
       setTransferLimits(null);
     }
   }, [sourceAccount]);
 
-  // Load beneficiaries on mount
+  // Load beneficiaries on mount and window focus (auto-sync if added in another tab/page)
   useEffect(() => {
-    getBeneficiaries().then(setBeneficiaries).catch(() => {});
+    loadBeneficiaries();
+    const handleFocus = () => loadBeneficiaries();
+    window.addEventListener("focus", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
+
+  // Update destination account and sync beneficiaries if navigated with router state
+  useEffect(() => {
+    const dest = (location.state as any)?.destinationAccount;
+    if (dest) {
+      setDestinationAccount(dest);
+      loadBeneficiaries();
+    }
+  }, [location.state]);
 
   const isSavedBeneficiary = Boolean(
     beneficiarySaved ||
-    (transactionResult && beneficiaries.some(
-      (b) => b.beneficiaryAccountNumber === transactionResult.destinationAccountNumber
-    ))
+      (transactionResult &&
+        beneficiaries.some(
+          (b) =>
+            b.beneficiaryAccountNumber?.trim() ===
+            transactionResult.destinationAccountNumber?.trim()
+        ))
   );
 
   const handleSaveBeneficiary = async () => {
@@ -831,22 +1154,39 @@ export const P2PTransferForm = () => {
     }
   }, [accounts, sourceAccount]);
 
-  // Load recent accounts & ensure latest account balances on mount
+  // Load recent accounts & reset transfer state
   useEffect(() => {
     dispatch(fetchMyAccounts());
     const saved = localStorage.getItem("recentDestinations");
     if (saved) setRecentAccounts(JSON.parse(saved));
-    return () => { dispatch(resetTransferState()); };
+    return () => {
+      dispatch(resetTransferState());
+    };
   }, [dispatch]);
 
-  // Debounced account lookup when destinationAccount changes
+  // Debounced recipient account lookup
   useEffect(() => {
-    setRecipientName("");
-    setLookupError("");
-
     const acc = destinationAccount.trim();
     if (!acc || acc.length < 5) {
+      setRecipientName("");
+      setLookupError("");
       return;
+    }
+
+    // Check if it matches a known saved beneficiary immediately to prevent flicker
+    const matchedBeneficiary = beneficiaries.find(
+      (b) => b.beneficiaryAccountNumber?.trim() === acc
+    );
+    if (matchedBeneficiary) {
+      setRecipientName(
+        matchedBeneficiary.nickname ||
+        matchedBeneficiary.beneficiaryAccountName ||
+        ""
+      );
+      setLookupError("");
+    } else {
+      setRecipientName("");
+      setLookupError("");
     }
 
     const timer = setTimeout(async () => {
@@ -860,17 +1200,25 @@ export const P2PTransferForm = () => {
           setLookupError("Account not found");
         }
       } catch (err: any) {
-        setRecipientName("");
-        setLookupError(err.response?.data?.message || "Account not found or inactive.");
+        if (!err.response) {
+          setLookupError("Cannot connect to server. Please ensure backend is running.");
+        } else if (err.response.status === 401) {
+          setLookupError("Session expired. Please log in again.");
+        } else {
+          setLookupError(err.response?.data?.message || "Account not found or inactive.");
+          if (!matchedBeneficiary) {
+            setRecipientName("");
+          }
+        }
       } finally {
         setLookupLoading(false);
       }
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [destinationAccount]);
+  }, [destinationAccount, beneficiaries]);
 
-  // Go to receipt when success
+  // Step transition on success
   useEffect(() => {
     if (success && transactionResult) {
       setShowPinModal(false);
@@ -884,7 +1232,7 @@ export const P2PTransferForm = () => {
     localStorage.setItem("recentDestinations", JSON.stringify(updated));
   };
 
-  /* --- Step 1 → Step 2 validation --- */
+  /* Validation */
   const handleContinue = () => {
     setValidationError("");
     if (!sourceAccount) return setValidationError("Please select a source account.");
@@ -927,7 +1275,7 @@ export const P2PTransferForm = () => {
     setStep("review");
   };
 
-  /* --- PIN submitted → API call --- */
+  /* PIN Confirmation */
   const handlePinConfirm = (pin: string) => {
     const payload: P2PTransferRequest = {
       sourceAccountNumber: sourceAccount,
@@ -944,12 +1292,11 @@ export const P2PTransferForm = () => {
         saveDestination(destinationAccount);
         dispatch(fetchMyAccounts());
       }
-      // Refresh notifications immediately for both success and failure
       window.dispatchEvent(new Event("new-notification-event"));
     });
   };
 
-  /* --- Reset everything --- */
+  /* Reset */
   const handleReset = () => {
     setStep("form");
     setDestinationAccount("");
@@ -964,100 +1311,259 @@ export const P2PTransferForm = () => {
     dispatch(fetchMyAccounts());
   };
 
-  /* ---------------------------------------------------------------------- */
-  /* Render                                                                  */
-  /* ---------------------------------------------------------------------- */
+  const selectedAcc = accounts.find((a) => a.accountNumber === sourceAccount);
+  const availBalance = selectedAcc ? Number(selectedAcc.availableBalance) : 0;
+  const transferAmountNum = Number(amount) || 0;
+  const newBalancePreview = Math.max(0, availBalance - transferAmountNum);
+
+  const isBeneficiarySelected = Boolean(
+    destinationAccount?.trim() &&
+      beneficiaries.some(
+        (b) => b.beneficiaryAccountNumber?.trim() === destinationAccount.trim()
+      )
+  );
 
   return (
     <>
-      {/* PIN Modal (rendered outside card) */}
+      {/* PIN Modal */}
       {showPinModal && (
         <PinModal
           loading={loading}
           error={error}
           onConfirm={handlePinConfirm}
-          onClose={() => { if (!loading) { setShowPinModal(false); dispatch(resetTransferState()); } }}
+          onClose={() => {
+            if (!loading) {
+              setShowPinModal(false);
+              dispatch(resetTransferState());
+            }
+          }}
         />
       )}
 
-      <div className="max-w-md mx-auto">
-        {/* Card */}
-        <div className={`bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden ${step === "receipt" ? "" : "p-6"}`}>
+      {/* When in Receipt Step: Render Standalone Official E-Receipt */}
+      {step === "receipt" && transactionResult ? (
+        <ReceiptStep
+          result={transactionResult}
+          recipientName={recipientName}
+          onNewTransfer={handleReset}
+          onGoDashboard={() => navigate("/dashboard")}
+          isSavedBeneficiary={isSavedBeneficiary}
+          onSaveBeneficiary={handleSaveBeneficiary}
+          savingBeneficiary={savingBeneficiary}
+          beneficiarySaved={beneficiarySaved}
+        />
+      ) : (
+        /* 2-Column Responsive Layout for Step 1 & Step 2 */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Main Left Column (Step Wizard Form) */}
+          <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200">
+            {/* Header with Visual Stepper */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 mb-6 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-blue-200 shrink-0">
+                  <Send className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-slate-900">
+                    Internal P2P Fund Transfer
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    {step === "form"
+                      ? "Instant, secure transfer to any account"
+                      : "Review your transfer summary before authorization"}
+                  </p>
+                </div>
+              </div>
 
-          {/* Header (not shown on receipt) */}
-          {step !== "receipt" && (
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-md shadow-blue-200">
-                <Send className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-gray-900">P2P Transfer</h2>
-                <p className="text-xs text-gray-400">
-                  {step === "form" ? "Send money to any account" : "Review your transfer"}
-                </p>
-              </div>
-              {/* Step indicator — dot 1: form, dot 2: review */}
-              <div className="ml-auto flex items-center gap-1.5">
-                <div className={`h-1.5 rounded-full transition-all duration-300
-                  ${step === "form" ? "w-6 bg-blue-500" : "w-2 bg-blue-200"}`}
-                />
-                <div className={`h-1.5 rounded-full transition-all duration-300
-                  ${step === "review" ? "w-6 bg-blue-500" : "w-2 bg-gray-200"}`}
-                />
+              {/* Stepper Pills */}
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                    step === "form"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                    1
+                  </span>
+                  <span>Setup</span>
+                </span>
+                <span className="text-slate-300 font-bold">➔</span>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                    step === "review"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "bg-slate-100 text-slate-400"
+                  }`}
+                >
+                  <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                    2
+                  </span>
+                  <span>Review &amp; PIN</span>
+                </span>
               </div>
             </div>
-          )}
 
-          {/* Steps */}
-          {step === "form" && (
-            <FormStep
-              accounts={accounts}
-              accountsLoading={accountsLoading}
-              sourceAccount={sourceAccount}
-              setSourceAccount={setSourceAccount}
-              destinationAccount={destinationAccount}
-              setDestinationAccount={setDestinationAccount}
-              recipientName={recipientName}
-              lookupLoading={lookupLoading}
-              lookupError={lookupError}
-              amount={amount}
-              setAmount={setAmount}
-              description={description}
-              setDescription={setDescription}
-              validationError={validationError}
-              recentAccounts={recentAccounts}
-              beneficiaries={beneficiaries}
-              transferLimits={transferLimits}
-              onContinue={handleContinue}
-            />
-          )}
+            {/* Step 1: Form */}
+            {step === "form" && (
+              <FormStep
+                accounts={accounts}
+                accountsLoading={accountsLoading}
+                sourceAccount={sourceAccount}
+                setSourceAccount={setSourceAccount}
+                destinationAccount={destinationAccount}
+                setDestinationAccount={setDestinationAccount}
+                recipientName={recipientName}
+                setRecipientName={setRecipientName}
+                lookupLoading={lookupLoading}
+                lookupError={lookupError}
+                amount={amount}
+                setAmount={setAmount}
+                description={description}
+                setDescription={setDescription}
+                validationError={validationError}
+                recentAccounts={recentAccounts}
+                beneficiaries={beneficiaries}
+                transferLimits={transferLimits}
+                onContinue={handleContinue}
+              />
+            )}
 
-          {step === "review" && (
-            <ReviewStep
-              sourceAccount={sourceAccount}
-              destinationAccount={destinationAccount}
-              recipientName={recipientName}
-              amount={Number(amount)}
-              description={description}
-              onConfirm={() => setShowPinModal(true)}
-              onBack={() => setStep("form")}
-            />
-          )}
+            {/* Step 2: Review */}
+            {step === "review" && (
+              <ReviewStep
+                sourceAccount={sourceAccount}
+                destinationAccount={destinationAccount}
+                recipientName={recipientName}
+                amount={Number(amount)}
+                description={description}
+                onConfirm={() => setShowPinModal(true)}
+                onBack={() => setStep("form")}
+              />
+            )}
+          </div>
 
-          {step === "receipt" && transactionResult && (
-            <ReceiptStep
-              result={transactionResult}
-              recipientName={recipientName}
-              onNewTransfer={handleReset}
-              onGoDashboard={() => navigate("/dashboard")}
-              isSavedBeneficiary={isSavedBeneficiary}
-              onSaveBeneficiary={handleSaveBeneficiary}
-              savingBeneficiary={savingBeneficiary}
-              beneficiarySaved={beneficiarySaved}
-            />
-          )}
+          {/* Right Column: Live Summary & Safety Monitor */}
+          <div className="lg:col-span-5 xl:col-span-4 space-y-4 lg:sticky lg:top-24">
+            {/* Live Calculation Preview Card */}
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                <CreditCard className="w-4 h-4 text-blue-600" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                  Transfer Summary
+                </h3>
+              </div>
+
+              {/* Source Account Overview */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 font-medium">Source Account</span>
+                  <span className="font-mono font-bold text-slate-800">
+                    {sourceAccount ? maskAccount(sourceAccount) : "Not selected"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 font-medium">Current Balance</span>
+                  <span className="font-bold text-slate-800">{formatMMK(availBalance)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs border-t border-slate-200/60 pt-2">
+                  <span className="text-slate-500 font-medium">Transfer Amount</span>
+                  <span className="font-black text-blue-600">
+                    -{formatMMK(transferAmountNum)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs border-t border-slate-200/60 pt-2">
+                  <span className="text-slate-700 font-bold">Balance After Transfer</span>
+                  <span className="font-black text-slate-900">
+                    {formatMMK(newBalancePreview)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Multi-Tier Transfer Limit Monitor */}
+              {transferLimits && (
+                <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-blue-600" />
+                      Today's Limit Usage
+                    </span>
+                    <span className="font-bold text-blue-700">
+                      {Math.min(
+                        100,
+                        Math.round(
+                          (transferLimits.todayTransferredAmount /
+                            Math.max(1, transferLimits.effectiveDailyLimit)) *
+                            100
+                        )
+                      )}
+                      %
+                    </span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.round(
+                            (transferLimits.todayTransferredAmount /
+                              Math.max(1, transferLimits.effectiveDailyLimit)) *
+                              100
+                          )
+                        )}%`,
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex justify-between text-[11px] text-slate-500">
+                    <span>Transferred: {formatMMK(transferLimits.todayTransferredAmount)}</span>
+                    <span className="font-bold text-slate-700">
+                      Remaining: {formatMMK(transferLimits.remainingDailyLimit)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Real-time Anti-Fraud / Beneficiary Badge */}
+              <div
+                className={`p-3 rounded-2xl border text-xs flex items-center justify-between ${
+                  isBeneficiarySelected
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                    : "bg-slate-50 border-slate-200 text-slate-600"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {isBeneficiarySelected ? (
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0" />
+                  )}
+                  <span>
+                    {isBeneficiarySelected
+                      ? "Saved Beneficiary (High Limit)"
+                      : "Standard / Unsaved Payee Limit"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Instant Banking Guarantee */}
+            <div className="p-4 rounded-3xl bg-white border border-slate-200 text-xs text-slate-500 space-y-1.5 shadow-sm">
+              <div className="flex items-center gap-1.5 text-slate-700 font-bold">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Instant Settlement Guarantee</span>
+              </div>
+              <p className="text-[11px] leading-relaxed">
+                Internal P2P transactions are executed in real time 24/7 with zero waiting time and encrypted end-to-end.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 };

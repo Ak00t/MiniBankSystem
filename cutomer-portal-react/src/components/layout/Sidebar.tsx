@@ -11,6 +11,7 @@ import {
   Building2,
   ChevronRight,
   Megaphone,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -62,6 +63,11 @@ const mainMenuItems = [
     labelKey: "navigation.transactionHistory",
     path: "/transaction",
     icon: History,
+  },
+  {
+    labelKey: "navigation.accountStatement",
+    path: "/statements",
+    icon: FileText,
   },
   {
     labelKey: "navigation.beneficiaries",

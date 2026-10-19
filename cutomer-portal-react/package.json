@@ -17,6 +17,7 @@
     "i18next": "^26.4.7",
     "i18next-resources-to-backend": "^1.2.3",
     "lucide-react": "^1.47.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-easy-crop": "^6.2.3",

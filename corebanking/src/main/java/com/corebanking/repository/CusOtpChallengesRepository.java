@@ -5,10 +5,14 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
+import com.corebanking.entity.CorporateUser;
 import com.corebanking.entity.Customers;
 import com.corebanking.entity.OtpChallenge;
 import com.corebanking.entity.enums.OtpPurpose;
+import com.corebanking.entity.enums.OtpSubjectType;
 import com.corebanking.entity.enums.OtpStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,7 +24,67 @@ import org.springframework.data.repository.query.Param;
 import com.corebanking.entity.enums.UpdatedByType;
 public interface CusOtpChallengesRepository
         extends JpaRepository<OtpChallenge, Long> {
-	List<OtpChallenge> findByCustomerAndPurposeAndStatus(
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<OtpChallenge> findByCustomerAndSubjectTypeAndPurposeAndStatus(
+            Customers customer,
+            OtpSubjectType subjectType,
+            OtpPurpose purpose,
+            OtpStatus status
+    );
+
+    /**
+     * Customer LOGIN current-group lookup, after the credential lock.
+     * Use resendNo = 0; deliberately do not filter by status or expiry.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<OtpChallenge>
+    findFirstByCustomer_CustomerIdAndSubjectTypeAndPurposeAndResendNoOrderByOtpIdDesc(
+            UUID customerId,
+            OtpSubjectType subjectType,
+            OtpPurpose purpose,
+            int resendNo
+    );
+
+    List<OtpChallenge> findByCorporateUserAndSubjectTypeAndPurposeAndStatus(
+            CorporateUser corporateUser,
+            OtpSubjectType subjectType,
+            OtpPurpose purpose,
+            OtpStatus status
+    );
+
+    /**
+     * Call after locking the corporate credential row. Use resendNo = 0 to
+     * identify the latest original login, regardless of its status or expiry.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<OtpChallenge>
+    findFirstByCorporateUser_CorporateUserIdAndSubjectTypeAndPurposeAndResendNoOrderByOtpIdDesc(
+            UUID corporateUserId,
+            OtpSubjectType subjectType,
+            OtpPurpose purpose,
+            int resendNo
+    );
+
+    @EntityGraph(attributePaths = "customer")
+    Optional<OtpChallenge> findTopByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
+            String challengeGroupId,
+            OtpSubjectType subjectType,
+            OtpPurpose purpose
+    );
+
+    /**
+     * Call inside a write transaction covering verification or resend updates.
+     * First and Top both select the latest single challenge.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<OtpChallenge> findFirstByChallengeGroupIdAndSubjectTypeAndPurposeOrderByOtpIdDesc(
+            String challengeGroupId,
+            OtpSubjectType subjectType,
+            OtpPurpose purpose
+    );
+
+    List<OtpChallenge> findByCustomerAndPurposeAndStatus(
             Customers customer,
             OtpPurpose purpose,
             OtpStatus status

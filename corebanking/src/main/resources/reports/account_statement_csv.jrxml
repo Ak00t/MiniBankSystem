@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Optimized for Flat CSV Export -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="account_statement_csv"
+              pageWidth="600"
+              pageHeight="842"
+              columnWidth="600"
+              leftMargin="0"
+              rightMargin="0"
+              topMargin="0"
+              bottomMargin="0"
+              whenNoDataType="AllSectionsNoDetail"
+              uuid="c0a80101-7b3b-4f5a-9c2d-1e3f5a7b9c0d">
+
+    <property name="net.sf.jasperreports.export.csv.write.header" value="false"/>
+    <property name="net.sf.jasperreports.print.keep.full.text" value="true"/>
+
+    <!-- Report Parameters -->
+    <parameter name="CUSTOMER_NAME" class="java.lang.String"/>
+    <parameter name="PHONE" class="java.lang.String"/>
+    <parameter name="NRC" class="java.lang.String"/>
+    <parameter name="ACCOUNT_NUMBER" class="java.lang.String"/>
+    <parameter name="ACCOUNT_TYPE" class="java.lang.String"/>
+    <parameter name="CURRENCY" class="java.lang.String"/>
+    <parameter name="FROM_DATE" class="java.lang.Object"/>
+    <parameter name="TO_DATE" class="java.lang.Object"/>
+    <parameter name="OPENING_BALANCE" class="java.math.BigDecimal"/>
+    <parameter name="CLOSING_BALANCE" class="java.math.BigDecimal"/>
+    <parameter name="NUMBER_OF_CREDIT_ENTRIES" class="java.lang.Integer"/>
+    <parameter name="TOTAL_CREDIT" class="java.math.BigDecimal"/>
+    <parameter name="NUMBER_OF_DEBIT_ENTRIES" class="java.lang.Integer"/>
+    <parameter name="TOTAL_DEBIT" class="java.math.BigDecimal"/>
+
+    <!-- Transaction Detail Fields -->
+    <field name="transactionDate" class="java.time.LocalDateTime"/>
+    <field name="transactionRef" class="java.lang.String"/>
+    <field name="description" class="java.lang.String"/>
+    <field name="creditAmount" class="java.math.BigDecimal"/>
+    <field name="debitAmount" class="java.math.BigDecimal"/>
+    <field name="balance" class="java.math.BigDecimal"/>
+
+    <!-- Metadata Header Section -->
+    <title>
+        <band height="135" splitType="Stretch">
+            <!-- Row 1: Account Number -->
+            <staticText>
+                <reportElement x="0" y="0" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440001"/>
+                <text><![CDATA[Account Number]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="0" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440002"/>
+                <textFieldExpression><![CDATA[$P{ACCOUNT_NUMBER}]]></textFieldExpression>
+            </textField>
+
+            <!-- Row 2: Account Type -->
+            <staticText>
+                <reportElement x="0" y="15" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440003"/>
+                <text><![CDATA[Account Type]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="15" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440004"/>
+                <textFieldExpression><![CDATA[$P{ACCOUNT_TYPE}]]></textFieldExpression>
+            </textField>
+
+            <!-- Row 3: Account Holder Name -->
+            <staticText>
+                <reportElement x="0" y="30" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440005"/>
+                <text><![CDATA[Account Holder Name]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="30" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440006"/>
+                <textFieldExpression><![CDATA[$P{CUSTOMER_NAME}]]></textFieldExpression>
+            </textField>
+
+            <!-- Row 4: Phone Number -->
+            <staticText>
+                <reportElement x="0" y="45" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440007"/>
+                <text><![CDATA[Phone Number]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="45" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440008"/>
+                <textFieldExpression><![CDATA[$P{PHONE}]]></textFieldExpression>
+            </textField>
+
+            <!-- Row 5: NRC -->
+            <staticText>
+                <reportElement x="0" y="60" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440009"/>
+                <text><![CDATA[NRC]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="60" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440010"/>
+                <textFieldExpression><![CDATA[$P{NRC} != null ? $P{NRC} : "N/A"]]></textFieldExpression>
+            </textField>
+
+            <!-- Row 6: Currency -->
+            <staticText>
+                <reportElement x="0" y="75" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440011"/>
+                <text><![CDATA[Currency]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="75" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440012"/>
+                <textFieldExpression><![CDATA[$P{CURRENCY}]]></textFieldExpression>
+            </textField>
+
+            <!-- Row 7: From Date -->
+            <staticText>
+                <reportElement x="0" y="90" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440013"/>
+                <text><![CDATA[From Date]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="90" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440014"/>
+                <textFieldExpression><![CDATA[$P{FROM_DATE} instanceof java.time.LocalDate ? ((java.time.LocalDate)$P{FROM_DATE}).format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")) : String.valueOf($P{FROM_DATE})]]></textFieldExpression>
+            </textField>
+
+            <!-- Row 8: To Date -->
+            <staticText>
+                <reportElement x="0" y="105" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440015"/>
+                <text><![CDATA[To Date]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="105" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440016"/>
+                <textFieldExpression><![CDATA[$P{TO_DATE} instanceof java.time.LocalDate ? ((java.time.LocalDate)$P{TO_DATE}).format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")) : String.valueOf($P{TO_DATE})]]></textFieldExpression>
+            </textField>
+
+            <!-- Row 9: Opening Balance -->
+            <staticText>
+                <reportElement x="0" y="120" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440017"/>
+                <text><![CDATA[Opening Balance]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="120" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440018"/>
+                <textFieldExpression><![CDATA[$P{OPENING_BALANCE} != null ? new java.text.DecimalFormat("0.00").format($P{OPENING_BALANCE}) : "0.00"]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <!-- Table Header (6 Columns) -->
+    <columnHeader>
+        <band height="15" splitType="Stretch">
+            <staticText>
+                <reportElement x="0" y="0" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440019"/>
+                <text><![CDATA[Transaction Date & Time]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="120" y="0" width="100" height="15" uuid="550e8400-e29b-41d4-a716-446655440020"/>
+                <text><![CDATA[Trn_Ref_No]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="220" y="0" width="160" height="15" uuid="550e8400-e29b-41d4-a716-446655440021"/>
+                <text><![CDATA[Detailed Description]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="380" y="0" width="70" height="15" uuid="550e8400-e29b-41d4-a716-446655440022"/>
+                <text><![CDATA[Credit]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="450" y="0" width="70" height="15" uuid="550e8400-e29b-41d4-a716-446655440023"/>
+                <text><![CDATA[Debit]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="520" y="0" width="80" height="15" uuid="550e8400-e29b-41d4-a716-446655440024"/>
+                <text><![CDATA[Balance]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <!-- Transaction Detail Rows -->
+    <detail>
+        <band height="15" splitType="Stretch">
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="0" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440025"/>
+                <textFieldExpression><![CDATA[$F{transactionDate} != null ? $F{transactionDate}.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss")) : ""]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="0" width="100" height="15" uuid="550e8400-e29b-41d4-a716-446655440026"/>
+                <textFieldExpression><![CDATA[$F{transactionRef}]]></textFieldExpression>
+            </textField>
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="220" y="0" width="160" height="15" uuid="550e8400-e29b-41d4-a716-446655440027"/>
+                <textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="380" y="0" width="70" height="15" uuid="550e8400-e29b-41d4-a716-446655440028"/>
+                <textFieldExpression><![CDATA[$F{creditAmount} != null ? new java.text.DecimalFormat("0.00").format($F{creditAmount}) : ""]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="450" y="0" width="70" height="15" uuid="550e8400-e29b-41d4-a716-446655440029"/>
+                <textFieldExpression><![CDATA[$F{debitAmount} != null ? new java.text.DecimalFormat("0.00").format($F{debitAmount}) : ""]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="520" y="0" width="80" height="15" uuid="550e8400-e29b-41d4-a716-446655440030"/>
+                <textFieldExpression><![CDATA[$F{balance} != null ? new java.text.DecimalFormat("0.00").format($F{balance}) : "0.00"]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <!-- Summary Section -->
+    <summary>
+        <band height="75" splitType="Stretch">
+            <!-- Closing Balance -->
+            <staticText>
+                <reportElement x="0" y="0" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440031"/>
+                <text><![CDATA[Closing Balance]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="0" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440032"/>
+                <textFieldExpression><![CDATA[$P{CLOSING_BALANCE} != null ? new java.text.DecimalFormat("0.00").format($P{CLOSING_BALANCE}) : "0.00"]]></textFieldExpression>
+            </textField>
+
+            <!-- No. of Credit -->
+            <staticText>
+                <reportElement x="0" y="15" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440033"/>
+                <text><![CDATA[No. of Credit]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="15" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440034"/>
+                <textFieldExpression><![CDATA[$P{NUMBER_OF_CREDIT_ENTRIES} != null ? $P{NUMBER_OF_CREDIT_ENTRIES} : 0]]></textFieldExpression>
+            </textField>
+
+            <!-- Credit Total -->
+            <staticText>
+                <reportElement x="0" y="30" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440035"/>
+                <text><![CDATA[Credit Total]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="30" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440036"/>
+                <textFieldExpression><![CDATA[$P{TOTAL_CREDIT} != null ? new java.text.DecimalFormat("0.00").format($P{TOTAL_CREDIT}) : "0.00"]]></textFieldExpression>
+            </textField>
+
+            <!-- No. of Debit -->
+            <staticText>
+                <reportElement x="0" y="45" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440037"/>
+                <text><![CDATA[No. of Debit]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="45" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440038"/>
+                <textFieldExpression><![CDATA[$P{NUMBER_OF_DEBIT_ENTRIES} != null ? $P{NUMBER_OF_DEBIT_ENTRIES} : 0]]></textFieldExpression>
+            </textField>
+
+            <!-- Debit Total -->
+            <staticText>
+                <reportElement x="0" y="60" width="120" height="15" uuid="550e8400-e29b-41d4-a716-446655440039"/>
+                <text><![CDATA[Debit Total]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="120" y="60" width="480" height="15" uuid="550e8400-e29b-41d4-a716-446655440040"/>
+                <textFieldExpression><![CDATA[$P{TOTAL_DEBIT} != null ? new java.text.DecimalFormat("0.00").format($P{TOTAL_DEBIT}) : "0.00"]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+
+</jasperReport>

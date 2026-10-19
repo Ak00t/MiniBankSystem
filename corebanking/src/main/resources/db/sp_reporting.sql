@@ -12,7 +12,7 @@
 --   actor_staff_id     (was: staff_id on audit_logs)
 --   old_values/new_values  (was: old_value/new_value)
 -- Transaction types updated to real enum values.
--- ============================================================
+-- ==========================================================
 
 DROP PROCEDURE IF EXISTS sp_get_daily_ledger_summary;
 

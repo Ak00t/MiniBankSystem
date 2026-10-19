@@ -25,7 +25,7 @@ public class LoginAttempt {
     private Long loginAttemptId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "actor_type", nullable = false, length = 10)
+    @Column(name = "actor_type", nullable = false, length = 20)
     private SessionSubjectType actorType;
 
     @Column(name = "login_identifier", length = 191, nullable = false)
@@ -62,7 +62,7 @@ public class LoginAttempt {
     private LocalDateTime attemptedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "updated_by_type", length = 10)
+    @Column(name = "updated_by_type", length = 20)
     private UpdatedByType updatedByType;
 
     @Column(name = "updated_by_id", columnDefinition = "BINARY(16)")
