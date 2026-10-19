@@ -5,6 +5,7 @@ import com.corebanking.dto.AnnouncementResponse;
 import com.corebanking.dto.AnnouncementUpdateRequest;
 import com.corebanking.service.AnnouncementService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/admin/announcements")
@@ -31,9 +33,8 @@ public class AnnouncementAdminController {
 
     @PostMapping
     public ResponseEntity<AnnouncementResponse> createAnnouncement(
-            @RequestBody AnnouncementCreateRequest request,
-            Authentication authentication
-    ) {
+            @Valid @RequestBody AnnouncementCreateRequest request,
+            Authentication authentication) {
 
         String username =
                 authentication.getName();
@@ -86,12 +87,10 @@ public class AnnouncementAdminController {
     // =====================================================
 
     @PutMapping("/{id}")
-    public ResponseEntity<AnnouncementResponse>
-    updateAnnouncement(
+    public ResponseEntity<AnnouncementResponse> updateAnnouncement(
             @PathVariable Integer id,
-            @RequestBody AnnouncementUpdateRequest request,
-            Authentication authentication
-    ) {
+            @Valid @RequestBody AnnouncementUpdateRequest request,
+            Authentication authentication) {
 
         String username =
                 authentication.getName();
@@ -148,5 +147,27 @@ public class AnnouncementAdminController {
                         username
                 )
         );
+    }
+    
+ // =====================================================
+    // 1. SOFT DELETE (Single)
+    // DELETE /api/admin/announcements/{id}/soft-delete
+    // =====================================================
+    @DeleteMapping("/{id}/soft-delete")
+    public ResponseEntity<String> softDeleteAnnouncement(
+            @PathVariable Integer id
+    ) {
+        announcementService.deleteAnnouncement(id);
+        return ResponseEntity.ok("Announcement deleted successfully");
+    }
+
+    // =====================================================
+    // 2. BULK SOFT DELETE EXPIRED
+    // DELETE /api/admin/announcements/bulk-soft-delete-expired
+    // =====================================================
+    @DeleteMapping("/bulk-soft-delete-expired")
+    public ResponseEntity<Void> bulkDeleteExpiredAnnouncements() {
+        announcementService.bulkDeleteExpiredAnnouncements();
+        return ResponseEntity.noContent().build();
     }
 }

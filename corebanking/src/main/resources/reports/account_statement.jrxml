@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="account_statement"
+              pageWidth="595"
+              pageHeight="842"
+              columnWidth="555"
+              leftMargin="20"
+              rightMargin="20"
+              topMargin="20"
+              bottomMargin="20"
+              uuid="b1c5f3e2-8924-498b-967c-171891901a5e"
+              whenNoDataType="AllSectionsNoDetail">
+
+    <property name="net.sf.jasperreports.default.font.name" value="SansSerif"/>
+
+    <!-- =================================================================== -->
+    <!-- REPORT PARAMETERS                                                   -->
+    <!-- =================================================================== -->
+    <parameter name="CUSTOMER_NAME" class="java.lang.String"/>
+    <parameter name="PHONE" class="java.lang.String"/>
+    <parameter name="NRC" class="java.lang.String"/>
+    <parameter name="ACCOUNT_NUMBER" class="java.lang.String"/>
+    <parameter name="ACCOUNT_TYPE" class="java.lang.String"/>
+    <parameter name="CURRENCY" class="java.lang.String"/>
+    <parameter name="FROM_DATE" class="java.lang.Object"/>
+    <parameter name="TO_DATE" class="java.lang.Object"/>
+    <parameter name="OPENING_BALANCE" class="java.math.BigDecimal"/>
+    <parameter name="CLOSING_BALANCE" class="java.math.BigDecimal"/>
+    <parameter name="NUMBER_OF_CREDIT_ENTRIES" class="java.lang.Integer"/>
+    <parameter name="TOTAL_CREDIT" class="java.math.BigDecimal"/>
+    <parameter name="NUMBER_OF_DEBIT_ENTRIES" class="java.lang.Integer"/>
+    <parameter name="TOTAL_DEBIT" class="java.math.BigDecimal"/>
+    <parameter name="LOGO" class="java.lang.Object"/>
+    <parameter name="GENERATED_DATE" class="java.lang.Object"/>
+
+    <!-- =================================================================== -->
+    <!-- TRANSACTION DETAIL FIELDS                                           -->
+    <!-- =================================================================== -->
+    <field name="transactionDate" class="java.time.LocalDateTime"/>
+    <field name="transactionRef" class="java.lang.String"/>
+    <field name="description" class="java.lang.String"/>
+    <field name="creditAmount" class="java.math.BigDecimal"/>
+    <field name="debitAmount" class="java.math.BigDecimal"/>
+    <field name="balance" class="java.math.BigDecimal"/>
+
+    <!-- =================================================================== -->
+    <!-- OPENING BALANCE GROUP (Executes ONCE before transaction detail rows) -->
+    <!-- =================================================================== -->
+    <group name="OpeningBalanceGroup">
+        <groupHeader>
+            <band height="20">
+                <rectangle>
+                    <reportElement x="0" y="0" width="555" height="20" backcolor="#F8FAFC" uuid="d4a98402-9861-4277-bf31-0dfae38b2581">
+                        <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                    </reportElement>
+                    <graphicElement>
+                        <pen lineWidth="0.5" lineColor="#CBD5E1"/>
+                    </graphicElement>
+                </rectangle>
+                <!-- Detailed Description: Opening Balance -->
+                <staticText>
+                    <reportElement x="200" y="0" width="145" height="20" forecolor="#08295C" uuid="60f06518-ff35-43ea-8316-0925e0a6d598">
+                        <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                    </reportElement>
+                    <textElement verticalAlignment="Middle">
+                        <font fontName="SansSerif" size="8" isBold="true"/>
+                    </textElement>
+                    <text><![CDATA[Opening Balance]]></text>
+                </staticText>
+                <!-- Balance: formatted OPENING_BALANCE -->
+                <textField>
+                    <reportElement x="485" y="0" width="65" height="20" forecolor="#08295C" uuid="ad616efb-2c59-4d69-8bc3-3b6833b3bdf2">
+                        <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                    </reportElement>
+                    <textElement textAlignment="Right" verticalAlignment="Middle">
+                        <font fontName="SansSerif" size="8" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.00").format($P{OPENING_BALANCE} != null ? $P{OPENING_BALANCE} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupHeader>
+    </group>
+
+    <!-- =================================================================== -->
+    <!-- TITLE BAND: Header, Branding Logo & Customer/Account Information     -->
+    <!-- =================================================================== -->
+    <title>
+        <band height="120" splitType="Stretch">
+            <!-- Top Center: Logo Image + MiniBank Brand Text -->
+            <image onErrorType="Blank">
+                <reportElement x="216" y="2" width="26" height="26" uuid="7cf2be41-bb89-4911-a831-29177a33bb58"/>
+                <imageExpression><![CDATA[$P{LOGO} != null ? $P{LOGO} : "reports/assets/logo.png"]]></imageExpression>
+            </image>
+            <staticText>
+                <reportElement x="248" y="2" width="92" height="26" forecolor="#08295C" uuid="8f1618a8-8e6c-49a8-be8e-1616c27f6312"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="18" isBold="true"/>
+                </textElement>
+                <text><![CDATA[MiniBank]]></text>
+            </staticText>
+
+            <!-- Top Right: Report Generated Date -->
+            <textField isBlankWhenNull="true">
+                <reportElement x="375" y="6" width="180" height="16" forecolor="#475569" uuid="e61e0cb9-90b9-47f2-959c-85dafa76b1f8"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Date : " + ($P{GENERATED_DATE} != null ? ($P{GENERATED_DATE} instanceof java.time.LocalDateTime ? ((java.time.LocalDateTime)$P{GENERATED_DATE}).format(java.time.format.DateTimeFormatter.ofPattern("dd MMMM, yyyy", java.util.Locale.ENGLISH)) : ($P{GENERATED_DATE} instanceof java.time.LocalDate ? ((java.time.LocalDate)$P{GENERATED_DATE}).format(java.time.format.DateTimeFormatter.ofPattern("dd MMMM, yyyy", java.util.Locale.ENGLISH)) : ($P{GENERATED_DATE} instanceof java.util.Date ? new java.text.SimpleDateFormat("dd MMMM, yyyy", java.util.Locale.ENGLISH).format((java.util.Date)$P{GENERATED_DATE}) : String.valueOf($P{GENERATED_DATE})))) : new java.text.SimpleDateFormat("dd MMMM, yyyy", java.util.Locale.ENGLISH).format(new java.util.Date()))]]></textFieldExpression>
+            </textField>
+
+            <!-- Top Divider Line -->
+            <line>
+                <reportElement x="0" y="34" width="555" height="1" forecolor="#CBD5E1" uuid="d65377bf-939e-4c7b-9686-21ce9a0fecfa"/>
+                <graphicElement>
+                    <pen lineWidth="0.8"/>
+                </graphicElement>
+            </line>
+
+            <!-- Customer & Account Info Grid -->
+            <!-- Left Column: Customer Personal Details -->
+            <staticText>
+                <reportElement x="0" y="42" width="110" height="15" forecolor="#64748B" uuid="ef961e93-27c9-4671-8c43-ea70fb3df3ba"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Account Holder Name:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="110" y="42" width="165" height="15" forecolor="#0F172A" uuid="a60b9381-80a5-48fa-b91c-76f578dfeb89"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{CUSTOMER_NAME}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="59" width="110" height="15" forecolor="#64748B" uuid="92e59df1-f3b1-477c-a02b-a010d8ef732a"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Phone Number:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="110" y="59" width="165" height="15" forecolor="#0F172A" uuid="d6e3557e-399a-41d6-848e-d967a5bb0042"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{PHONE}]]></textFieldExpression>
+            </textField>
+
+            <!-- Strictly NRC label, NOT NRC/Passport Number -->
+            <staticText>
+                <reportElement x="0" y="76" width="110" height="15" forecolor="#64748B" uuid="a9d59ca4-9f89-4a92-be22-fa7a147e4564"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[NRC:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="110" y="76" width="165" height="15" forecolor="#0F172A" uuid="9c8eb01a-8bb7-41a4-949f-b98a101f370a"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{NRC} != null ? $P{NRC} : "N/A"]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="93" width="110" height="15" forecolor="#64748B" uuid="b4eb827c-3f24-4f24-9195-2c8c6d4ba4c8"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Account Type:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="110" y="93" width="165" height="15" forecolor="#0F172A" uuid="3fb8bf28-1110-4828-98e6-764f69f2e46b"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{ACCOUNT_TYPE}]]></textFieldExpression>
+            </textField>
+
+            <!-- Right Column: Account & Time Period Details -->
+            <staticText>
+                <reportElement x="295" y="42" width="95" height="15" forecolor="#64748B" uuid="88d9c57a-df87-4348-9366-2ec2b516ff87"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Account Number:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="390" y="42" width="165" height="15" forecolor="#08295C" uuid="ef17bb3a-a1fb-4299-8cf0-2ca0f074be28"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{ACCOUNT_NUMBER}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="295" y="59" width="95" height="15" forecolor="#64748B" uuid="e61e0cb9-90b9-47f2-959c-85dafa76b1f6"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Currency:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="390" y="59" width="165" height="15" forecolor="#0F172A" uuid="45466c1b-f8f2-4e4c-bdf6-559d813ec637"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{CURRENCY}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="295" y="76" width="95" height="15" forecolor="#64748B" uuid="9f1c7e9f-4318-4bf8-b57f-71ea86348ef1"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Time Period:]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="390" y="76" width="165" height="15" forecolor="#0F172A" uuid="a63e2617-bb19-482f-87eb-4cb928787f73"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["From " + ($P{FROM_DATE} instanceof java.time.LocalDate ? ((java.time.LocalDate)$P{FROM_DATE}).format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")) : String.valueOf($P{FROM_DATE})) + " To " + ($P{TO_DATE} instanceof java.time.LocalDate ? ((java.time.LocalDate)$P{TO_DATE}).format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")) : String.valueOf($P{TO_DATE}))]]></textFieldExpression>
+            </textField>
+
+            <!-- Bottom Header Divider Line -->
+            <line>
+                <reportElement x="0" y="114" width="555" height="1" forecolor="#E2E8F0" uuid="7d5f0b54-ec0a-43cf-be6b-586793a647e3"/>
+                <graphicElement>
+                    <pen lineWidth="0.8"/>
+                </graphicElement>
+            </line>
+        </band>
+    </title>
+
+    <!-- =================================================================== -->
+    <!-- PAGE HEADER BAND: Mini Header for Page 2+                           -->
+    <!-- =================================================================== -->
+    <pageHeader>
+        <band height="18">
+            <printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+            <textField>
+                <reportElement x="0" y="0" width="350" height="14" forecolor="#64748B" uuid="88e0c96c-1960-44ec-b8f9-4b6d4fe7fb55"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["MiniBank Account Statement | Acc: " + $P{ACCOUNT_NUMBER} + " (" + $P{ACCOUNT_TYPE} + ")"]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="350" y="0" width="205" height="14" forecolor="#64748B" uuid="559d814f-3760-482a-a92c-c5e317c2a7db"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Period: " + String.valueOf($P{FROM_DATE}) + " - " + String.valueOf($P{TO_DATE})]]></textFieldExpression>
+            </textField>
+            <line>
+                <reportElement x="0" y="16" width="555" height="1" forecolor="#CBD5E1" uuid="62463e26-f772-466d-8e47-e14b2d3fe32e"/>
+            </line>
+        </band>
+    </pageHeader>
+
+    <!-- =================================================================== -->
+    <!-- COLUMN HEADER BAND: Transaction Table Headers (Repeated on pages)  -->
+    <!-- =================================================================== -->
+    <columnHeader>
+        <band height="24">
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="24" backcolor="#08295C" uuid="c24a2ef3-5a02-4fe7-b716-1f61882c5a4b"/>
+                <graphicElement>
+                    <pen lineWidth="0.0"/>
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="5" y="0" width="105" height="24" forecolor="#FFFFFF" uuid="4526b71b-4370-49c7-8c38-89fa2d6b38c2"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Transaction Date & Time]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="110" y="0" width="90" height="24" forecolor="#FFFFFF" uuid="dfbb7145-2f92-4826-b7b5-2eb3a846c2f9"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Trn_Ref_No]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="200" y="0" width="145" height="24" forecolor="#FFFFFF" uuid="d93e1173-19cb-4ef9-813c-cf80d440c95a"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Detailed Description]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="345" y="0" width="70" height="24" forecolor="#FFFFFF" uuid="fcfeb168-1549-4364-bbcf-05fc085ee581"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Credit]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="415" y="0" width="70" height="24" forecolor="#FFFFFF" uuid="eeea6e88-349f-4315-9988-a28efbc2fa93"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Debit]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="485" y="0" width="65" height="24" forecolor="#FFFFFF" uuid="cf822eb1-a1b7-449e-bb9d-92c2df9e2c69"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Balance]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <!-- =================================================================== -->
+    <!-- DETAIL BAND: Individual Transaction Ledger Movement Rows            -->
+    <!-- =================================================================== -->
+    <detail>
+        <band height="20" splitType="Prevent">
+            <!-- Row Border Line -->
+            <line>
+                <reportElement positionType="FixRelativeToBottom" x="0" y="19" width="555" height="1" forecolor="#F1F5F9" uuid="885ecb2a-6058-45b9-b5f7-640fb0db8b21"/>
+                <graphicElement>
+                    <pen lineWidth="0.5"/>
+                </graphicElement>
+            </line>
+
+            <!-- Transaction Date & Time -->
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="5" y="0" width="105" height="19" forecolor="#0F172A" uuid="2a563c78-cf9f-4952-ba13-fb467cebc627">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{transactionDate} != null ? $F{transactionDate}.format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss")) : ""]]></textFieldExpression>
+            </textField>
+
+            <!-- Trn_Ref_No -->
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="110" y="0" width="90" height="19" forecolor="#0F172A" uuid="a6327cf1-3c48-4389-9a28-66d4957e0eb7">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{transactionRef}]]></textFieldExpression>
+            </textField>
+
+            <!-- Detailed Description -->
+            <textField textAdjust="StretchHeight" isBlankWhenNull="true">
+                <reportElement x="200" y="0" width="145" height="19" forecolor="#0F172A" uuid="c2865ffb-4a56-42bb-a320-b6aafe34f6d4">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+            </textField>
+
+            <!-- Credit Amount -->
+            <textField isBlankWhenNull="true">
+                <reportElement x="345" y="0" width="70" height="19" forecolor="#0F172A" uuid="603caeb1-9ff4-4ff5-bba4-1e5ff017f9fb">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="false"/>
+                </textElement>
+                <textFieldExpression><![CDATA[($F{creditAmount} != null && $F{creditAmount}.compareTo(java.math.BigDecimal.ZERO) > 0) ? new java.text.DecimalFormat("#,##0.00").format($F{creditAmount}) : "0.00"]]></textFieldExpression>
+            </textField>
+
+            <!-- Debit Amount -->
+            <textField isBlankWhenNull="true">
+                <reportElement x="415" y="0" width="70" height="19" forecolor="#0F172A" uuid="885ecb2a-6058-45b9-b5f7-640fb0db8b29">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="false"/>
+                </textElement>
+                <textFieldExpression><![CDATA[($F{debitAmount} != null && $F{debitAmount}.compareTo(java.math.BigDecimal.ZERO) > 0) ? ("-" + new java.text.DecimalFormat("#,##0.00").format($F{debitAmount})) : "-0.00"]]></textFieldExpression>
+            </textField>
+
+            <!-- Running Balance -->
+            <textField isBlankWhenNull="true">
+                <reportElement x="485" y="0" width="65" height="19" forecolor="#08295C" uuid="bb3b890f-7828-4ef9-8dcf-e56847c20c02">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{balance} != null ? new java.text.DecimalFormat("#,##0.00").format($F{balance}) : "0.00"]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <!-- =================================================================== -->
+    <!-- PAGE FOOTER BAND: Standard Disclaimer and Page Numbers              -->
+    <!-- =================================================================== -->
+    <pageFooter>
+        <band height="30">
+            <line>
+                <reportElement x="0" y="4" width="555" height="1" forecolor="#CBD5E1" uuid="d65377bf-939e-4c7b-9686-21ce9a0fecf2"/>
+                <graphicElement>
+                    <pen lineWidth="0.8"/>
+                </graphicElement>
+            </line>
+            <staticText>
+                <reportElement x="0" y="10" width="380" height="14" forecolor="#64748B" uuid="7cf2be41-bb89-4911-a831-29177a33bb52"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="7" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[This is an auto-generated document and no further signature is required.]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="390" y="10" width="165" height="14" forecolor="#64748B" uuid="6231bb14-ca0d-4560-84c4-f2a89cb5ca32"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="7"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <!-- =================================================================== -->
+    <!-- SUMMARY BAND: Closing Balance & Two Custom Summary Rows             -->
+    <!-- =================================================================== -->
+    <summary>
+        <band height="60" splitType="Prevent">
+            <!-- =========================================================== -->
+            <!-- ROW 1: CLOSING BALANCE TABLE ROW                            -->
+            <!-- =========================================================== -->
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="20" backcolor="#F8FAFC" uuid="d82b4a59-b1d5-4519-94bc-696615b13861">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#CBD5E1"/>
+                </graphicElement>
+            </rectangle>
+            <!-- Column 3: Detailed Description -> Closing Balance -->
+            <staticText>
+                <reportElement x="200" y="0" width="145" height="20" forecolor="#08295C" uuid="8d641d40-f1d2-43bb-a53b-0164c414bb44">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Closing Balance]]></text>
+            </staticText>
+            <!-- Column 6: Balance -> formatted CLOSING_BALANCE -->
+            <textField>
+                <reportElement x="485" y="0" width="65" height="20" forecolor="#08295C" uuid="45465e90-c20e-436e-b3f4-e7529853a48e">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.00").format($P{CLOSING_BALANCE} != null ? $P{CLOSING_BALANCE} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
+            </textField>
+
+            <!-- =========================================================== -->
+            <!-- ROW 2: CREDIT TOTAL TABLE ROW                               -->
+            <!-- =========================================================== -->
+            <rectangle>
+                <reportElement x="0" y="20" width="555" height="20" backcolor="#F8FAFC" uuid="559d814f-3760-482a-a92c-c5e317c2a7e1">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#CBD5E1"/>
+                </graphicElement>
+            </rectangle>
+            <!-- Column 2: Trn_Ref_No -> No. of Credit: <count> -->
+            <textField>
+                <reportElement x="110" y="20" width="90" height="20" forecolor="#0F172A" uuid="a63e2617-bb19-482f-87eb-4cb928787f81">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["No. of Credit: " + ($P{NUMBER_OF_CREDIT_ENTRIES} != null ? $P{NUMBER_OF_CREDIT_ENTRIES} : 0)]]></textFieldExpression>
+            </textField>
+            <!-- Column 3: Detailed Description -> Credit Total -->
+            <staticText>
+                <reportElement x="200" y="20" width="145" height="20" forecolor="#08295C" uuid="f04b2b2a-19fb-449e-b7a4-1e5ff017f911">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Credit Total]]></text>
+            </staticText>
+            <!-- Column 4: Credit -> formatted TOTAL_CREDIT -->
+            <textField>
+                <reportElement x="345" y="20" width="70" height="20" forecolor="#08295C" uuid="ef17bb3a-a1fb-4299-8cf0-2ca0f074be91">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[new java.text.DecimalFormat("#,##0.00").format($P{TOTAL_CREDIT} != null ? $P{TOTAL_CREDIT} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
+            </textField>
+
+            <!-- =========================================================== -->
+            <!-- ROW 3: DEBIT TOTAL TABLE ROW                                -->
+            <!-- =========================================================== -->
+            <rectangle>
+                <reportElement x="0" y="40" width="555" height="20" backcolor="#F8FAFC" uuid="c24a2ef3-5a02-4fe7-b716-1f61882c5ae2">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#CBD5E1"/>
+                </graphicElement>
+            </rectangle>
+            <!-- Column 2: Trn_Ref_No -> No. of Debit: <count> -->
+            <textField>
+                <reportElement x="110" y="40" width="90" height="20" forecolor="#0F172A" uuid="603caeb1-9ff4-4ff5-bba4-1e5ff017f9e2">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["No. of Debit: " + ($P{NUMBER_OF_DEBIT_ENTRIES} != null ? $P{NUMBER_OF_DEBIT_ENTRIES} : 0)]]></textFieldExpression>
+            </textField>
+            <!-- Column 3: Detailed Description -> Debit Total -->
+            <staticText>
+                <reportElement x="200" y="40" width="145" height="20" forecolor="#08295C" uuid="998ecb2a-6058-45b9-b5f7-640fb0db8b33">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Debit Total]]></text>
+            </staticText>
+            <!-- Column 5: Debit -> formatted TOTAL_DEBIT with leading minus sign -->
+            <textField>
+                <reportElement x="415" y="40" width="70" height="20" forecolor="#08295C" uuid="885ecb2a-6058-45b9-b5f7-640fb0db8be2">
+                    <property name="com.jaspersoft.studio.unit.height" value="px"/>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="SansSerif" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[($P{TOTAL_DEBIT} != null && $P{TOTAL_DEBIT}.compareTo(java.math.BigDecimal.ZERO) > 0 ? ("-" + new java.text.DecimalFormat("#,##0.00").format($P{TOTAL_DEBIT})) : "0.00")]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+
+</jasperReport>

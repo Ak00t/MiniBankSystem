@@ -1,5 +1,4 @@
 import {
-  Bell,
   Search,
   ChevronDown,
   HelpCircle,
@@ -31,7 +30,10 @@ import type {
 
 import {
   useAppSelector,
+  type RootState,
 } from "../../lib/redux";
+
+import { NotificationDropdown } from "../../features/notifications/components/NotificationDropdown";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ export default function Navbar() {
    * =========================================
    */
   const profile = useAppSelector(
-    (state) => state.profile.profile
+    (state: RootState) => state.profile.profile
   );
 
   /**
@@ -276,6 +278,7 @@ export default function Navbar() {
   return (
     <header
       className="
+        no-print
         fixed left-64 right-0 top-0 z-20
         flex h-20 items-center justify-between
         border-b border-slate-200
@@ -353,34 +356,11 @@ export default function Navbar() {
             NOTIFICATIONS
         ==================================== */}
 
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="
-            relative flex h-10 w-10
-            items-center justify-center
-            rounded-xl
-            text-slate-500
-            transition
-            hover:bg-slate-50
-            hover:text-[#08295C]
-            focus:outline-none
-            focus:ring-2
-            focus:ring-blue-100
-          "
-        >
-          <Bell size={19} />
+        {/* ===================================
+            NOTIFICATIONS DROPDOWN
+        ==================================== */}
 
-          <span
-            className="
-              absolute right-2 top-2
-              h-2 w-2
-              rounded-full
-              bg-red-500
-              ring-2 ring-white
-            "
-          />
-        </button>
+        <NotificationDropdown />
 
         {/* ===================================
             DIVIDER
