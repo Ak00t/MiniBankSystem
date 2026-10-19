@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { LockKeyhole } from "lucide-react";
 import { loginCorporate } from "../api/auth";
 import CorporateAuthCard from "../components/CorporateAuthCard";
 import { CorporateField, CorporateNotice, CorporateSubmit } from "../components/CorporateForm";
@@ -37,11 +38,15 @@ export default function CorporateLoginPage() {
       <CorporateField id="corporate-user" label="Corporate User ID" value={user} onChange={e => setUser(e.target.value)} disabled={action.busy} required autoComplete="off" readOnly={!userEditable} onFocus={() => setUserEditable(true)} placeholder="Enter Corporate User ID" />
       <CorporateField id="corporate-password" label="Password" secret value={password} onChange={e => setPassword(e.target.value)} disabled={action.busy} required autoComplete="new-password" readOnly={!passwordEditable} onFocus={() => setPasswordEditable(true)} placeholder="Enter your password" />
       <CorporateNotice error message={action.error} />
-      <CorporateSubmit busy={action.busy}>Corporate Login</CorporateSubmit>
+      <CorporateSubmit busy={action.busy}>Login</CorporateSubmit>
     </form>
     <p className="mt-6 text-center text-sm text-slate-500">Personal banking? <Link to="/login" className="font-semibold text-cyan-600 hover:text-cyan-700">Individual Customer Login</Link></p>
     <div className="mt-8 border-t border-slate-100 pt-6 text-center">
       <p className="text-sm text-slate-500">Don't have a corporate account? <span className="font-semibold text-cyan-600">Contact your bank</span></p>
+    </div>
+    <div className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-center">
+      <LockKeyhole size={14} className="text-slate-400" />
+      <p className="text-xs leading-5 text-slate-500">For your security, never share your password or OTP with anyone.</p>
     </div>
   </CorporateAuthCard>;
 }
