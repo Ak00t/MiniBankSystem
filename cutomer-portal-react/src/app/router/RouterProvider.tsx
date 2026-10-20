@@ -2,6 +2,7 @@
 import {
   createBrowserRouter,
   RouterProvider,
+  Navigate,
 } from "react-router-dom";
 
 import ProtectedRoute from "../../features/auth/components/ProtectedRoute";
@@ -142,6 +143,16 @@ const router = createBrowserRouter([
           },
 
           {
+            path: "/merchant-payment/authorize",
+            element: <MerchantPaymentAuthorize />,
+          },
+
+          {
+            path: "/merchant-payment",
+            element: <MerchantPaymentAuthorize />,
+          },
+
+          {
             path: "/dashboard",
             element: <DashboardPage />,
           },
@@ -204,6 +215,11 @@ const router = createBrowserRouter([
 
     ],
 
+  },
+
+  {
+    path: "*",
+    element: <Navigate to="/dashboard" replace />,
   },
 
 ]);
