@@ -152,6 +152,8 @@ public class CusCorporateSessionService {
         corporateCredentialRepository.saveAndFlush(credentials);
 
         loginAttemptsRepository.saveAndFlush(LoginAttempt.builder()
+                .ipAddress(metadata == null ? null : metadata.ipAddress())
+                .userAgent(metadata == null ? null : metadata.userAgent())
                 .actorType(SessionSubjectType.CORPORATE_USER)
                 .corporateUser(user)
                 .customer(null)
@@ -164,6 +166,8 @@ public class CusCorporateSessionService {
                 .build());
 
         auditLogsRepository.saveAndFlush(AuditLogs.builder()
+                .ipAddress(metadata == null ? null : metadata.ipAddress())
+                .userAgent(metadata == null ? null : metadata.userAgent())
                 .actorType(ActorType.CORPORATE_USER)
                 .actorCorporateUser(user)
                 .actorCustomer(null)
@@ -185,6 +189,11 @@ public class CusCorporateSessionService {
 
     @Transactional(noRollbackFor = CusSessionExpiredException.class)
     public CusTokenResponse refreshToken(CusRefreshTokenRequest request) {
+        return refreshToken(request, CusSessionClientMetadata.EMPTY);
+    }
+
+    @Transactional(noRollbackFor = CusSessionExpiredException.class)
+    public CusTokenResponse refreshToken(CusRefreshTokenRequest request, CusSessionClientMetadata metadata) {
         if (request == null
                 || request.getRefreshToken() == null
                 || request.getRefreshToken().isBlank()) {
@@ -237,6 +246,8 @@ public class CusCorporateSessionService {
             );
         }
         auditLogsRepository.save(AuditLogs.builder()
+                .ipAddress(metadata == null ? null : metadata.ipAddress())
+                .userAgent(metadata == null ? null : metadata.userAgent())
                 .actorType(ActorType.CORPORATE_USER)
                 .actorCorporateUser(user)
                 .actorCustomer(null)
@@ -253,6 +264,11 @@ public class CusCorporateSessionService {
 
     @Transactional(noRollbackFor = CusSessionExpiredException.class)
     public void logout(String authorizationHeader) {
+        logout(authorizationHeader, CusSessionClientMetadata.EMPTY);
+    }
+
+    @Transactional(noRollbackFor = CusSessionExpiredException.class)
+    public void logout(String authorizationHeader, CusSessionClientMetadata metadata) {
         if (authorizationHeader == null || authorizationHeader.isBlank()
                 || !authorizationHeader.startsWith("Bearer ")) {
             throw new CusAuthenticationException("Access token is required.");
@@ -294,6 +310,8 @@ public class CusCorporateSessionService {
                     .build());
         }
         auditLogsRepository.save(AuditLogs.builder()
+                .ipAddress(metadata == null ? null : metadata.ipAddress())
+                .userAgent(metadata == null ? null : metadata.userAgent())
                 .actorType(ActorType.CORPORATE_USER)
                 .actorCorporateUser(user)
                 .actorCustomer(null)

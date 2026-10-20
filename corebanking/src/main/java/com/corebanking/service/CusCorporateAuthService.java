@@ -29,7 +29,11 @@ public class CusCorporateAuthService {
     private final CusCorporateCredentialRepository corporateCredentialRepository;
 
     public CusCorporateLoginResponse login(CusCorporateLoginRequest request) {
-        UUID corporateUserId = corporateCredentialService.authenticateCredentials(request);
+        return login(request, CusSessionClientMetadata.EMPTY);
+    }
+
+    public CusCorporateLoginResponse login(CusCorporateLoginRequest request, CusSessionClientMetadata metadata) {
+        UUID corporateUserId = corporateCredentialService.authenticateCredentials(request, metadata);
         OtpChallenge challenge = corporateOtpService.createLoginOtp(corporateUserId);
         return new CusCorporateLoginResponse(
                 true,
@@ -85,11 +89,19 @@ public class CusCorporateAuthService {
     }
 
     public CusTokenResponse refreshToken(CusRefreshTokenRequest request) {
-        return corporateSessionService.refreshToken(request);
+        return refreshToken(request, CusSessionClientMetadata.EMPTY);
+    }
+
+    public CusTokenResponse refreshToken(CusRefreshTokenRequest request, CusSessionClientMetadata metadata) {
+        return corporateSessionService.refreshToken(request, metadata);
     }
 
     public void logout(String authorizationHeader) {
-        corporateSessionService.logout(authorizationHeader);
+        logout(authorizationHeader, CusSessionClientMetadata.EMPTY);
+    }
+
+    public void logout(String authorizationHeader, CusSessionClientMetadata metadata) {
+        corporateSessionService.logout(authorizationHeader, metadata);
     }
 
     private CusCorporateOtpVerifyResponse completedLoginResponse(CusTokenResponse tokens, String message) {

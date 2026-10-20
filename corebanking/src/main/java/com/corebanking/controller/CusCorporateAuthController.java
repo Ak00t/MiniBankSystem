@@ -38,8 +38,8 @@ public class CusCorporateAuthController {
 
     @PostMapping("/login")
     public ResponseEntity<CusCorporateLoginResponse> login(
-            @Valid @RequestBody CusCorporateLoginRequest request) {
-        return ResponseEntity.ok(corporateAuthService.login(request));
+            @Valid @RequestBody CusCorporateLoginRequest request, HttpServletRequest servletRequest) {
+        return ResponseEntity.ok(corporateAuthService.login(request, CusSessionClientMetadata.from(servletRequest)));
     }
 
     @PostMapping("/verify-otp")
@@ -80,8 +80,8 @@ public class CusCorporateAuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<CusTokenResponse> refreshToken(
-            @RequestBody CusRefreshTokenRequest request) {
-        return ResponseEntity.ok(corporateAuthService.refreshToken(request));
+            @RequestBody CusRefreshTokenRequest request, HttpServletRequest servletRequest) {
+        return ResponseEntity.ok(corporateAuthService.refreshToken(request, CusSessionClientMetadata.from(servletRequest)));
     }
 
     // The Corporate security chain validates and touches the session before dispatch.
@@ -95,8 +95,8 @@ public class CusCorporateAuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(
-            @RequestHeader("Authorization") String authorizationHeader) {
-        corporateAuthService.logout(authorizationHeader);
+            @RequestHeader("Authorization") String authorizationHeader, HttpServletRequest servletRequest) {
+        corporateAuthService.logout(authorizationHeader, CusSessionClientMetadata.from(servletRequest));
         return ResponseEntity.ok("Logged out successfully.");
     }
 }

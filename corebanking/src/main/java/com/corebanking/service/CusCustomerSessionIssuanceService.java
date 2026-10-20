@@ -154,7 +154,7 @@ public class CusCustomerSessionIssuanceService {
              "AUTH_SESSION",
              authSession.getSessionUuid(),
              null,
-             "{\"status\":\"ACTIVE\",\"idleTimeoutMinutes\":5}"
+             "{\"status\":\"ACTIVE\",\"idleTimeoutMinutes\":5}", metadata
      );
 
 
@@ -173,7 +173,7 @@ public class CusCustomerSessionIssuanceService {
              customer.getCustomerCode(),
              customer,
              true,
-             null
+             null, metadata
      );
 
 
@@ -194,9 +194,22 @@ public class CusCustomerSessionIssuanceService {
          String entityId,
          String oldValues,
          String newValues) {
+        saveAuditLog(actorType, actorCustomer, actionType, entityType, entityId, oldValues, newValues, CusSessionClientMetadata.EMPTY);
+    }
+
+    private void saveAuditLog(
+         ActorType actorType,
+         Customers actorCustomer,
+         String actionType,
+         String entityType,
+         String entityId,
+         String oldValues,
+         String newValues, CusSessionClientMetadata metadata) {
 
      AuditLogs auditLog =
              AuditLogs.builder()
+                     .ipAddress(metadata == null ? null : metadata.ipAddress())
+                     .userAgent(metadata == null ? null : metadata.userAgent())
 
                      .actorType(
                              actorType
