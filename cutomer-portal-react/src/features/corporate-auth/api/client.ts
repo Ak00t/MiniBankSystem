@@ -1,7 +1,7 @@
-import axios, { type InternalAxiosRequestConfig } from "axios";
+import axios, { type AxiosRequestConfig, type InternalAxiosRequestConfig } from "axios";
 import type { CorporateTokens } from "../types";
 import {
-  assertCorporateGeneration, endCorporateSession, getCorporateAccessToken,
+  assertCorporateGeneration, assertCorporateSessionActive, endCorporateSession, getCorporateAccessToken,
   getCorporateGeneration, getCorporateRefreshToken, isCorporateGenerationCurrent,
   saveCorporateTokens,
 } from "../utils/storage";
@@ -9,6 +9,9 @@ import {
 const options = { baseURL: "http://localhost:8080/api/corporate", timeout: 10_000 };
 const corporateApi = axios.create(options);
 const refreshClient = axios.create(options);
+export interface CorporateRequestConfig extends AxiosRequestConfig {
+  corporateGeneration?: number;
+}
 interface CorporateRequest extends InternalAxiosRequestConfig {
   corporateGeneration?: number;
   corporateRetry?: boolean;
@@ -23,6 +26,7 @@ corporateApi.interceptors.request.use(config => {
   request.corporateGeneration ??= getCorporateGeneration();
   if (config.url !== "/auth/logout") assertCorporateGeneration(request.corporateGeneration);
   if (!isPublic(config.url)) {
+    if (config.url !== "/auth/logout") assertCorporateSessionActive(request.corporateGeneration);
     const token = getCorporateAccessToken();
     if (token && !(config.url === "/auth/logout" && config.headers.Authorization)) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -33,13 +37,13 @@ corporateApi.interceptors.request.use(config => {
 
 let refreshLock: { generation: number; promise: Promise<string> } | null = null;
 async function refreshCorporateAccess(generation: number) {
-  assertCorporateGeneration(generation);
+  assertCorporateSessionActive(generation);
   if (refreshLock?.generation === generation) return refreshLock.promise;
   const promise = (async () => {
     const refreshToken = getCorporateRefreshToken();
     if (!refreshToken) throw new Error("Corporate refresh token is missing.");
     const { data } = await refreshClient.post<CorporateTokens & { success: boolean }>("/auth/refresh", { refreshToken });
-    assertCorporateGeneration(generation);
+    assertCorporateSessionActive(generation);
     if (!data.success) throw new Error("Corporate session refresh failed.");
     saveCorporateTokens(data, generation, true);
     return data.accessToken;
@@ -51,7 +55,10 @@ async function refreshCorporateAccess(generation: number) {
 
 corporateApi.interceptors.response.use(response => {
   const config = response.config as CorporateRequest;
-  if (config.url !== "/auth/logout") assertCorporateGeneration(config.corporateGeneration!);
+  if (config.url !== "/auth/logout") {
+    assertCorporateGeneration(config.corporateGeneration!);
+    if (!isPublic(config.url)) assertCorporateSessionActive(config.corporateGeneration!);
+  }
   return response;
 }, async (error: unknown) => {
   if (!axios.isAxiosError(error)) return Promise.reject(error);
@@ -62,17 +69,23 @@ corporateApi.interceptors.response.use(response => {
   const generation = request.corporateGeneration!;
   if (!isCorporateGenerationCurrent(generation)) return Promise.reject(error);
   if (error.response?.data?.code === "SESSION_EXPIRED" || request.corporateRetry) {
-    endCorporateSession();
+    endCorporateSession(error.response?.data?.code === "SESSION_EXPIRED" ? "expired" : "logout");
     return Promise.reject(error);
   }
   request.corporateRetry = true;
   try {
     const token = await refreshCorporateAccess(generation);
-    assertCorporateGeneration(generation);
+    assertCorporateSessionActive(generation);
+    // Refresh already validates/touches the backend session. Do not replay a
+    // keep-alive inside its 60-second throttle window; the next activity can retry.
+    if (request.url === "/auth/session/keep-alive") return Promise.reject(error);
     request.headers.Authorization = `Bearer ${token}`;
     return corporateApi(request);
   } catch (refreshError) {
-    if (isCorporateGenerationCurrent(generation)) endCorporateSession();
+    if (isCorporateGenerationCurrent(generation)) {
+      const expired = axios.isAxiosError(refreshError) && refreshError.response?.data?.code === "SESSION_EXPIRED";
+      endCorporateSession(expired ? "expired" : "logout");
+    }
     return Promise.reject(refreshError);
   }
 });

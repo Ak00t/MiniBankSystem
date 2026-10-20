@@ -6,6 +6,10 @@ const keys = {
   challenge: "corporateChallengeGroupId",
   setupExpiry: "corporateSetupExpiresAt",
   setupStep: "corporateSetupStep",
+  activity: "corporateLastActivityAt",
+  activitySession: "corporateActivitySession",
+  keepAliveAt: "corporateKeepAliveStartedAt",
+  keepAliveSession: "corporateKeepAliveSession",
 } as const;
 
 let generation = 0;
@@ -29,9 +33,12 @@ export function clearCorporateAuth() {
   Object.values(keys).forEach(key => sessionStorage.removeItem(key));
 }
 
-export function endCorporateSession() {
+export type CorporateSessionEndReason = "logout" | "idle" | "absolute" | "expired";
+export function endCorporateSession(reason: CorporateSessionEndReason = "logout") {
   clearCorporateAuth();
-  window.dispatchEvent(new Event(CORPORATE_SESSION_ENDED));
+  const event = new Event(CORPORATE_SESSION_ENDED);
+  Object.assign(event, { reason });
+  window.dispatchEvent(event);
 }
 
 export function beginCorporateLogin() {
@@ -78,6 +85,48 @@ export function corporateSessionDeadline() {
 }
 export const hasCorporateSession = () => corporateSessionDeadline() > Date.now();
 
+export const CORPORATE_IDLE_MS = 5 * 60 * 1000;
+export function corporateLastActivity() {
+  const claims = readClaims(getCorporateRefreshToken(), "REFRESH");
+  const value = Number(sessionStorage.getItem(keys.activity));
+  return claims && sessionStorage.getItem(keys.activitySession) === claims.sid &&
+    Number.isFinite(value) && value > 0 && value <= Date.now() ? value : 0;
+}
+export function recordCorporateActivity() {
+  const claims = readClaims(getCorporateRefreshToken(), "REFRESH");
+  if (!claims) return;
+  sessionStorage.setItem(keys.activitySession, claims.sid);
+  sessionStorage.setItem(keys.activity, String(Date.now()));
+}
+// Reserve before Axios dispatch so failures, route remounts and full reloads
+// cannot open another request slot for this session within sixty seconds.
+export function reserveCorporateKeepAlive() {
+  const claims = readClaims(getCorporateRefreshToken(), "REFRESH");
+  if (!claims) return false;
+  const raw = sessionStorage.getItem(keys.keepAliveAt);
+  const previous = Number(raw);
+  if (sessionStorage.getItem(keys.keepAliveSession) === claims.sid && raw !== null &&
+      Number.isFinite(previous) && Date.now() - previous < 60_000) return false;
+  sessionStorage.setItem(keys.keepAliveSession, claims.sid);
+  sessionStorage.setItem(keys.keepAliveAt, String(Date.now()));
+  return true;
+}
+
+export function corporateExpirationReason(): CorporateSessionEndReason | null {
+  if (corporateSessionDeadline() <= Date.now()) return "absolute";
+  if (!corporateLastActivity() || Date.now() - corporateLastActivity() >= CORPORATE_IDLE_MS) return "idle";
+  return null;
+}
+export function assertCorporateSessionActive(expectedGeneration: number) {
+  assertCorporateGeneration(expectedGeneration);
+  const reason = corporateExpirationReason();
+  if (reason) {
+    endCorporateSession(reason);
+    throw new Error("Corporate session has expired. Please login again.");
+  }
+}
+
+
 export function saveCorporateTokens(tokens: CorporateTokens, expectedGeneration: number, rotation = false) {
   assertCorporateGeneration(expectedGeneration);
   const access = readClaims(tokens.accessToken, "ACCESS");
@@ -87,6 +136,7 @@ export function saveCorporateTokens(tokens: CorporateTokens, expectedGeneration:
     throw new Error("Invalid Corporate authentication response. Please login again.");
   }
   if (rotation) {
+    assertCorporateSessionActive(expectedGeneration);
     const deadline = corporateSessionDeadline();
     if (!deadline || refresh.exp * 1000 > deadline) throw new Error("Corporate session lifetime cannot be extended.");
   } else {
@@ -94,6 +144,7 @@ export function saveCorporateTokens(tokens: CorporateTokens, expectedGeneration:
   }
   sessionStorage.setItem(keys.access, tokens.accessToken);
   sessionStorage.setItem(keys.refresh, tokens.refreshToken);
+  if (!rotation) recordCorporateActivity();
 }
 
 export const getCorporateSetupExpiry = () => Number(sessionStorage.getItem(keys.setupExpiry)) || 0;

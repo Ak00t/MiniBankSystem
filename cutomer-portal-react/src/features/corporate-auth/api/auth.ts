@@ -1,9 +1,9 @@
-import corporateApi from "./client";
+import corporateApi, { type CorporateRequestConfig } from "./client";
 import type { CorporateLoginRequest, CorporateLoginResponse, CorporateOtpResponse, CorporateResendResponse } from "../types";
 import {
-  assertCorporateGeneration, beginCorporateLogin, beginCorporateSetup, endCorporateSession,
+  assertCorporateGeneration, assertCorporateSessionActive, beginCorporateLogin, beginCorporateSetup, endCorporateSession,
   clearCorporateChallenge, getCorporateAccessToken, getCorporateChallenge, getCorporateGeneration, invalidateCorporateGeneration,
-  saveCorporateChallenge, saveCorporateTokens, setCorporateSetupStep,
+  saveCorporateChallenge, saveCorporateTokens, setCorporateSetupStep, reserveCorporateKeepAlive,
 } from "../utils/storage";
 
 const challenge = () => {
@@ -98,4 +98,24 @@ export function logoutCorporate(): Promise<boolean> {
   // Store the invalidated generation so repeated calls during this logout join it.
   logoutLock = { generation, promise };
   return promise;
+}
+
+// Survives route remounts; deduplication and throttling are scoped to the session generation.
+let keepAliveLock: { generation: number; startedAt: number; pending: boolean; promise: Promise<void> } | null = null;
+export function keepAliveCorporate(): Promise<void> {
+  const generation = getCorporateGeneration();
+  try { assertCorporateSessionActive(generation); }
+  catch (error) { return Promise.reject(error); }
+  if (keepAliveLock?.generation === generation &&
+      (keepAliveLock.pending || Date.now() - keepAliveLock.startedAt < 60_000)) return keepAliveLock.promise;
+  if (!reserveCorporateKeepAlive()) return Promise.resolve();
+  const operation = { generation, startedAt: Date.now(), pending: true, promise: Promise.resolve() };
+  const config: CorporateRequestConfig = { corporateGeneration: generation };
+  operation.promise = corporateApi.get("/auth/session/keep-alive", config).then(() => {
+    assertCorporateSessionActive(generation);
+  }).finally(() => {
+    operation.pending = false;
+  });
+  keepAliveLock = operation;
+  return operation.promise;
 }

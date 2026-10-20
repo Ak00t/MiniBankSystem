@@ -4,9 +4,14 @@ Open `/corporate/login` in the frontend development server. All Corporate APIs u
 `http://localhost:8080/api/corporate`; the browser must also be able to reach the backend.
 Use `localhost:5173` for the frontend to match the backend CORS configuration.
 
-Only the Corporate-owned success screen is integrated. A teammate's Dashboard and
-Corporate idle-timeout/keep-alive integration remain pending. There is no Corporate
-keep-alive endpoint in the current controller. No polling or invented endpoint is used.
+Only the Corporate-owned success screen is integrated; a teammate's Dashboard remains
+pending. Corporate protected routes enforce five minutes of inactivity using persisted,
+session-bound activity timestamps. Missing activity timestamps fail closed (sessions
+created before this update must log in again). Real interactions send Corporate
+keep-alive at most once per minute, with no polling or concurrent duplicate operations. The session-bound request
+reservation survives reloads; untrusted synthetic activity is ignored.
+Reloads and tab sleep do not reset activity. The backend keep-alive endpoint runs
+through the existing Corporate JWT/session filter; it never extends absolute expiry.
 The client enforces the returned refresh JWT expiry as an upper bound. Backend checks
 remain authoritative for signature validity, revocation, idle expiry and absolute expiry.
 Client-side JWT claim inspection is a routing check, not cryptographic authentication.
@@ -27,7 +32,7 @@ No project dependency or lockfile change is needed for the isolated test prerequ
 ```sh
 npm install --prefix /tmp/minibank-corporate-test-tools --no-audit --no-fund jsdom
 CORPORATE_TEST_JSDOM=/tmp/minibank-corporate-test-tools/node_modules/jsdom \
-  node --test src/features/corporate-auth/__tests__/corporate-auth.test.cjs
+  node --test src/features/corporate-auth/__tests__/*.test.cjs
 npx --no-install eslint src/features/corporate-auth src/app/router/RouterProvider.tsx
 npm run build
 ```
@@ -35,3 +40,15 @@ npm run build
 The repository's existing missing `Account` export in
 `src/features/customer-account/data/mockData.tsx` may block the full build independently
 of these Corporate files. Never modify that teammate-owned file for these tests.
+
+
+Corporate access validation reuses the existing no-activity-write ACCESS validator.
+The Corporate-only activity repository then locks the row, samples the existing
+application clock after waiting, rechecks expiry/revocation, and updates only
+activity/audit metadata. It never merges the validated entity or writes token hashes.
+
+`CusCorporateSessionActivityConcurrencyTest` exercises this SQL against a separate
+throwaway MySQL 8.4 database. It is skipped without an explicit
+`corporate.test.jdbcUrl` matching the isolated loopback test database. Never point
+it at the application database. The HTTP/filter tests use mocked persistence;
+they do not replace the independent MySQL concurrency tests.

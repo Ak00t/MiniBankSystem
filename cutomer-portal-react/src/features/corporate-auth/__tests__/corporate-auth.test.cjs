@@ -410,12 +410,15 @@ test('late Corporate logout preserves a newer login and sends only the captured 
   } finally { pending.resolve(); await app.cleanup(); }
 });
 
-test('backend Corporate session expiry redirects only Corporate routes without refresh', async () => {
+test('backend Corporate session expiry shows only Corporate timeout modal without refresh', async () => {
   const app = await setup();
   try {
     await app.login(); await app.verify();
     app.setHandler((config, { fail }) => config.url === '/protected-test' ? fail(config, 401, 'Corporate session expired', 'SESSION_EXPIRED') : undefined);
     await act(async () => { await assert.rejects(app.api.get('/protected-test')); });
+    assert.ok(app.container.querySelector('[role="alertdialog"]'));
+    assert.equal(sessionStorage.getItem('corporateAccessToken'), null);
+    await app.click('Login Again');
     assert.equal(app.router.state.location.pathname, '/corporate/login');
     assert.equal(app.calls.filter(c => c.url === '/auth/refresh').length, 0); app.checkIsolation();
   } finally { await app.cleanup(); }
