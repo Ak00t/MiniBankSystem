@@ -1,5 +1,7 @@
 package com.corebanking.service;
 
+import com.corebanking.dto.CusSessionClientMetadata;
+
 import java.security.SecureRandom;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -878,8 +880,13 @@ public class CusAuthService {
 //verify login otp
     
     @Transactional(noRollbackFor = CusOtpException.class)
+    public CusOtpVerifyResponse verifyLoginOtp(CusOtpVerifyRequest request) {
+        return verifyLoginOtp(request, CusSessionClientMetadata.EMPTY);
+    }
+
+    @Transactional(noRollbackFor = CusOtpException.class)
     public CusOtpVerifyResponse verifyLoginOtp(
-            CusOtpVerifyRequest request) {
+            CusOtpVerifyRequest request, CusSessionClientMetadata metadata) {
 
         // 1. Request validation
         if (request == null
@@ -1096,7 +1103,7 @@ public class CusAuthService {
         CusTokenResponse tokenResponse =
                 createAuthenticatedSession(
                         customer,
-                        credentials
+                        credentials, metadata
                 );
 
         return new CusOtpVerifyResponse(
@@ -1624,10 +1631,15 @@ public void resetPassword(
     // 13. FIRST LOGIN - CREATE TRANSACTION PIN
     // =========================================================
     @Transactional
+    public CusTokenResponse setupTransactionPin(String challengeGroupId, String pin, String confirmPin) {
+        return setupTransactionPin(challengeGroupId, pin, confirmPin, CusSessionClientMetadata.EMPTY);
+    }
+
+    @Transactional
     public CusTokenResponse setupTransactionPin(
             String challengeGroupId,
             String pin,
-            String confirmPin) {
+            String confirmPin, CusSessionClientMetadata metadata) {
 
         // =====================================================
         // 1. REQUIRED FIELDS
@@ -1766,7 +1778,7 @@ public void resetPassword(
 
         return createAuthenticatedSession(
                 customer,
-                credentials
+                credentials, metadata
         );
     }
     
@@ -1779,6 +1791,12 @@ public void resetPassword(
          CustomerCredentials credentials) {
      return customerSessionIssuanceService.createAuthenticatedSession(customer, credentials);
  }
+
+ private CusTokenResponse createAuthenticatedSession(
+         Customers customer, CustomerCredentials credentials, CusSessionClientMetadata metadata) {
+     return customerSessionIssuanceService.createAuthenticatedSession(customer, credentials, metadata);
+ }
+
  
 //=========================================================
 //REFRESH TOKEN - ATOMIC ROTATION

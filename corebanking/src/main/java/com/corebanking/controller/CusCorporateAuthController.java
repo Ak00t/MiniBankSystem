@@ -1,5 +1,8 @@
 package com.corebanking.controller;
 
+import com.corebanking.dto.CusSessionClientMetadata;
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.corebanking.dto.CusCorporateFirstLoginPasswordRequest;
 import com.corebanking.dto.CusCorporateLoginRequest;
 import com.corebanking.dto.CusCorporateLoginResponse;
@@ -41,8 +44,8 @@ public class CusCorporateAuthController {
 
     @PostMapping("/verify-otp")
     public ResponseEntity<CusCorporateOtpVerifyResponse> verifyOtp(
-            @Valid @RequestBody CusCorporateOtpVerifyRequest request) {
-        return ResponseEntity.ok(corporateAuthService.verifyLoginOtp(request));
+            @Valid @RequestBody CusCorporateOtpVerifyRequest request, HttpServletRequest servletRequest) {
+        return ResponseEntity.ok(corporateAuthService.verifyLoginOtp(request, CusSessionClientMetadata.from(servletRequest)));
     }
 
     @PostMapping("/resend-otp")
@@ -71,8 +74,8 @@ public class CusCorporateAuthController {
 
     @PostMapping("/first-login/complete")
     public ResponseEntity<CusCorporateOtpVerifyResponse> completeFirstLogin(
-            @RequestParam("challengeGroupId") String challengeGroupId) {
-        return ResponseEntity.ok(corporateAuthService.completeFirstLogin(challengeGroupId));
+            @RequestParam("challengeGroupId") String challengeGroupId, HttpServletRequest servletRequest) {
+        return ResponseEntity.ok(corporateAuthService.completeFirstLogin(challengeGroupId, CusSessionClientMetadata.from(servletRequest)));
     }
 
     @PostMapping("/refresh")

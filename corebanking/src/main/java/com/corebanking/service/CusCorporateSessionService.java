@@ -1,5 +1,7 @@
 package com.corebanking.service;
 
+import com.corebanking.dto.CusSessionClientMetadata;
+
 import com.corebanking.dto.CusTokenResponse;
 import com.corebanking.dto.CusRefreshTokenRequest;
 import com.corebanking.entity.AuditLogs;
@@ -64,6 +66,12 @@ public class CusCorporateSessionService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public CusTokenResponse createAuthenticatedSession(String challengeGroupId) {
+        return createAuthenticatedSession(challengeGroupId, CusSessionClientMetadata.EMPTY);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public CusTokenResponse createAuthenticatedSession(String challengeGroupId, CusSessionClientMetadata metadata) {
+        metadata = metadata == null ? CusSessionClientMetadata.EMPTY : metadata;
         if (challengeGroupId == null || challengeGroupId.isBlank()) {
             throw new CusValidationException("OTP challenge information is required.");
         }
@@ -121,6 +129,8 @@ public class CusCorporateSessionService {
         );
         AuthSession session = AuthSession.builder()
                 .sessionUuid(sessionUuid)
+                .ipAddress(metadata.ipAddress())
+                .userAgent(metadata.userAgent())
                 .subjectType(SessionSubjectType.CORPORATE_USER)
                 .corporateUser(user)
                 .customer(null)

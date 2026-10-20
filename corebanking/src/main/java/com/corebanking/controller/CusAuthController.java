@@ -1,6 +1,9 @@
 
 package com.corebanking.controller;
 
+import com.corebanking.dto.CusSessionClientMetadata;
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,11 +68,11 @@ public class CusAuthController {
 
     @PostMapping("/verify-otp")
     public ResponseEntity<CusOtpVerifyResponse> verifyOtp(
-            @RequestBody CusOtpVerifyRequest request) {
+            @RequestBody CusOtpVerifyRequest request, HttpServletRequest servletRequest) {
 
         CusOtpVerifyResponse response =
                 cusAuthService.verifyLoginOtp(
-                        request
+                        request, CusSessionClientMetadata.from(servletRequest)
                 );
 
         return ResponseEntity.ok(
@@ -123,13 +126,13 @@ public class CusAuthController {
 
     @PostMapping("/first-login/setup-pin")
     public ResponseEntity<CusTokenResponse> setupTransactionPin(
-            @RequestBody CusPinSetupRequest request) {
+            @RequestBody CusPinSetupRequest request, HttpServletRequest servletRequest) {
 
         CusTokenResponse response =
                 cusAuthService.setupTransactionPin(
                         request.getChallengeGroupId(),
                         request.getPin(),
-                        request.getConfirmPin()
+                        request.getConfirmPin(), CusSessionClientMetadata.from(servletRequest)
                 );
 
         return ResponseEntity.ok(
