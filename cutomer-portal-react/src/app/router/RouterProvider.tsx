@@ -40,6 +40,7 @@ import SettingsPage from "../../features/customer-account/settings/pages/Setting
 import AnnouncementsPage from "../../features/customer-account/announcements/AnnouncementsPage";
 import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
 import AccountStatementPage from "../../features/customer-account/statements/pages/AccountStatementPage";
+import TransactionHistoryPage from "../../features/customer-account/transactions/pages/TransactionHistoryPage";
 
 // ======================================================
 // ROUTER
@@ -144,6 +145,11 @@ const router = createBrowserRouter([
           {
             path: "/statements",
             element: <AccountStatementPage />,
+          },
+
+          {
+            path: "/transaction",
+            element: <TransactionHistoryPage />,
           },
 
           {
