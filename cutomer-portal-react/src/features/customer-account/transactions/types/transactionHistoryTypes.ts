@@ -16,6 +16,9 @@ export interface CusTransactionHistoryItemDTO {
   failureMessage: string | null;
   initiatedAt: string;
   completedAt: string | null;
+  counterpartyName: string | null;
+  isOwnAccount: boolean;
+  displayTitle: string;
 }
 
 export interface CusTransactionHistoryResponseDTO {
@@ -113,7 +116,8 @@ export function formatTypeLabel(type: string): string {
 }
 
 /**
- * Formats ISO date string into DD-MM-YYYY HH:mm:ss
+ * Formats ISO date string into DD MMM YYYY HH:mm
+ * e.g. "06 Oct 2026 10:30"
  */
 export function formatTransactionDateTime(isoString: string): string {
   if (!isoString) return "-";
@@ -121,12 +125,15 @@ export function formatTransactionDateTime(isoString: string): string {
     const d = new Date(isoString);
     if (Number.isNaN(d.getTime())) return isoString;
     const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    const month = months[d.getMonth()];
     const year = d.getFullYear();
     const hours = String(d.getHours()).padStart(2, "0");
     const minutes = String(d.getMinutes()).padStart(2, "0");
-    const seconds = String(d.getSeconds()).padStart(2, "0");
-    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+    return `${day} ${month} ${year} ${hours}:${minutes}`;
   } catch {
     return isoString;
   }

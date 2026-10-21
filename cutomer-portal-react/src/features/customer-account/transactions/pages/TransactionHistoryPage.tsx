@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { History, AlertCircle, RefreshCw, AlertTriangle } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../../../lib/redux";
@@ -59,14 +59,13 @@ export default function TransactionHistoryPage() {
   const [page, setPage] = useState<number>(0);
   const [size, setSize] = useState<number>(10);
 
+  // Retry trigger for error recovery
+  const [retryTrigger, setRetryTrigger] = useState<number>(0);
+
   // Data & loading states
   const [historyData, setHistoryData] = useState<CusTransactionHistoryResponseDTO | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
-
-  // Active AbortControllers to cancel stale requests
-  const historyAbortRef = useRef<AbortController | null>(null);
-  const discoveryAbortRef = useRef<AbortController | null>(null);
 
   // Load customer accounts on mount if needed
   useEffect(() => {
@@ -121,24 +120,19 @@ export default function TransactionHistoryPage() {
     );
   }, [appliedFilters]);
 
-  // Load status and type discovery options for the active account
-  const loadDiscovery = useCallback((accountNumber: string) => {
-    if (!accountNumber) {
+  // Status and Type discovery effect: strictly owned by activeAccountNumber
+  useEffect(() => {
+    if (!activeAccountNumber) {
       setAvailableStatuses([]);
       setAvailableTypes([]);
       return;
     }
 
-    // Abort previous in-flight discovery
-    if (discoveryAbortRef.current) {
-      discoveryAbortRef.current.abort();
-    }
     const controller = new AbortController();
-    discoveryAbortRef.current = controller;
 
     Promise.all([
-      getTransactionStatuses(accountNumber, controller.signal),
-      getTransactionTypes(accountNumber, controller.signal),
+      getTransactionStatuses(activeAccountNumber, controller.signal),
+      getTransactionTypes(activeAccountNumber, controller.signal),
     ])
       .then(([statuses, types]) => {
         setAvailableStatuses(statuses);
@@ -149,106 +143,80 @@ export default function TransactionHistoryPage() {
           console.error("Failed to discover statuses or types:", err);
         }
       });
-  }, []);
 
-  // Fetch transaction history
-  const loadHistory = useCallback(
-    async (
-      accountNumber: string,
-      filters: TransactionFilterApplied,
-      pageNum: number,
-      pageSize: number
-    ) => {
-      if (!accountNumber) {
-        setHistoryData(null);
-        setIsLoadingHistory(false);
-        return;
-      }
+    return () => {
+      controller.abort();
+    };
+  }, [activeAccountNumber]);
 
-      // Abort previous in-flight request
-      if (historyAbortRef.current) {
-        historyAbortRef.current.abort();
-      }
-      const controller = new AbortController();
-      historyAbortRef.current = controller;
+  // Transaction history effect: strictly owned by account, applied filters, pagination, and retry
+  useEffect(() => {
+    if (!activeAccountNumber) {
+      setHistoryData(null);
+      setIsLoadingHistory(false);
+      return;
+    }
 
-      setIsLoadingHistory(true);
-      setHistoryError(null);
+    const controller = new AbortController();
+    setIsLoadingHistory(true);
+    setHistoryError(null);
 
-      try {
-        const result = await getTransactions(
-          {
-            accountNumber,
-            page: pageNum,
-            size: pageSize,
-            status: filters.status,
-            transactionType: filters.transactionType,
-            fromDate: filters.fromDate,
-            toDate: filters.toDate,
-            minAmount: filters.minAmount,
-            maxAmount: filters.maxAmount,
-          },
-          controller.signal
-        );
+    getTransactions(
+      {
+        accountNumber: activeAccountNumber,
+        page,
+        size,
+        status: appliedFilters.status,
+        transactionType: appliedFilters.transactionType,
+        fromDate: appliedFilters.fromDate,
+        toDate: appliedFilters.toDate,
+        minAmount: appliedFilters.minAmount,
+        maxAmount: appliedFilters.maxAmount,
+      },
+      controller.signal
+    )
+      .then((result) => {
         setHistoryData(result);
-      } catch (err: unknown) {
+      })
+      .catch((err: unknown) => {
         if (
           axios.isCancel(err) ||
           (err instanceof Error && (err.name === "CanceledError" || err.name === "AbortError"))
         ) {
-          return; // Ignore canceled requests
+          return;
         }
         let errorMsg = "Failed to load transaction history. Please try again.";
         if (axios.isAxiosError(err)) {
-          errorMsg =
-            err.response?.data?.message || err.message || errorMsg;
+          errorMsg = err.response?.data?.message || err.message || errorMsg;
         }
         setHistoryError(errorMsg);
-      } finally {
+      })
+      .finally(() => {
         setIsLoadingHistory(false);
-      }
-    },
-    []
-  );
+      });
 
-  // Trigger initial discovery and history on initial account determination
-  const initialLoadTriggeredRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (activeAccountNumber && initialLoadTriggeredRef.current !== activeAccountNumber) {
-      initialLoadTriggeredRef.current = activeAccountNumber;
-      loadDiscovery(activeAccountNumber);
-      void loadHistory(activeAccountNumber, appliedFilters, page, size);
-    }
-  }, [activeAccountNumber, loadDiscovery, loadHistory, appliedFilters, page, size]);
+    return () => {
+      controller.abort();
+    };
+  }, [activeAccountNumber, appliedFilters, page, size, retryTrigger]);
 
   // Handle Account Change
   const handleAccountChange = (newAccNo: string) => {
     if (newAccNo === activeAccountNumber) return;
 
     setSelectedAccNo(newAccNo);
-    initialLoadTriggeredRef.current = newAccNo;
-
-    // 1. Reset page to 0
     setPage(0);
 
-    // 2 & 3. Clear applied and draft status and transactionType
     setDraftFilters((prev) => ({
       ...prev,
       status: "",
       transactionType: "",
     }));
-    const updatedApplied: TransactionFilterApplied = {
-      ...appliedFilters,
+    setAppliedFilters((prev) => ({
+      ...prev,
       status: "",
       transactionType: "",
-    };
-    setAppliedFilters(updatedApplied);
-
-    // 4 & 5. Reload available DB statuses and transaction types
-    loadDiscovery(newAccNo);
-
-    // 6. Reload transaction history for new account at page 0
-    void loadHistory(newAccNo, updatedApplied, 0, size);
+    }));
   };
 
   // Draft filter input changes
@@ -266,18 +234,15 @@ export default function TransactionHistoryPage() {
     const minNum = draftFilters.minAmount.trim() !== "" ? Number(draftFilters.minAmount) : undefined;
     const maxNum = draftFilters.maxAmount.trim() !== "" ? Number(draftFilters.maxAmount) : undefined;
 
-    const newApplied: TransactionFilterApplied = {
+    setAppliedFilters({
       status: draftFilters.status,
       transactionType: draftFilters.transactionType,
       fromDate: draftFilters.fromDate,
       toDate: draftFilters.toDate,
       minAmount: minNum,
       maxAmount: maxNum,
-    };
-
-    setAppliedFilters(newApplied);
+    });
     setPage(0);
-    void loadHistory(activeAccountNumber, newApplied, 0, size);
   };
 
   // Clear filters handler
@@ -285,42 +250,23 @@ export default function TransactionHistoryPage() {
     setDraftFilters(INITIAL_DRAFT_FILTERS);
     setAppliedFilters(INITIAL_APPLIED_FILTERS);
     setPage(0);
-    if (activeAccountNumber) {
-      void loadHistory(activeAccountNumber, INITIAL_APPLIED_FILTERS, 0, size);
-    }
   };
 
   // Pagination page change
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    if (activeAccountNumber) {
-      void loadHistory(activeAccountNumber, appliedFilters, newPage, size);
-    }
   };
 
   // Pagination size change
   const handleSizeChange = (newSize: number) => {
     setSize(newSize);
     setPage(0);
-    if (activeAccountNumber) {
-      void loadHistory(activeAccountNumber, appliedFilters, 0, newSize);
-    }
   };
 
   // Retry on error
   const handleRetry = () => {
-    if (activeAccountNumber) {
-      void loadHistory(activeAccountNumber, appliedFilters, page, size);
-    }
+    setRetryTrigger((prev) => prev + 1);
   };
-
-  // Cleanup abort controllers on unmount
-  useEffect(() => {
-    return () => {
-      historyAbortRef.current?.abort();
-      discoveryAbortRef.current?.abort();
-    };
-  }, []);
 
   const hasActiveAccounts = accounts.some((a) => a.status === "ACTIVE");
 
