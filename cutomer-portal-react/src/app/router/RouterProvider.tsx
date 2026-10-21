@@ -7,6 +7,7 @@ import {
 
 import ProtectedRoute from "../../features/auth/components/ProtectedRoute";
 import SessionTimeoutProvider from "../../features/auth/components/SessionTimeoutProvider";
+import { corporateAuthRoutes } from "../../features/corporate-auth/routes";
 
 // ======================================================
 // AUTH PAGES
@@ -49,6 +50,8 @@ import AccountStatementPage from "../../features/customer-account/statements/pag
 // ======================================================
 
 const router = createBrowserRouter([
+
+  ...corporateAuthRoutes,
 
   // =========================================
   // PUBLIC AUTH PAGES & STANDALONE PAGES
