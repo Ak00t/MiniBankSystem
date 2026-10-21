@@ -59,11 +59,30 @@ String details = ex.getBindingResult().getFieldErrors().stream()
 return buildErrorResponse(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", details);
 }
 
+@ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+    String msg = "Data conflict or duplicate entry detected.";
+    String detail = ex.getMessage();
+    if (detail != null) {
+        if (detail.contains("registration_number") || detail.contains("UKqd9i1kjk9tj4gxlfk1nw3yrrw")) {
+            msg = "A company with this Registration Number already exists. Please use a unique Registration Number.";
+        } else if (detail.contains("tax_id")) {
+            msg = "A company with this Tax ID already exists. Please use a unique Tax ID.";
+        } else if (detail.contains("nrc")) {
+            msg = "A customer with this NRC number already exists.";
+        } else if (detail.contains("phone")) {
+            msg = "This phone number is already registered.";
+        } else if (detail.contains("email")) {
+            msg = "This email is already registered.";
+        }
+    }
+    return buildErrorResponse(HttpStatus.CONFLICT, "DUPLICATE_ENTRY", msg);
+}
+
 @ExceptionHandler(Exception.class)
 public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
 return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", ex.getMessage());
 }
-
 private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String errorCode, String message) {
 Map<String, Object> body = new HashMap<>();
 body.put("timestamp", LocalDateTime.now());
@@ -72,6 +91,7 @@ body.put("code", errorCode);
 body.put("message", message);
 return new ResponseEntity<>(body, status);
 }
+
 
 @ExceptionHandler(CusAuthenticationException.class)
 public ResponseEntity<Map<String, Object>>
@@ -205,14 +225,9 @@ public ResponseEntity<Map<String, Object>>
             .body(body);
 }
 
-
-
-
-
-
-
-
-
-
+@ExceptionHandler(AuthException.class)
+public ResponseEntity<Map<String, Object>> handleAuthException(AuthException ex) {
+    return buildErrorResponse(HttpStatus.UNAUTHORIZED, "AUTH_FAILED", ex.getMessage());
+}
 
 }

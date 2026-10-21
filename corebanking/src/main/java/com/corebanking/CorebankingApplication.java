@@ -2,8 +2,11 @@ package com.corebanking;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableScheduling
 @SpringBootApplication
+@org.springframework.scheduling.annotation.EnableAsync
 public class CorebankingApplication {
 
 	public static void main(String[] args) {

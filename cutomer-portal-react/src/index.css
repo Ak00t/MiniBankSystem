@@ -1,4 +1,43 @@
+
 @import "tailwindcss";
+
+/* Enable Tailwind dark: utilities using the .dark class */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Light theme */
+:root {
+  color-scheme: light;
+
+  --app-bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-secondary: #f8fafc;
+
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+
+  --border-default: #e2e8f0;
+
+  --brand-primary: #0878e8;
+  --sidebar-bg: #08295c;
+}
+
+/* Dark theme */
+.dark {
+  color-scheme: dark;
+
+  --app-bg: #020617;
+  --surface: #0f172a;
+  --surface-secondary: #1e293b;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+
+  --border-default: #334155;
+
+  --brand-primary: #3b9aff;
+  --sidebar-bg: #020b1d;
+}
+
 /* body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -29,3 +68,39 @@ button {
 button:hover {
   background-color: #004c99;
 } */
+
+@media print {
+  @page {
+    margin: 12mm;
+    size: auto;
+  }
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  header,
+  aside,
+  nav,
+  input[type="search"],
+  .no-print,
+  button:not(.print-include) {
+    display: none !important;
+  }
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  main > div {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .print-receipt-container {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 20px !important;
+    max-width: 620px !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+  }
+}

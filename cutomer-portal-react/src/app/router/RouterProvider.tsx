@@ -2,6 +2,7 @@
 import {
   createBrowserRouter,
   RouterProvider,
+  Navigate,
 } from "react-router-dom";
 
 import ProtectedRoute from "../../features/auth/components/ProtectedRoute";
@@ -34,7 +35,15 @@ import PinResetNewPinPage from "../../features/auth/pages/PinResetNewPinPage";
 import DashboardPage from "../../features/customer-account/dashboard/DashboardPage";
 import MainLayout from "../../components/layout/MainLayout";
 import MyAccountsPage from "../../features/customer-account/accounts/MyaccountPage";
+import { MerchantPaymentAuthorize } from "../../features/merchant-payment/pages/MerchantPaymentAuthorize";
+
 import ProfilePage from "../../features/customer-account/profile/ProfilePage";
+import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
+import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
+import SettingsPage from "../../features/customer-account/settings/pages/SettingsPage";
+import AnnouncementsPage from "../../features/customer-account/announcements/AnnouncementsPage";
+import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
+import AccountStatementPage from "../../features/customer-account/statements/pages/AccountStatementPage";
 
 // ======================================================
 // ROUTER
@@ -44,6 +53,9 @@ const router = createBrowserRouter([
 
   ...corporateAuthRoutes,
 
+  // =========================================
+  // PUBLIC AUTH PAGES & STANDALONE PAGES
+  // =========================================
   // ====================================================
   // PUBLIC AUTH PAGES
   // ====================================================
@@ -84,6 +96,8 @@ const router = createBrowserRouter([
   },
 
 
+
+  // =========================================
   // ====================================================
   // FORGOT PASSWORD / PASSWORD RESET
   // ====================================================
@@ -113,15 +127,30 @@ const router = createBrowserRouter([
 
     children: [
 
-      
-       {
-          element: (
-            <SessionTimeoutProvider>
-              <MainLayout />
-            </SessionTimeoutProvider>
-          ),
+
+      {
+        element: (
+          <SessionTimeoutProvider>
+            <MainLayout />
+          </SessionTimeoutProvider>
+        ),
 
         children: [
+
+          {
+            path: "/checkout",
+            element: <MerchantPaymentAuthorize />,
+          },
+
+          {
+            path: "/merchant-payment/authorize",
+            element: <MerchantPaymentAuthorize />,
+          },
+
+          {
+            path: "/merchant-payment",
+            element: <MerchantPaymentAuthorize />,
+          },
 
           {
             path: "/dashboard",
@@ -133,12 +162,32 @@ const router = createBrowserRouter([
             element: <MyAccountsPage />,
           },
 
-           {
+          {
+            path: "/accounts/:accountNumber",
+            element: <AccountDetailPage />,
+          },
+
+          {
+            path: "/statements",
+            element: <AccountStatementPage />,
+          },
+
+          {
             path: "/profile",
             element: <ProfilePage />,
           },
 
-            //pin reset pages
+          {
+            path: "/settings",
+            element: <SettingsPage />,
+          },
+
+          {
+            path: "/announcements",
+            element: <AnnouncementsPage />,
+          },
+
+          //pin reset pages
 
           {
             path: "/pin-reset/otp",
@@ -150,12 +199,27 @@ const router = createBrowserRouter([
             element: <PinResetNewPinPage />,
           },
 
+          {
+            path: "/transfer",
+            element: <P2PTransferForm />,
+          },
+
+          {
+            path: "/beneficiaries",
+            element: <BeneficiariesPage />,
+          },
+
         ],
 
       },
 
     ],
 
+  },
+
+  {
+    path: "*",
+    element: <Navigate to="/dashboard" replace />,
   },
 
 ]);
