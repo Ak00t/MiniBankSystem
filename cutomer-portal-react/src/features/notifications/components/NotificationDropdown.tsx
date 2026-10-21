@@ -26,6 +26,7 @@ import {
   isAuthenticationGenerationCurrent,
   subscribeToAuthenticationChanges,
 } from "../../../utils/tokenStorage";
+import { SESSION_TIMEOUT_EVENT } from "../../../utils/sessionEvents";
 
 interface NotificationRequestScope {
   generation: number;
@@ -44,6 +45,7 @@ export const NotificationDropdown: React.FC = () => {
   const requestScopeRef = useRef<NotificationRequestScope | null>(null);
   const isOpenRef = useRef(isOpen);
   useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
+  const stopPollingRef = useRef<() => void>(() => {});
 
   const isCurrent = useCallback((scope: NotificationRequestScope | null) =>
     scope !== null && requestScopeRef.current === scope && hasTokens() &&
@@ -100,8 +102,10 @@ export const NotificationDropdown: React.FC = () => {
     try {
       const count = await getUnreadNotificationCount();
       if (isCurrent(scope)) setUnreadCount(count);
-    } catch {
-      // Silently catch in polling
+    } catch (err: unknown) {
+      if (isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
+        stopPollingRef.current();
+      }
     }
   }, [isCurrent]);
 
@@ -121,6 +125,9 @@ export const NotificationDropdown: React.FC = () => {
       }
     } catch (err: unknown) {
       if (!isCurrent(scope)) return;
+      if (isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
+        stopPollingRef.current();
+      }
       setError(
         (isAxiosError<{ message?: string }>(err) ? err.response?.data?.message : undefined) ||
         (err instanceof Error ? err.message : "Failed to load notifications.")
@@ -137,6 +144,8 @@ export const NotificationDropdown: React.FC = () => {
       window.clearInterval(intervalId);
       intervalId = undefined;
     };
+    stopPollingRef.current = stopPolling;
+
     const synchronize = () => {
       const generation = getAuthenticationGeneration();
       const authenticated = hasTokens() && isAuthenticationGenerationCurrent(generation);
@@ -162,6 +171,12 @@ export const NotificationDropdown: React.FC = () => {
       }, 20000);
     };
 
+    const handleSessionTimeout = () => {
+      requestScopeRef.current = null;
+      stopPolling();
+      setIsOpen(false);
+    };
+
     // Listen to custom notification trigger (e.g. from P2P transfer)
     const handleCustomNotify = () => {
       if (!isCurrent(requestScopeRef.current)) return;
@@ -177,6 +192,7 @@ export const NotificationDropdown: React.FC = () => {
       void fetchUnreadCount();
     };
     const unsubscribe = subscribeToAuthenticationChanges(synchronize);
+    window.addEventListener(SESSION_TIMEOUT_EVENT, handleSessionTimeout);
     window.addEventListener("new-notification-event", handleCustomNotify);
     window.addEventListener("open-notification-dropdown", handleOpenFromToast);
     window.addEventListener("storage", synchronize);
@@ -186,6 +202,7 @@ export const NotificationDropdown: React.FC = () => {
       requestScopeRef.current = null;
       stopPolling();
       unsubscribe();
+      window.removeEventListener(SESSION_TIMEOUT_EVENT, handleSessionTimeout);
       window.removeEventListener("new-notification-event", handleCustomNotify);
       window.removeEventListener("open-notification-dropdown", handleOpenFromToast);
       window.removeEventListener("storage", synchronize);
