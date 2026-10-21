@@ -240,9 +240,10 @@ function SessionTimeoutProvider({
 
 
     const handleActivity =
-      () => {
+      (event: Event) => {
 
         if (
+          !event.isTrusted ||
           !hasTokens() ||
           expiredRef.current ||
           isIndividualLogoutInProgress()

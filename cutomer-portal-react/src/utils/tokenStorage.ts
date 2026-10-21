@@ -5,6 +5,18 @@ const REFRESH_TOKEN_KEY = "refreshToken";
 let authenticationGeneration = 0;
 let authenticationInvalidated = false;
 
+// Observers receive lifecycle changes without participating in authentication decisions.
+const authenticationListeners = new Set<() => void>();
+export const subscribeToAuthenticationChanges = (listener: () => void) => {
+  authenticationListeners.add(listener);
+  return () => { authenticationListeners.delete(listener); };
+};
+const notifyAuthenticationChanged = () => {
+  for (const listener of [...authenticationListeners]) {
+    try { listener(); } catch { /* Observers must never interrupt login, rotation or logout. */ }
+  }
+};
+
 export const getAuthenticationGeneration = () => authenticationGeneration;
 
 export const isAuthenticationGenerationCurrent = (generation: number) =>
@@ -12,7 +24,9 @@ export const isAuthenticationGenerationCurrent = (generation: number) =>
 
 export const invalidateAuthenticationGeneration = () => {
   authenticationInvalidated = true;
-  return ++authenticationGeneration;
+  const invalidatedGeneration = ++authenticationGeneration;
+  notifyAuthenticationChanged();
+  return invalidatedGeneration;
 };
 
 
@@ -39,6 +53,7 @@ export const saveTokens = (
     REFRESH_TOKEN_KEY,
     refreshToken
   );
+  notifyAuthenticationChanged();
 };
 
 

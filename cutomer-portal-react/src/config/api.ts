@@ -69,6 +69,13 @@ interface RetryableRequestConfig
 
 }
 
+// Background notification reads must not initiate rotation, which updates backend activity.
+const isNotificationPollingRequest = (request: RetryableRequestConfig): boolean => {
+  const path = request.url?.split("?")[0];
+  return request.method?.toLowerCase() === "get" &&
+    (path === "/notifications" || path === "/notifications/unread-count");
+};
+
 
 // ======================================================
 // API ERROR RESPONSE TYPE
@@ -182,6 +189,8 @@ api.interceptors.request.use(
     // ==================================================
 
     if (
+      // Logout supplies its captured session token; never substitute a newer one.
+      config.url !== "/auth/logout" &&
       accessToken &&
       !isPublicEndpoint(
         config.url
@@ -566,6 +575,12 @@ api.interceptors.response.use(
 
     }
 
+
+    // Let activity-driven keep-alive or another foreground request refresh normally.
+    // SESSION_EXPIRED above still invalidates authentication and shows the timeout modal.
+    if (isNotificationPollingRequest(originalRequest)) {
+      return Promise.reject(error);
+    }
 
     // ==================================================
     // ORIGINAL REQUEST RETRIED ALREADY ?
