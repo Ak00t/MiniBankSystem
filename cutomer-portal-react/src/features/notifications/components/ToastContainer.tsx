@@ -7,6 +7,8 @@ import {
   Bell,
   User,
   ExternalLink,
+  Store,
+  CreditCard,
 } from "lucide-react";
 import type { NotificationItem } from "../types/notificationTypes";
 
@@ -187,6 +189,9 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
     toast.transferDirection === "SENT" ||
     titleLower.includes("transfer sent") ||
     titleLower.includes("sent");
+  const isPayment =
+    toast.type === "PAYMENT" ||
+    titleLower.includes("payment");
 
   const formatAmount = (num: number | null | undefined) => {
     if (num === null || num === undefined) return null;
@@ -226,7 +231,11 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
               : "bg-slate-100 text-slate-600"
           }`}
         >
-          {isReceived ? (
+          {isPayment && isReceived ? (
+            <Store className="w-5 h-5" />
+          ) : isPayment && isSent ? (
+            <CreditCard className="w-5 h-5" />
+          ) : isReceived ? (
             <ArrowDownLeft className="w-5 h-5" />
           ) : isSent ? (
             <ArrowUpRight className="w-5 h-5" />

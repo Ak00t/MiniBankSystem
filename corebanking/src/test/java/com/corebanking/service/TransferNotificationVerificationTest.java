@@ -7,6 +7,7 @@ import com.corebanking.entity.Customers;
 import com.corebanking.entity.Notifications;
 import com.corebanking.entity.enums.NotificationType;
 import com.corebanking.entity.enums.TransactionType;
+import com.corebanking.repository.AccountRepository;
 import com.corebanking.repository.BankTransactionRepository;
 import com.corebanking.repository.CustomerRepository;
 import com.corebanking.repository.NotificationRepository;
@@ -45,6 +46,9 @@ public class TransferNotificationVerificationTest {
     @Mock
     private BankTransactionRepository bankTransactionRepository;
 
+    @Mock
+    private AccountRepository accountRepository;
+
     private AsyncNotificationService asyncNotificationService;
 
     private Customers sender;
@@ -63,7 +67,8 @@ public class TransferNotificationVerificationTest {
                 notificationRepository,
                 notificationWebSocketHandler,
                 customerRepository,
-                bankTransactionRepository
+                bankTransactionRepository,
+                accountRepository
         );
 
         sender = Customers.builder()
@@ -98,11 +103,11 @@ public class TransferNotificationVerificationTest {
                 .completedAt(LocalDateTime.now())
                 .build();
 
-        when(customerRepository.findById(senderId)).thenReturn(Optional.of(sender));
-        when(customerRepository.findById(receiverId)).thenReturn(Optional.of(receiver));
-        when(bankTransactionRepository.findById(txnId)).thenReturn(Optional.of(transaction));
+        lenient().when(customerRepository.findById(senderId)).thenReturn(Optional.of(sender));
+        lenient().when(customerRepository.findById(receiverId)).thenReturn(Optional.of(receiver));
+        lenient().when(bankTransactionRepository.findById(txnId)).thenReturn(Optional.of(transaction));
 
-        when(notificationRepository.save(any(Notifications.class))).thenAnswer(invocation -> {
+        lenient().when(notificationRepository.save(any(Notifications.class))).thenAnswer(invocation -> {
             Notifications notif = invocation.getArgument(0);
             return Notifications.builder()
                     .notificationId(101L)
@@ -163,5 +168,62 @@ public class TransferNotificationVerificationTest {
         assertEquals("Funds Received", receiverWsDto.getTitle());
         assertEquals("U Ba", receiverWsDto.getCounterpartyName());
         assertEquals("2001111111", receiverWsDto.getCounterpartyAccountNumber());
+    }
+
+    @Test
+    @DisplayName("Verify Merchant Payment notifications are saved and pushed via WebSocket to both Payer and Merchant")
+    void testMerchantPaymentNotificationsCreated() {
+        when(customerRepository.findById(senderId)).thenReturn(Optional.of(sender));
+        when(accountRepository.findByAccountNumber("2002222222")).thenReturn(Optional.of(destAccount));
+        when(customerRepository.findById(receiverId)).thenReturn(Optional.of(receiver));
+
+        asyncNotificationService.sendMerchantPaymentNotificationAsync(
+                senderId,
+                "2001111111",
+                "2002222222",
+                "City Mart Supermarket",
+                "ORD-9988",
+                new BigDecimal("35000.0000"),
+                "MMK",
+                "TXN-ECOM-20261022-0001"
+        );
+
+        ArgumentCaptor<Notifications> notiCaptor = ArgumentCaptor.forClass(Notifications.class);
+        verify(notificationRepository, times(2)).save(notiCaptor.capture());
+
+        List<Notifications> savedNotifications = notiCaptor.getAllValues();
+        assertEquals(2, savedNotifications.size(), "Should save exactly 2 notifications (Payer & Merchant)");
+
+        // Payer notification assertions
+        Notifications payerNotif = savedNotifications.get(0);
+        assertEquals(senderId, payerNotif.getCustomer().getCustomerId());
+        assertEquals("Payment Sent", payerNotif.getTitle());
+        assertEquals(NotificationType.PAYMENT, payerNotif.getNotificationType());
+        assertTrue(payerNotif.getMessage().contains("You paid 35000.0000 MMK to City Mart Supermarket"));
+        assertTrue(payerNotif.getMessage().contains("ORD-9988"));
+
+        // Merchant notification assertions
+        Notifications merchantNotif = savedNotifications.get(1);
+        assertEquals(receiverId, merchantNotif.getCustomer().getCustomerId());
+        assertEquals("Merchant Payment Received", merchantNotif.getTitle());
+        assertEquals(NotificationType.PAYMENT, merchantNotif.getNotificationType());
+        assertTrue(merchantNotif.getMessage().contains("You received 35000.0000 MMK from U Ba"));
+        assertTrue(merchantNotif.getMessage().contains("ORD-9988"));
+
+        // WebSocket assertions
+        ArgumentCaptor<NotificationResponseDto> wsDtoCaptor = ArgumentCaptor.forClass(NotificationResponseDto.class);
+        verify(notificationWebSocketHandler).sendNotification(eq(senderId.toString()), wsDtoCaptor.capture());
+        NotificationResponseDto payerWs = wsDtoCaptor.getValue();
+        assertEquals(NotificationType.PAYMENT, payerWs.getNotificationType());
+        assertEquals("SENT", payerWs.getTransferDirection());
+        assertEquals("Payment Sent", payerWs.getTitle());
+        assertEquals("City Mart Supermarket", payerWs.getCounterpartyName());
+
+        verify(notificationWebSocketHandler).sendNotification(eq(receiverId.toString()), wsDtoCaptor.capture());
+        NotificationResponseDto merchantWs = wsDtoCaptor.getValue();
+        assertEquals(NotificationType.PAYMENT, merchantWs.getNotificationType());
+        assertEquals("RECEIVED", merchantWs.getTransferDirection());
+        assertEquals("Merchant Payment Received", merchantWs.getTitle());
+        assertEquals("U Ba", merchantWs.getCounterpartyName());
     }
 }

@@ -11,6 +11,8 @@ import {
   Loader2,
   X,
   User,
+  Store,
+  CreditCard,
 } from "lucide-react";
 import {
   getMyNotifications,
@@ -300,12 +302,33 @@ export const NotificationDropdown: React.FC = () => {
     const titleLower = item.title.toLowerCase();
     const isFailed = titleLower.includes("fail") || titleLower.includes("reject");
     const isReceived =
-      titleLower.includes("received") || titleLower.includes("funds received");
+      item.transferDirection === "RECEIVED" ||
+      titleLower.includes("received") ||
+      titleLower.includes("funds received");
+    const isPayment =
+      item.notificationType === "PAYMENT" ||
+      titleLower.includes("payment");
 
     if (isFailed) {
       return (
         <div className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0 border border-red-100">
           <AlertCircle className="w-5 h-5" />
+        </div>
+      );
+    }
+
+    if (isPayment && isReceived) {
+      return (
+        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 shadow-xs">
+          <Store className="w-5 h-5" />
+        </div>
+      );
+    }
+
+    if (isPayment && !isReceived) {
+      return (
+        <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 shadow-xs">
+          <CreditCard className="w-5 h-5" />
         </div>
       );
     }
