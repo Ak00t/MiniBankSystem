@@ -189,6 +189,8 @@ api.interceptors.request.use(
     // ==================================================
 
     if (
+      // Logout supplies its captured session token; never substitute a newer one.
+      config.url !== "/auth/logout" &&
       accessToken &&
       !isPublicEndpoint(
         config.url
