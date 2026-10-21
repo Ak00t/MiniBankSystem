@@ -466,14 +466,14 @@ export const NotificationDropdown: React.FC = () => {
                               item.transferDirection === "RECEIVED"
                                 ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                                 : item.transferDirection === "SENT"
-                                ? "bg-blue-50 text-blue-700 border border-blue-100"
+                                ? "bg-rose-50 text-rose-700 border border-rose-100"
                                 : "bg-slate-100 text-slate-600"
                             }`}
                           >
                             {item.transferDirection === "RECEIVED"
-                              ? "+"
+                              ? "+ "
                               : item.transferDirection === "SENT"
-                              ? "-"
+                              ? "- "
                               : ""}
                             {formatAmount(item.amount)} {item.currency || "MMK"}
                           </span>
