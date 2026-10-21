@@ -57,10 +57,6 @@ export const PaymentReceipt: React.FC<Props> = ({ receipt, details, selectedAcco
             <span className="text-slate-500 text-xs font-medium">Transaction Reference</span>
             <span className="font-mono text-xs font-semibold text-slate-700">{receipt.coreLedgerReference || 'AUTH-SUCCESS'}</span>
           </div>
-          <div className="flex justify-between items-center border-b border-slate-200/60 pb-2.5">
-            <span className="text-slate-500 text-xs font-medium">Payment Token</span>
-            <span className="font-mono text-xs text-slate-700">{receipt.paymentToken}</span>
-          </div>
           <div className="flex justify-between items-center pt-0.5">
             <span className="text-slate-500 text-xs font-medium">Date & Time</span>
             <span className="text-xs text-slate-800">

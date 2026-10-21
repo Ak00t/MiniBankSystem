@@ -64,6 +64,9 @@ public class CoreBankingLedgerAdapter implements LedgerFacadePort {
 
             BigDecimal todayTotal = bankTransactionRepository.findTodayTotalTransferredAmount(
                     sourceAccount.getAccountId(), startOfDay, endOfDay);
+            if (todayTotal == null) {
+                todayTotal = BigDecimal.ZERO;
+            }
 
             BigDecimal totalAttempted = todayTotal.add(amount);
 

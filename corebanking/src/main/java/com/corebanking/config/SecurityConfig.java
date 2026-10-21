@@ -96,15 +96,30 @@ public class SecurityConfig {
                     "/api/auth/staff-password-setup/complete"
                 ).permitAll()
 
+                // CORS preflight requests
+                .requestMatchers(
+                    HttpMethod.OPTIONS,
+                    "/**"
+                ).permitAll()
+
                 // Customer APIs
                 .requestMatchers(
+                    "/api/customers",
                     "/api/customers/**"
                 ).permitAll()
 
-                // WebSocket endpoints (Handshake authentication handled by HandshakeInterceptor)
+                // Account APIs
                 .requestMatchers(
+                    "/api/accounts",
+                    "/api/accounts/**",
                     "/ws/**"
                 ).permitAll()
+
+                // WebSocket endpoints (Handshake authentication handled by HandshakeInterceptor)
+              
+
+                // WebSocket endpoints (Handshake authentication handled by HandshakeInterceptor)
+                
 
                 // All other endpoints require authentication
                 .anyRequest().authenticated()

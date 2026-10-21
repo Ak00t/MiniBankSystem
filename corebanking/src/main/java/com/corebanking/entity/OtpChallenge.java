@@ -100,7 +100,7 @@ public class OtpChallenge {
     private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "updated_by_type", length = 10)
+    @Column(name = "updated_by_type", length = 20)
     private UpdatedByType updatedByType;
 
     @Column(name = "updated_by_id", columnDefinition = "BINARY(16)")

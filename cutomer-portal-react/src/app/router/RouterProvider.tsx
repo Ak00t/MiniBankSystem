@@ -2,10 +2,12 @@
 import {
   createBrowserRouter,
   RouterProvider,
+  Navigate,
 } from "react-router-dom";
 
 import ProtectedRoute from "../../features/auth/components/ProtectedRoute";
 import SessionTimeoutProvider from "../../features/auth/components/SessionTimeoutProvider";
+import { corporateAuthRoutes } from "../../features/corporate-auth/routes";
 
 // ======================================================
 // AUTH PAGES
@@ -48,6 +50,13 @@ import AccountStatementPage from "../../features/customer-account/statements/pag
 // ======================================================
 
 const router = createBrowserRouter([
+
+  // =========================================
+  // PUBLIC AUTH PAGES & STANDALONE PAGES
+  // =========================================
+  ...corporateAuthRoutes,
+
+  ...corporateAuthRoutes,
 
   // =========================================
   // PUBLIC AUTH PAGES & STANDALONE PAGES
@@ -139,6 +148,16 @@ const router = createBrowserRouter([
           },
 
           {
+            path: "/merchant-payment/authorize",
+            element: <MerchantPaymentAuthorize />,
+          },
+
+          {
+            path: "/merchant-payment",
+            element: <MerchantPaymentAuthorize />,
+          },
+
+          {
             path: "/dashboard",
             element: <DashboardPage />,
           },
@@ -201,6 +220,11 @@ const router = createBrowserRouter([
 
     ],
 
+  },
+
+  {
+    path: "*",
+    element: <Navigate to="/dashboard" replace />,
   },
 
 ]);
