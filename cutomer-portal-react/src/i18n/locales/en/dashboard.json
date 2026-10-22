@@ -54,6 +54,7 @@
   "amount": "Amount",
   "date": "Date",
   "description": "Description",
-  "transactionType": "Transaction Type"
-  
+  "transactionType": "Transaction Type",
+  "loadingDashboard": "Loading dashboard",
+"refreshingDashboard": "Refreshing dashboard..."
 }

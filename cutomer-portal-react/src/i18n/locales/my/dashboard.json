@@ -54,5 +54,7 @@
   "amount": "ငွေပမာဏ",
   "date": "ရက်စွဲ",
   "description": "ဖော်ပြချက်",
-  "transactionType": "ငွေကြေးလွှဲပြောင်းမှု အမျိုးအစား"
+  "transactionType": "ငွေကြေးလွှဲပြောင်းမှု အမျိုးအစား",
+  "loadingDashboard": "Dashboard ကို ဖွင့်နေသည်",
+"refreshingDashboard": "Dashboard ကို ပြန်လည်ရယူနေသည်..."
 }
