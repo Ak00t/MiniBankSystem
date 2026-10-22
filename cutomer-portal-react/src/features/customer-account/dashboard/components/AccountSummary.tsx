@@ -21,9 +21,8 @@ interface AccountSummaryProps {
 const statusStyles: Record<string, string> = {
   ACTIVE: "bg-emerald-50 text-emerald-700",
   FROZEN: "bg-amber-50 text-amber-700",
-  SUSPENDED: "bg-red-50 text-red-700",
   DORMANT: "bg-amber-50 text-amber-700",
-  CLOSED: "bg-slate-100 text-slate-600",
+  CLOSED: "bg-red-50 text-red-700",
 };
 
 function getAccountIcon(accountType: string) {

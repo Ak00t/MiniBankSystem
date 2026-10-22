@@ -15,7 +15,7 @@ export async function getMyAccount(
   accountNumber: string
 ): Promise<CustomerAccount> {
   const response = await api.get<CustomerAccount>(
-    `/accounts/${accountNumber}`
+    `/accounts/${encodeURIComponent(accountNumber)}`
   );
 
   return response.data;
@@ -25,7 +25,7 @@ export async function getAccountTransferLimits(
   accountNumber: string
 ): Promise<TransferLimitInfo> {
   const response = await api.get<TransferLimitInfo>(
-    `/accounts/${accountNumber}/transfer-limits`
+    `/accounts/${encodeURIComponent(accountNumber)}/transfer-limits`
   );
 
   return response.data;
@@ -36,7 +36,7 @@ export async function updateAccountTransferLimits(
   payload: UpdateTransferLimitPayload
 ): Promise<TransferLimitInfo> {
   const response = await api.put<TransferLimitInfo>(
-    `/accounts/${accountNumber}/transfer-limits`,
+    `/accounts/${encodeURIComponent(accountNumber)}/transfer-limits`,
     payload
   );
 
