@@ -16,23 +16,16 @@ import {
 
 import {
   NavLink,
-  useNavigate,
 } from "react-router-dom";
 
 import {
   useEffect,
-  useState,
+  useSyncExternalStore,
 } from "react";
 
 import { useTranslation } from "react-i18next";
-
-import {
-  logoutCustomer,
-} from "../../services/authService";
-
-import {
-  clearTokens,
-} from "../../utils/tokenStorage";
+import { isIndividualLogoutInProgress, useIndividualLogout } from "../../features/auth/hooks/useIndividualLogout";
+import { getAuthenticationGeneration, subscribeToAuthenticationChanges } from "../../utils/tokenStorage";
 import { useAppDispatch ,useAppSelector } from "../../lib/redux";
 import { fetchAnnouncements } from "../../features/customer-account/announcements/store/announcementSlice";
 
@@ -111,19 +104,14 @@ const accountMenuItems = [
 
 export default function Sidebar() {
 
-  const navigate =
-    useNavigate();
+  const handleLogout = useIndividualLogout();
+  // A previous session's pending logout must not disable this session's button.
+  useSyncExternalStore(subscribeToAuthenticationChanges, getAuthenticationGeneration);
+  const loggingOut = isIndividualLogoutInProgress();
 
    const dispatch = useAppDispatch();
 
-    const { t } = useTranslation("common");
-
-  const [
-    loggingOut,
-    setLoggingOut,
-  ] = useState(false);
-
-
+  const { t } = useTranslation("common");
     useEffect(() => {
     void dispatch(fetchAnnouncements());
   }, [dispatch]);
@@ -134,176 +122,6 @@ export default function Sidebar() {
       (announcement) => !announcement.isRead,
     ).length,
   );
-
-
-  // ====================================================
-  // LOGOUT
-  // ====================================================
-
-  const handleLogout =
-    async () => {
-
-      // Double click မဖြစ်အောင်
-      if (loggingOut) {
-        return;
-      }
-
-
-      setLoggingOut(true);
-
-
-      try {
-
-        // ----------------------------------------------
-        // Backend Logout API
-        //
-        // POST /api/customer/auth/logout
-        //
-        // api.ts interceptor က
-        // Authorization: Bearer <accessToken>
-        // ကို automatically ထည့်ပေးမယ်
-        // ----------------------------------------------
-
-        await logoutCustomer();
-
-
-        console.log(
-          "Logout successful."
-        );
-
-
-      } catch (error) {
-
-        // Backend logout fail ဖြစ်သော်လည်း
-        // browser ထဲက local authentication data
-        // ကိုတော့ clear လုပ်ပေးမယ်
-
-        console.error(
-          "Logout API failed:",
-          error
-        );
-
-
-      } finally {
-
-        // ----------------------------------------------
-        // ACCESS TOKEN + REFRESH TOKEN CLEAR
-        // ----------------------------------------------
-
-        clearTokens();
-
-
-        // ----------------------------------------------
-        // Temporary login / OTP data CLEAR
-        // ----------------------------------------------
-
-        sessionStorage.removeItem(
-          "challengeGroupId"
-        );
-
-        sessionStorage.removeItem(
-          "maskedEmail"
-        );
-
-
-        // ----------------------------------------------
-        // LOGIN PAGE ပြန်ပို့
-        // ----------------------------------------------
-
-        navigate(
-          "/login",
-          {
-            replace: true,
-          }
-        );
-
-      }
-
-    };
-
-      // ====================================================
-  // SHARED NAV LINK CLASS
-  // ====================================================
-
-  const getNavLinkClass = (isActive: boolean) =>
-    `
-      group flex items-center gap-3 rounded-xl px-3 py-2.5
-      text-sm transition-all duration-200
-      ${
-        isActive
-          ? "bg-[#EAF3FF] font-semibold text-[#0878E8]"
-          : "font-medium text-slate-600 hover:bg-slate-50 hover:text-[#08295C]"
-      }
-    `;
-
-  const getIconContainerClass = (isActive: boolean) =>
-    `
-      flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
-      transition-all duration-200
-      ${
-        isActive
-          ? "bg-[#0878E8] text-white shadow-sm"
-          : "bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-[#08295C]"
-      }
-    `;
-
-  // ====================================================
-  // NAV ITEM RENDERER
-  // ====================================================
-
-  const renderNavItem = (
-    item: (typeof mainMenuItems)[number] | (typeof accountMenuItems)[number],
-  ) => {
-    const Icon = item.icon;
-    const isAnnouncement = item.path === "/announcements";
-
-    return (
-      <NavLink
-        key={item.path}
-        to={item.path}
-        className={({ isActive }) => getNavLinkClass(isActive)}
-      >
-        {({ isActive }) => (
-          <>
-            <div className={getIconContainerClass(isActive)}>
-              <Icon
-                size={17}
-                strokeWidth={isActive ? 2.3 : 2}
-                aria-hidden="true"
-              />
-            </div>
-
-            <span className="min-w-0 flex-1 truncate">
-              {t(item.labelKey)}
-            </span>
-
-            {isAnnouncement && unreadAnnouncementCount > 0 && (
-              <span
-                aria-label={t("accessibility.unreadAnnouncements", {
-                  count: unreadAnnouncementCount,
-                })}
-                className="inline-flex min-w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-white"
-              >
-                {unreadAnnouncementCount > 99
-                  ? "99+"
-                  : unreadAnnouncementCount}
-              </span>
-            )}
-
-            {isActive && (
-              <ChevronRight
-                size={15}
-                strokeWidth={2.5}
-                className="shrink-0 text-[#0878E8]"
-                aria-hidden="true"
-              />
-            )}
-          </>
-        )}
-      </NavLink>
-    );
-  };
-
 
 
   // ====================================================
