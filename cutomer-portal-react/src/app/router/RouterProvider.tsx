@@ -1,4 +1,3 @@
-
 import {
   createBrowserRouter,
   RouterProvider,
@@ -36,6 +35,7 @@ import DashboardPage from "../../features/customer-account/dashboard/pages/Dashb
 import MainLayout from "../../components/layout/MainLayout";
 import MyAccountsPage from "../../features/customer-account/accounts/pages/MyaccountPage";
 import { MerchantPaymentAuthorize } from "../../features/merchant-payment/pages/MerchantPaymentAuthorize";
+import { MerchantPaymentRouteGuard } from "../../features/merchant-payment/components/MerchantPaymentRouteGuard";
 import ProfilePage from "../../features/customer-account/profile/pages/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
 import AccountDetailPage from "../../features/customer-account/accounts/pages/AccountDetailPage";
@@ -119,6 +119,40 @@ const router = createBrowserRouter([
 
 
   // ====================================================
+  // MERCHANT PAYMENT CHECKOUT (PRE-LOGIN REDIRECT GUARD)
+  // ====================================================
+
+  {
+    element: <MerchantPaymentRouteGuard />,
+
+    children: [
+      {
+        element: (
+          <SessionTimeoutProvider>
+            <MainLayout />
+          </SessionTimeoutProvider>
+        ),
+
+        children: [
+          {
+            path: "/checkout",
+            element: <MerchantPaymentAuthorize />,
+          },
+          {
+            path: "/merchant-payment/authorize",
+            element: <MerchantPaymentAuthorize />,
+          },
+          {
+            path: "/merchant-payment",
+            element: <MerchantPaymentAuthorize />,
+          },
+        ],
+      },
+    ],
+  },
+
+
+  // ====================================================
   // PROTECTED CUSTOMER PAGES
   // ====================================================
 
@@ -136,21 +170,6 @@ const router = createBrowserRouter([
         ),
 
         children: [
-
-          {
-            path: "/checkout",
-            element: <MerchantPaymentAuthorize />,
-          },
-
-          {
-            path: "/merchant-payment/authorize",
-            element: <MerchantPaymentAuthorize />,
-          },
-
-          {
-            path: "/merchant-payment",
-            element: <MerchantPaymentAuthorize />,
-          },
 
           {
             path: "/dashboard",
