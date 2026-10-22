@@ -1,5 +1,8 @@
 package com.corebanking.controller;
 
+import com.corebanking.dto.CusSessionClientMetadata;
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.corebanking.dto.CusCorporateFirstLoginPasswordRequest;
 import com.corebanking.dto.CusCorporateLoginRequest;
 import com.corebanking.dto.CusCorporateLoginResponse;
@@ -35,14 +38,14 @@ public class CusCorporateAuthController {
 
     @PostMapping("/login")
     public ResponseEntity<CusCorporateLoginResponse> login(
-            @Valid @RequestBody CusCorporateLoginRequest request) {
-        return ResponseEntity.ok(corporateAuthService.login(request));
+            @Valid @RequestBody CusCorporateLoginRequest request, HttpServletRequest servletRequest) {
+        return ResponseEntity.ok(corporateAuthService.login(request, CusSessionClientMetadata.from(servletRequest)));
     }
 
     @PostMapping("/verify-otp")
     public ResponseEntity<CusCorporateOtpVerifyResponse> verifyOtp(
-            @Valid @RequestBody CusCorporateOtpVerifyRequest request) {
-        return ResponseEntity.ok(corporateAuthService.verifyLoginOtp(request));
+            @Valid @RequestBody CusCorporateOtpVerifyRequest request, HttpServletRequest servletRequest) {
+        return ResponseEntity.ok(corporateAuthService.verifyLoginOtp(request, CusSessionClientMetadata.from(servletRequest)));
     }
 
     @PostMapping("/resend-otp")
@@ -71,14 +74,14 @@ public class CusCorporateAuthController {
 
     @PostMapping("/first-login/complete")
     public ResponseEntity<CusCorporateOtpVerifyResponse> completeFirstLogin(
-            @RequestParam("challengeGroupId") String challengeGroupId) {
-        return ResponseEntity.ok(corporateAuthService.completeFirstLogin(challengeGroupId));
+            @RequestParam("challengeGroupId") String challengeGroupId, HttpServletRequest servletRequest) {
+        return ResponseEntity.ok(corporateAuthService.completeFirstLogin(challengeGroupId, CusSessionClientMetadata.from(servletRequest)));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<CusTokenResponse> refreshToken(
-            @RequestBody CusRefreshTokenRequest request) {
-        return ResponseEntity.ok(corporateAuthService.refreshToken(request));
+            @RequestBody CusRefreshTokenRequest request, HttpServletRequest servletRequest) {
+        return ResponseEntity.ok(corporateAuthService.refreshToken(request, CusSessionClientMetadata.from(servletRequest)));
     }
 
     // The Corporate security chain validates and touches the session before dispatch.
@@ -92,8 +95,8 @@ public class CusCorporateAuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(
-            @RequestHeader("Authorization") String authorizationHeader) {
-        corporateAuthService.logout(authorizationHeader);
+            @RequestHeader("Authorization") String authorizationHeader, HttpServletRequest servletRequest) {
+        corporateAuthService.logout(authorizationHeader, CusSessionClientMetadata.from(servletRequest));
         return ResponseEntity.ok("Logged out successfully.");
     }
 }
