@@ -2,10 +2,12 @@
 import {
   createBrowserRouter,
   RouterProvider,
+  Navigate,
 } from "react-router-dom";
 
 import ProtectedRoute from "../../features/auth/components/ProtectedRoute";
 import SessionTimeoutProvider from "../../features/auth/components/SessionTimeoutProvider";
+import { corporateAuthRoutes } from "../../features/corporate-auth/routes";
 
 // ======================================================
 // AUTH PAGES
@@ -33,6 +35,7 @@ import PinResetNewPinPage from "../../features/auth/pages/PinResetNewPinPage";
 import DashboardPage from "../../features/customer-account/dashboard/pages/DashboardPage";
 import MainLayout from "../../components/layout/MainLayout";
 import MyAccountsPage from "../../features/customer-account/accounts/pages/MyaccountPage";
+import { MerchantPaymentAuthorize } from "../../features/merchant-payment/pages/MerchantPaymentAuthorize";
 import ProfilePage from "../../features/customer-account/profile/pages/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
 import AccountDetailPage from "../../features/customer-account/accounts/pages/AccountDetailPage";
@@ -48,6 +51,11 @@ import AccountStatementPage from "../../features/customer-account/statements/pag
 
 const router = createBrowserRouter([
 
+  ...corporateAuthRoutes,
+
+  // =========================================
+  // PUBLIC AUTH PAGES & STANDALONE PAGES
+  // =========================================
   // ====================================================
   // PUBLIC AUTH PAGES
   // ====================================================
@@ -88,6 +96,8 @@ const router = createBrowserRouter([
   },
 
 
+
+  // =========================================
   // ====================================================
   // FORGOT PASSWORD / PASSWORD RESET
   // ====================================================
@@ -126,6 +136,21 @@ const router = createBrowserRouter([
         ),
 
         children: [
+
+          {
+            path: "/checkout",
+            element: <MerchantPaymentAuthorize />,
+          },
+
+          {
+            path: "/merchant-payment/authorize",
+            element: <MerchantPaymentAuthorize />,
+          },
+
+          {
+            path: "/merchant-payment",
+            element: <MerchantPaymentAuthorize />,
+          },
 
           {
             path: "/dashboard",
@@ -190,6 +215,11 @@ const router = createBrowserRouter([
 
     ],
 
+  },
+
+  {
+    path: "*",
+    element: <Navigate to="/dashboard" replace />,
   },
 
 ]);
