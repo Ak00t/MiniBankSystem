@@ -105,6 +105,7 @@ export const NotificationDropdown: React.FC = () => {
       const count = await getUnreadNotificationCount();
       if (isCurrent(scope)) setUnreadCount(count);
     } catch (err: unknown) {
+      if (!isCurrent(scope)) return;
       if (isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
         stopPollingRef.current();
       }
@@ -151,7 +152,7 @@ export const NotificationDropdown: React.FC = () => {
     const synchronize = () => {
       const generation = getAuthenticationGeneration();
       const authenticated = hasTokens() && isAuthenticationGenerationCurrent(generation);
-      if (authenticated && requestScopeRef.current?.generation === generation) return;
+      if (authenticated && requestScopeRef.current?.generation === generation && intervalId !== undefined) return;
 
       requestScopeRef.current = null;
       stopPolling();
