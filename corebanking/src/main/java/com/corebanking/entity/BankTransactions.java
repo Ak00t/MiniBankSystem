@@ -122,7 +122,7 @@ public class BankTransactions {
     private LocalDateTime updatedAt;
 
     @Version
-    @Column(name = "version")
+    @Column(name = "version", nullable = false)
     private Integer version = 0;
 
     @PrePersist
