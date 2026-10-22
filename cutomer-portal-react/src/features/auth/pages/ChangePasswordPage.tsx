@@ -7,7 +7,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import {
   changeFirstLoginPassword,
@@ -279,7 +279,7 @@ function ChangePasswordPage() {
           description={"Choose a strong password to secure your ACE Bank account."}
           variant="password"
         />
-        <form onSubmit={handleChangePassword} className="space-y-5">
+        <form onSubmit={handleChangePassword} className="space-y-3">
           <AuthField label="New password" htmlFor="individual-new-password">
             <input
               type={showNewPassword ? "text" : "password"}
@@ -347,7 +347,6 @@ function ChangePasswordPage() {
             ) : (
               <>
                 Continue to PIN Setup
-                <ArrowRight size={18} />
               </>
             )}{" "}
           </button>

@@ -3,7 +3,7 @@ import {
   type FormEvent,
 } from "react";
 
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import {
   useNavigate,
@@ -14,7 +14,7 @@ import {
 } from "../../../services/authService";
 
 
-import { AuthRecoveryLayout, IndividualAuthCard, AuthHeading, AuthField, AuthCodeField, AuthNotice, AuthSecurityNote, AuthPinRules, AuthSuccess, AuthArrow } from "../components/IndividualAuthUI";
+import { AuthRecoveryLayout, IndividualAuthCard, AuthHeading, AuthField, AuthCodeField, AuthNotice, AuthSecurityNote, AuthPinRules, AuthSuccess } from "../components/IndividualAuthUI";
 import { authPrimaryButtonClass, authLinkButtonClass, authCodeInputClass, authCodeToggleClass } from "../components/IndividualAuthStyles";
 
 function PinResetNewPinPage() {
@@ -304,7 +304,6 @@ function PinResetNewPinPage() {
               className={authPrimaryButtonClass}
             >
               Back to Profile
-              <AuthArrow />
             </button>
             <AuthSecurityNote title="Keep your PIN private">
               Never share your transaction PIN with anyone, including bank staff.
@@ -329,7 +328,7 @@ function PinResetNewPinPage() {
           description={"Choose a new 6-digit PIN to keep your transactions secure."}
           variant="pin"
         />
-        <form onSubmit={handleResetPin} className="space-y-5">
+        <form onSubmit={handleResetPin} className="space-y-3">
           <AuthField label="New PIN" htmlFor="individual-reset-pin">
             <div className="flex items-center gap-2">
               <AuthCodeField value={newPin} masked={!showNewPin}>
@@ -412,7 +411,7 @@ function PinResetNewPinPage() {
                 className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none"
               />
             )}{" "}
-            {loading ? "Resetting PIN..." : "Reset Transaction PIN"} <AuthArrow />
+            {loading ? "Resetting PIN..." : "Reset Transaction PIN"}
           </button>
           <button
             type="button"
@@ -421,7 +420,7 @@ function PinResetNewPinPage() {
             className={authLinkButtonClass}
           >
             {" "}
-            <ArrowLeft size={17} /> Cancel and Back to Profile
+             Cancel and Back to Profile
           </button>
         </form>
         <AuthSecurityNote title="Keep your PIN private">

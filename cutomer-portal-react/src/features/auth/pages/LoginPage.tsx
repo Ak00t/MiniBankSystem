@@ -18,7 +18,7 @@ import PublicAuthLayout
   from "../components/PublicAuthLayout";
 
 
-import { IndividualAuthCard, AuthField, AuthNotice, AuthSecurityNote, AuthArrow } from "../components/IndividualAuthUI";
+import { IndividualAuthCard, AuthField, AuthNotice, AuthSecurityNote } from "../components/IndividualAuthUI";
 import { authInputClass, authPrimaryButtonClass, authLinkButtonClass, authToggleButtonClass } from "../components/IndividualAuthStyles";
 
 function LoginPage() {
@@ -174,16 +174,16 @@ function LoginPage() {
   return (
     <PublicAuthLayout>
       <IndividualAuthCard variant="login">
-        <div className="mb-8">
+        <div className="mb-4">
           <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-600">
-            Individual customer banking
+            ACE Bank
           </p>
-          <h1 className="text-3xl font-bold tracking-tight text-[#08295C]">Welcome back</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-500">
-            Sign in to your ACE Bank account. Your banking, securely within reach.
+          <h1 className="text-3xl font-bold tracking-tight text-[#08295C]">Welcome!</h1>
+          <p className="mt-2 text-sm leading-5 text-slate-500">
+            Login securely using your Customer ID or Account Number.
           </p>
         </div>
-        <form onSubmit={handleLogin} autoComplete="off" className="space-y-5">
+        <form onSubmit={handleLogin} autoComplete="off" className="space-y-3">
           <AuthField label="Customer ID / Account Number" htmlFor="individual-login-id">
             <input
               type="text"
@@ -249,10 +249,10 @@ function LoginPage() {
                 className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none"
               />
             )}{" "}
-            {loading ? "Sending OTP..." : "Login"} <AuthArrow />
+            {loading ? "Sending OTP..." : "Login"}
           </button>
         </form>
-        <div className="mt-6 space-y-3 text-center text-xs leading-5 text-slate-500">
+        <div className="mt-4 space-y-2 text-center text-xs leading-5 text-slate-500">
           <p>
             Corporate Banking?{" "}
             <Link

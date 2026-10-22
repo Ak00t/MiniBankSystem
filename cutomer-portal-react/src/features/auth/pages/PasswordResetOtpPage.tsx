@@ -7,7 +7,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { ArrowLeft } from "lucide-react";
 
 import {
   verifyPasswordResetOtp,
@@ -18,7 +17,7 @@ import PublicAuthLayout
   from "../components/PublicAuthLayout";
 
 
-import { IndividualAuthCard, AuthHeading, AuthField, AuthCodeField, AuthNotice, AuthSecurityNote, AuthExpiryNote, AuthArrow } from "../components/IndividualAuthUI";
+import { IndividualAuthCard, AuthHeading, AuthField, AuthCodeField, AuthNotice, AuthSecurityNote, AuthExpiryNote } from "../components/IndividualAuthUI";
 import { authPrimaryButtonClass, authSecondaryButtonClass, authLinkButtonClass, authCodeInputClass } from "../components/IndividualAuthStyles";
 
 function PasswordResetOtpPage() {
@@ -398,7 +397,7 @@ function PasswordResetOtpPage() {
           }
           variant="otp"
         />
-        <form onSubmit={handleVerifyOtp} className="space-y-5">
+        <form onSubmit={handleVerifyOtp} className="space-y-3">
           <AuthField label="Verification code" htmlFor="individual-recovery-otp">
             <AuthCodeField value={otp}>
               <input
@@ -437,10 +436,10 @@ function PasswordResetOtpPage() {
                   className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none"
                 />
               ))}{" "}
-            {loading ? "Verifying..." : "Verify OTP"} <AuthArrow />
+            {loading ? "Verifying..." : "Verify OTP"}
           </button>
         </form>
-        <div className="mt-6 text-center">
+        <div className="mt-3 text-center">
           <p className="mb-2 text-xs text-slate-500">Didn't receive the code?</p>
           <button
             type="button"
@@ -452,7 +451,7 @@ function PasswordResetOtpPage() {
             {resending ? "Sending..." : "Resend OTP"}{" "}
           </button>
         </div>
-        <div className="mt-4 text-center">
+        <div className="mt-3 text-center">
           <button
             type="button"
             onClick={handleBack}
@@ -460,7 +459,7 @@ function PasswordResetOtpPage() {
             className={authLinkButtonClass}
           >
             {" "}
-            <ArrowLeft size={17} /> Back to Password Recovery
+             Back to Password Recovery
           </button>
         </div>
         <AuthSecurityNote title="Secure verification">

@@ -85,6 +85,7 @@ for (const name of ['LoginPage', 'OtpPage', 'ChangePasswordPage', 'SetupPinPage'
   test(name + ' exposes labelled native inputs and keeps credentials empty', async t => {
     const h = await setup(t, name);
     const inputs = [...h.container.querySelectorAll('input')]; assert.ok(inputs.length > 0);
+    assert.equal(h.container.querySelectorAll('button .lucide-arrow-right, button .lucide-arrow-left, a .lucide-arrow-right, a .lucide-arrow-left').length, 0);
     for (const input of inputs) {
       assert.equal(input.value, ''); assert.ok(input.id);
       assert.ok(h.container.querySelector('label[for="' + input.id + '"]'));
@@ -195,4 +196,29 @@ test('pending resend disables existing actions and resumes without a cooldown', 
   await h.perform(finish);
   assert.equal([...h.container.querySelectorAll('button')].find(b => b.textContent.trim() === 'Resend OTP').disabled, false);
   assert.equal(sessionStorage.getItem('corporateAccessToken'), 'synthetic-corporate-sentinel');
+});
+
+for (const [page, button, destination] of [
+  ['ForgotPasswordPage', 'Back to Login', '/login'],
+  ['PasswordResetOtpPage', 'Back to Password Recovery', '/forgot-password'],
+  ['ResetPasswordPage', 'Cancel Password Reset', '/forgot-password'],
+  ['PinResetOtpPage', 'Back to Profile', '/profile'],
+  ['PinResetNewPinPage', 'Cancel and Back to Profile', '/profile'],
+]) {
+  test(page + ' preserves navigation after removing decorative arrows', async t => {
+    const h = await setup(t, page);
+    await h.click(button);
+    assert.equal(h.location(), destination);
+    assert.equal(h.calls.length, 0);
+  });
+}
+
+test('login retains the pre-redesign welcome and sign-in wording', async t => {
+  const h = await setup(t, 'LoginPage');
+  for (const text of [
+    'WELCOME TO ACE BANK',
+    'Securely access your account, manage your banking services, and stay connected with ACE Bank.',
+    'Welcome!',
+    'Login securely using your Customer ID or Account Number.',
+  ]) assert.ok(h.container.textContent.includes(text), text);
 });

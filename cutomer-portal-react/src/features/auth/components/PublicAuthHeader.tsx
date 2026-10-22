@@ -4,7 +4,7 @@ import { AuthWordmark } from "./IndividualAuthUI";
 function PublicAuthHeader() {
   return (
     <header className="border-b border-slate-200/70 bg-white">
-      <div className="mx-auto flex min-h-[76px] max-w-[1280px] items-center justify-between gap-4 px-5 md:px-8">
+      <div className="mx-auto flex min-h-16 max-w-[1280px] items-center justify-between gap-4 px-5 md:px-8">
         <div className="flex items-center gap-4">
           <AuthWordmark />
           <span className="hidden border-l border-slate-200 pl-4 text-xs text-slate-400 sm:block">

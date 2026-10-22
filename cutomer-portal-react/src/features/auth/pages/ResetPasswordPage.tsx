@@ -7,7 +7,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import {
   confirmPasswordReset,
@@ -17,7 +17,7 @@ import PublicAuthLayout
   from "../components/PublicAuthLayout";
 
 
-import { IndividualAuthCard, AuthHeading, AuthField, AuthNotice, AuthPasswordRules, AuthSuccess, AuthArrow } from "../components/IndividualAuthUI";
+import { IndividualAuthCard, AuthHeading, AuthField, AuthNotice, AuthPasswordRules, AuthSuccess } from "../components/IndividualAuthUI";
 import { authInputClass, authPrimaryButtonClass, authLinkButtonClass, authToggleButtonClass } from "../components/IndividualAuthStyles";
 
 function ResetPasswordPage() {
@@ -412,7 +412,6 @@ function ResetPasswordPage() {
               className={authPrimaryButtonClass}
             >
               Back to Login
-              <AuthArrow />
             </button>
           </AuthSuccess>
         ) : (
@@ -422,7 +421,7 @@ function ResetPasswordPage() {
               description={"Choose a new password to restore secure access to your account."}
               variant="password"
             />
-            <form onSubmit={handleResetPassword} className="space-y-5">
+            <form onSubmit={handleResetPassword} className="space-y-3">
               <AuthField label="New password" htmlFor="individual-reset-password">
                 <input
                   type={showNewPassword ? "text" : "password"}
@@ -487,7 +486,7 @@ function ResetPasswordPage() {
                     className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none"
                   />
                 )}{" "}
-                {loading ? "Resetting Password..." : "Reset Password"} <AuthArrow />
+                {loading ? "Resetting Password..." : "Reset Password"}
               </button>
               <button
                 type="button"
@@ -496,7 +495,7 @@ function ResetPasswordPage() {
                 className={authLinkButtonClass}
               >
                 {" "}
-                <ArrowLeft size={17} /> Cancel Password Reset
+                 Cancel Password Reset
               </button>
             </form>
           </>

@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import {
-  ArrowRight,
   Check,
   CheckCircle2,
   Clock3,
@@ -27,9 +26,9 @@ export function AuthWordmark({ inverse = false }: { inverse?: boolean }) {
 
 const panels: Record<AuthVariant, { title: string; description: string }> = {
   login: {
-    title: "Welcome to better banking.",
+    title: "WELCOME TO ACE BANK",
     description:
-      "Your everyday banking, thoughtfully connected. Secure access. Greater peace of mind.",
+      "Securely access your account, manage your banking services, and stay connected with ACE Bank.",
   },
   otp: {
     title: "Secure banking.\nA brighter tomorrow.",
@@ -62,7 +61,7 @@ export function IndividualAuthCard({
     <section className="isolate w-full max-w-[1080px] overflow-hidden rounded-[28px] border border-white/80 bg-[#08295C] shadow-[0_24px_80px_-32px_rgba(8,41,92,0.38)] md:rounded-[32px]">
       <div className="grid md:grid-cols-[0.88fr_1.12fr]">
         <aside
-          className={`relative hidden min-h-[690px] overflow-hidden text-white md:flex md:flex-col ${variant === "login" ? "justify-end" : "justify-between"}`}
+          className={`relative hidden overflow-hidden text-white md:flex md:flex-col ${variant === "login" ? "justify-end" : "justify-between"}`}
         >
           <img
             src="/images.jfif"
@@ -73,19 +72,19 @@ export function IndividualAuthCard({
             className={`absolute inset-0 ${variant === "login" ? "bg-gradient-to-t from-[#041b3c] via-[#08295C]/55 to-[#08295C]/15" : "bg-gradient-to-b from-[#061d43] via-[#08295C]/95 to-[#08295C]/35"}`}
           />
           <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full border-[40px] border-cyan-400/5" />
-          <div className={`relative p-9 lg:p-11 ${variant === "login" ? "pb-6" : ""}`}>
+          <div className="relative p-6 lg:p-8">
             <AuthWordmark inverse />
-            <div className={variant === "login" ? "mt-44" : "mt-12"}>
-              <div className="mb-5 h-1 w-10 rounded-full bg-[#06B6D4]" />
-              <h2 className="whitespace-pre-line text-[30px] font-semibold leading-[1.25] tracking-tight lg:text-[34px]">
+            <div className={variant === "login" ? "mt-10" : "mt-6"}>
+              <div className="mb-3 h-1 w-10 rounded-full bg-[#06B6D4]" />
+              <h2 className="whitespace-pre-line text-[26px] font-semibold leading-[1.25] tracking-tight lg:text-[30px]">
                 {panel.title}
               </h2>
-              <p className="mt-4 max-w-xs text-sm leading-6 text-blue-100/90">
+              <p className="mt-3 max-w-xs text-sm leading-6 text-blue-100/90">
                 {panel.description}
               </p>
             </div>
           </div>
-          <div className="relative space-y-4 bg-gradient-to-t from-[#041b3c]/95 to-transparent px-9 py-8 lg:px-11">
+          <div className="relative space-y-2 bg-gradient-to-t from-[#041b3c]/95 to-transparent px-6 py-5 lg:px-8">
             {[
               [ShieldCheck, "Secure verification"],
               [WalletCards, "Safe transactions"],
@@ -106,8 +105,8 @@ export function IndividualAuthCard({
             })}
           </div>
         </aside>
-        <div className="bg-gradient-to-br from-[#123B72] to-[#08295C] p-3 sm:p-5 md:p-5 lg:p-6">
-          <div className="flex h-full items-center rounded-[21px] border border-white/80 bg-white px-5 py-8 shadow-lg sm:px-9 sm:py-10 lg:px-11">
+        <div className="bg-gradient-to-br from-[#123B72] to-[#08295C] p-3">
+          <div className="flex h-full items-center rounded-[21px] border border-white/80 bg-white px-5 py-4 shadow-lg sm:px-8">
             <div className="w-full min-w-0">{children}</div>
           </div>
         </div>
@@ -127,21 +126,21 @@ export function AuthHeading({
 }) {
   const Icon = variant === "otp" ? Mail : variant === "pin" ? LockKeyhole : KeyRound;
   return (
-    <div className="mb-7 text-center">
-      <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-[#2563EB] ring-8 ring-blue-50/40">
+    <div className="mb-3 text-center">
+      <span className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-[#2563EB] ring-4 ring-blue-50/40">
         <Icon aria-hidden="true" size={25} strokeWidth={1.8} />
       </span>
-      <h1 className="text-2xl font-bold leading-tight tracking-tight text-[#08295C] sm:text-[27px]">
+      <h1 className="text-[22px] font-bold leading-tight tracking-tight text-[#08295C] sm:text-2xl">
         {title}
       </h1>
-      <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-500">{description}</p>
+      <p className="mx-auto mt-1 max-w-md text-sm leading-5 text-slate-500">{description}</p>
     </div>
   );
 }
 
 export function AuthSteps({ current }: { current: 1 | 2 | 3 }) {
   return (
-    <ol aria-label="Account security setup" className="mb-8 grid grid-cols-3">
+    <ol aria-label="Account security setup" className="mb-3 grid grid-cols-3">
       {["Verify email", "Change password", "Set PIN"].map((label, index) => (
         <li
           key={label}
@@ -160,7 +159,7 @@ export function AuthSteps({ current }: { current: 1 | 2 | 3 }) {
             {current > index + 1 ? <Check aria-hidden="true" size={14} /> : index + 1}
           </span>
           <span
-            className={`relative mt-2 block text-[10px] sm:text-[11px] ${current === index + 1 ? "font-semibold text-[#08295C]" : "text-slate-500"}`}
+            className={`relative mt-1 block text-[10px] sm:text-[11px] ${current === index + 1 ? "font-semibold text-[#08295C]" : "text-slate-500"}`}
           >
             {label}
           </span>
@@ -183,7 +182,7 @@ export function AuthField({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="mb-2 block text-xs font-semibold text-[#08295C]">
+      <label htmlFor={htmlFor} className="mb-1.5 block text-xs font-semibold text-[#08295C]">
         {label}
       </label>
       <div className="relative">{children}</div>
@@ -209,7 +208,7 @@ export function AuthCodeField({
         {Array.from({ length: 6 }, (_, index) => (
           <span
             key={index}
-            className={`flex h-13 min-w-0 items-center justify-center rounded-lg border bg-white font-mono text-xl font-semibold text-[#08295C] transition sm:h-14 ${index === Math.min(value.length, 5) ? "border-blue-200 group-focus-within:border-[#2563EB] group-focus-within:shadow-[0_0_0_1px_#2563EB]" : "border-slate-200"}`}
+            className={`flex h-12 min-w-0 items-center justify-center rounded-lg border bg-white font-mono text-xl font-semibold text-[#08295C] transition ${index === Math.min(value.length, 5) ? "border-blue-200 group-focus-within:border-[#2563EB] group-focus-within:shadow-[0_0_0_1px_#2563EB]" : "border-slate-200"}`}
           >
             {value[index] ? (masked ? "•" : value[index]) : ""}
           </span>
@@ -226,7 +225,7 @@ export function AuthNotice({ error, message }: { error?: string; message?: strin
     <div
       role={error ? "alert" : "status"}
       aria-live={error ? "assertive" : "polite"}
-      className={`my-4 rounded-xl border px-4 py-3 text-sm leading-6 ${error ? "border-red-100 bg-red-50 text-red-700" : "border-emerald-100 bg-emerald-50 text-emerald-700"}`}
+      className={`my-3 rounded-xl border px-3 py-2 text-sm leading-5 ${error ? "border-red-100 bg-red-50 text-red-700" : "border-emerald-100 bg-emerald-50 text-emerald-700"}`}
     >
       {error || message}
     </div>
@@ -241,11 +240,11 @@ export function AuthSecurityNote({
   title?: string;
 }) {
   return (
-    <div className="mt-6 flex gap-3 rounded-xl border border-blue-50 bg-[#F3F7FB] p-4">
+    <div className="mt-3 flex gap-3 rounded-xl border border-blue-50 bg-[#F3F7FB] p-3">
       <ShieldCheck aria-hidden="true" size={21} className="mt-0.5 shrink-0 text-[#2563EB]" />
       <div>
         <p className="text-xs font-semibold text-[#08295C]">{title}</p>
-        <p className="mt-1 text-xs leading-5 text-slate-500">{children}</p>
+        <p className="mt-1 text-xs leading-4 text-slate-500">{children}</p>
       </div>
     </div>
   );
@@ -253,7 +252,7 @@ export function AuthSecurityNote({
 
 export function AuthExpiryNote() {
   return (
-    <p className="my-5 flex items-center justify-center gap-2 text-xs text-slate-500">
+    <p className="my-3 flex items-center justify-center gap-2 text-xs text-slate-500">
       <Clock3 aria-hidden="true" size={14} />
       Your verification code is valid for 5 minutes.
     </p>
@@ -285,9 +284,9 @@ export function AuthPasswordRules({
     ["Passwords match", password.length > 0 && password === confirmPassword],
   ] as const;
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-      <p className="mb-2.5 text-xs font-semibold text-[#08295C]">Password requirements</p>
-      <ul className="space-y-1.5">
+    <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3">
+      <p className="mb-2 text-xs font-semibold text-[#08295C]">Password requirements</p>
+      <ul className="grid gap-x-3 gap-y-1 sm:grid-cols-2">
         {rules.map(([label, valid]) => (
           <li
             key={String(label)}
@@ -311,7 +310,7 @@ export function AuthPasswordRules({
 
 export function AuthPinRules({ pin, confirmPin }: { pin: string; confirmPin: string }) {
   return (
-    <ul className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-4 text-xs text-slate-500">
+    <ul className="space-y-1 rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-500">
       {[
         ["Exactly 6 digits", /^\d{6}$/.test(pin)],
         ["PINs match", pin.length > 0 && pin === confirmPin],
@@ -343,10 +342,6 @@ export function AuthSuccess({ title, children }: { title: string; children: Reac
       <div className="mt-4 space-y-5 text-sm leading-6 text-slate-500">{children}</div>
     </div>
   );
-}
-
-export function AuthArrow() {
-  return <ArrowRight aria-hidden="true" size={17} />;
 }
 
 // PIN recovery stays inside the existing protected route and timeout provider.

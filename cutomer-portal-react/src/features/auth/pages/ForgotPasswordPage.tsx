@@ -7,7 +7,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { ArrowLeft } from "lucide-react";
 
 import {
   requestPasswordReset,
@@ -17,7 +16,7 @@ import PublicAuthLayout
   from "../components/PublicAuthLayout";
 
 
-import { IndividualAuthCard, AuthHeading, AuthField, AuthNotice, AuthSecurityNote, AuthArrow } from "../components/IndividualAuthUI";
+import { IndividualAuthCard, AuthHeading, AuthField, AuthNotice, AuthSecurityNote } from "../components/IndividualAuthUI";
 import { authInputClass, authPrimaryButtonClass, authLinkButtonClass } from "../components/IndividualAuthStyles";
 
 function ForgotPasswordPage() {
@@ -169,7 +168,7 @@ function ForgotPasswordPage() {
           }
           variant="recovery"
         />
-        <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
+        <form onSubmit={handleSubmit} autoComplete="off" className="space-y-3">
           <AuthField label="Customer ID / Account Number" htmlFor="individual-recovery-id">
             <input
               type="text"
@@ -197,9 +196,9 @@ function ForgotPasswordPage() {
                 className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none"
               />
             )}{" "}
-            {loading ? "Sending OTP..." : "Continue"} <AuthArrow />
+            {loading ? "Sending OTP..." : "Continue"}
           </button>
-          <div className="border-t border-slate-100 pt-5 text-center">
+          <div className="border-t border-slate-100 pt-3 text-center">
             <p className="mb-2 text-xs text-slate-500">Remember your password?</p>
             <button
               type="button"
@@ -208,7 +207,7 @@ function ForgotPasswordPage() {
               className={authLinkButtonClass}
             >
               {" "}
-              <ArrowLeft size={17} /> Back to Login
+               Back to Login
             </button>
           </div>
         </form>

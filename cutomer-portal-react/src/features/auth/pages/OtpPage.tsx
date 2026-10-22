@@ -25,7 +25,7 @@ import PublicAuthLayout
 import { consumePendingPaymentRedirect } from "../utils/pendingPaymentRedirect";
 
 
-import { IndividualAuthCard, AuthHeading, AuthField, AuthCodeField, AuthNotice, AuthSecurityNote, AuthExpiryNote, AuthArrow } from "../components/IndividualAuthUI";
+import { IndividualAuthCard, AuthHeading, AuthField, AuthCodeField, AuthNotice, AuthSecurityNote, AuthExpiryNote } from "../components/IndividualAuthUI";
 import { authPrimaryButtonClass, authSecondaryButtonClass, authCodeInputClass } from "../components/IndividualAuthStyles";
 
 function OtpPage() {
@@ -508,10 +508,10 @@ function OtpPage() {
                 className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none"
               />
             ))}{" "}
-          {verifying ? "Verifying..." : "Verify OTP"} <AuthArrow />
+          {verifying ? "Verifying..." : "Verify OTP"}
         </button>
         {!completed && (
-          <div className="mt-6 text-center">
+          <div className="mt-3 text-center">
             <p className="mb-2 text-xs text-slate-500">Didn't receive the code?</p>
             <button
               type="button"

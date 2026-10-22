@@ -540,7 +540,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import {
   setupTransactionPin,
@@ -830,7 +830,7 @@ function SetupPinPage() {
           description={"Create a 6-digit PIN to authorize your payments and transactions."}
           variant="pin"
         />
-        <form onSubmit={handleSetupPin} className="space-y-5">
+        <form onSubmit={handleSetupPin} className="space-y-3">
           <AuthField label="New PIN" htmlFor="individual-setup-pin">
             <div className="flex items-center gap-2">
               <AuthCodeField value={pin} masked={!showPin}>
@@ -911,7 +911,6 @@ function SetupPinPage() {
             ) : (
               <>
                 Complete Setup & Continue
-                <ArrowRight size={18} />
               </>
             )}{" "}
           </button>
