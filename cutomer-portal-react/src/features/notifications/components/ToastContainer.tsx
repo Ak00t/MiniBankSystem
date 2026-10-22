@@ -11,6 +11,8 @@ import {
   CreditCard,
 } from "lucide-react";
 import type { NotificationItem } from "../types/notificationTypes";
+import { SESSION_TIMEOUT_EVENT } from "../../../utils/sessionEvents";
+import { hasTokens, subscribeToAuthenticationChanges } from "../../../utils/tokenStorage";
 
 export interface ToastData {
   id: string;
@@ -114,12 +116,26 @@ export const ToastContainer: React.FC = () => {
       }
     };
 
+    // 3. Clear active toasts on Session Timeout or Logout
+    const clearAllToasts = () => {
+      setToasts([]);
+    };
+
+    const unsubscribeAuth = subscribeToAuthenticationChanges(() => {
+      if (!hasTokens()) {
+        clearAllToasts();
+      }
+    });
+
     window.addEventListener("ws-notification-received", handleWsNotification);
     window.addEventListener("show-toast-notification", handleCustomToast);
+    window.addEventListener(SESSION_TIMEOUT_EVENT, clearAllToasts);
 
     return () => {
       window.removeEventListener("ws-notification-received", handleWsNotification);
       window.removeEventListener("show-toast-notification", handleCustomToast);
+      window.removeEventListener(SESSION_TIMEOUT_EVENT, clearAllToasts);
+      unsubscribeAuth();
     };
   }, [addToast]);
 

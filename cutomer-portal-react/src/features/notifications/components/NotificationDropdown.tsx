@@ -23,6 +23,7 @@ import {
 import type { NotificationItem } from "../types/notificationTypes";
 import { useNotificationWebSocket } from "../hooks/useNotificationWebSocket";
 import {
+  getAccessToken,
   getAuthenticationGeneration,
   hasTokens,
   isAuthenticationGenerationCurrent,
@@ -48,6 +49,7 @@ export const NotificationDropdown: React.FC = () => {
   const isOpenRef = useRef(isOpen);
   useEffect(() => { isOpenRef.current = isOpen; }, [isOpen]);
   const stopPollingRef = useRef<() => void>(() => {});
+  const startPollingRef = useRef<() => void>(() => {});
 
   const isCurrent = useCallback((scope: NotificationRequestScope | null) =>
     scope !== null && requestScopeRef.current === scope && hasTokens() &&
@@ -101,11 +103,21 @@ export const NotificationDropdown: React.FC = () => {
   const fetchUnreadCount = useCallback(async () => {
     const scope = requestScopeRef.current;
     if (!isCurrent(scope)) return;
+    const requestToken = getAccessToken();
+    if (!requestToken) return;
+
     try {
       const count = await getUnreadNotificationCount();
-      if (isCurrent(scope)) setUnreadCount(count);
+      if (isCurrent(scope) && requestToken === getAccessToken()) {
+        setUnreadCount(count);
+        // Recovery: If previous 403 or error stopped polling, but this fetch succeeded, safely resume polling
+        startPollingRef.current();
+      }
     } catch (err: unknown) {
       if (!isCurrent(scope)) return;
+      // Token Rotation Guard: If token was rotated while in flight, ignore 401/403 from the old token!
+      if (requestToken !== getAccessToken()) return;
+
       if (isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
         stopPollingRef.current();
       }
@@ -116,18 +128,28 @@ export const NotificationDropdown: React.FC = () => {
   const fetchNotifications = useCallback(async () => {
     const scope = requestScopeRef.current;
     if (!isCurrent(scope)) return;
+    const requestToken = getAccessToken();
+    if (!requestToken) return;
+
     try {
       setLoading(true);
       setError(null);
       const data = await getMyNotifications();
       if (!isCurrent(scope)) return;
-      if (Array.isArray(data)) {
-        setNotifications(data);
-      } else {
-        setNotifications([]);
+      if (requestToken === getAccessToken()) {
+        if (Array.isArray(data)) {
+          setNotifications(data);
+        } else {
+          setNotifications([]);
+        }
+        // Recovery: If manual fetch succeeded, safely resume polling
+        startPollingRef.current();
       }
     } catch (err: unknown) {
       if (!isCurrent(scope)) return;
+      // Token Rotation Guard: If token was rotated while in flight, ignore 401/403 from the old token!
+      if (requestToken !== getAccessToken()) return;
+
       if (isAxiosError(err) && (err.response?.status === 401 || err.response?.status === 403)) {
         stopPollingRef.current();
       }
@@ -144,10 +166,24 @@ export const NotificationDropdown: React.FC = () => {
   useEffect(() => {
     let intervalId: number | undefined;
     const stopPolling = () => {
-      window.clearInterval(intervalId);
-      intervalId = undefined;
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+        intervalId = undefined;
+      }
     };
     stopPollingRef.current = stopPolling;
+
+    const startPolling = (targetScope = requestScopeRef.current) => {
+      if (!isCurrent(targetScope)) return;
+      if (intervalId !== undefined) return; // Prevent duplicate intervals
+
+      intervalId = window.setInterval(() => {
+        if (!isCurrent(targetScope)) return;
+        void fetchUnreadCount();
+        if (isOpenRef.current) void fetchNotifications();
+      }, 20000);
+    };
+    startPollingRef.current = () => startPolling();
 
     const synchronize = () => {
       const generation = getAuthenticationGeneration();
@@ -167,11 +203,7 @@ export const NotificationDropdown: React.FC = () => {
       const scope = { generation };
       requestScopeRef.current = scope;
       void fetchUnreadCount();
-      intervalId = window.setInterval(() => {
-        if (!isCurrent(scope)) return;
-        void fetchUnreadCount();
-        if (isOpenRef.current) void fetchNotifications();
-      }, 20000);
+      startPolling(scope);
     };
 
     const handleSessionTimeout = () => {

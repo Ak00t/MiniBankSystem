@@ -226,4 +226,33 @@ public class TransferNotificationVerificationTest {
         assertEquals("Merchant Payment Received", merchantWs.getTitle());
         assertEquals("U Ba", merchantWs.getCounterpartyName());
     }
+
+    @Test
+    @DisplayName("Verify that CusNotificationService HTTP mapping retains all details for payment notifications")
+    void testHttpNotificationMappingRetainsDetails() {
+        CusNotificationService cusNotificationService = new CusNotificationService(notificationRepository);
+
+        Notifications payerNotif = Notifications.builder()
+                .notificationId(201L)
+                .customer(sender)
+                .notificationType(NotificationType.PAYMENT)
+                .title("Payment Sent")
+                .message("You paid 45000.0000 MMK to Ocean Supercenter for Order #ORD-5544. Ref: TXN-ECOM-9900")
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        when(notificationRepository.findTop30ByCustomer_CustomerIdOrderByCreatedAtDesc(senderId))
+                .thenReturn(List.of(payerNotif));
+
+        List<NotificationResponseDto> result = cusNotificationService.getMyNotifications(senderId.toString());
+        assertEquals(1, result.size());
+
+        NotificationResponseDto dto = result.get(0);
+        assertEquals("SENT", dto.getTransferDirection());
+        assertEquals(new BigDecimal("45000.0000"), dto.getAmount());
+        assertEquals("MMK", dto.getCurrency());
+        assertEquals("Ocean Supercenter", dto.getCounterpartyName());
+        assertEquals("TXN-ECOM-9900", dto.getTransactionRef());
+    }
 }

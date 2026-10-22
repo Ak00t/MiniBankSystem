@@ -266,6 +266,16 @@ public class AsyncNotificationService {
                     ? payerManaged.getFullName()
                     : (!srcAcc.isEmpty() ? "Account " + srcAcc : "Customer");
 
+            // Look up associated BankTransactions entity if present (for database foreign key persistence)
+            BankTransactions txnManaged = null;
+            if (transactionRef != null && !transactionRef.isBlank() && bankTransactionRepository != null) {
+                try {
+                    txnManaged = bankTransactionRepository.findByTransactionRef(transactionRef.trim()).orElse(null);
+                } catch (Exception ex) {
+                    log.warn("Could not find transaction by reference {}: {}", transactionRef, ex.getMessage());
+                }
+            }
+
             // 1. NOTIFICATION FOR PAYER (Customer who authorized payment)
             if (payerManaged != null) {
                 try {
@@ -278,6 +288,7 @@ public class AsyncNotificationService {
 
                     Notifications payerNotification = Notifications.builder()
                             .customer(payerManaged)
+                            .transaction(txnManaged)
                             .notificationType(NotificationType.PAYMENT)
                             .title("Payment Sent")
                             .message(payerMessage)
@@ -291,6 +302,7 @@ public class AsyncNotificationService {
                             .message(savedPayer.getMessage())
                             .isRead(false)
                             .createdAt(savedPayer.getCreatedAt() != null ? savedPayer.getCreatedAt() : LocalDateTime.now())
+                            .transactionId(txnManaged != null ? txnManaged.getTransactionId() : null)
                             .transactionRef(ref)
                             .amount(amount)
                             .currency(curr)
@@ -318,6 +330,7 @@ public class AsyncNotificationService {
 
                     Notifications merchantNotification = Notifications.builder()
                             .customer(merchantManaged)
+                            .transaction(txnManaged)
                             .notificationType(NotificationType.PAYMENT)
                             .title("Merchant Payment Received")
                             .message(merchantMessage)
@@ -331,6 +344,7 @@ public class AsyncNotificationService {
                             .message(savedMerchant.getMessage())
                             .isRead(false)
                             .createdAt(savedMerchant.getCreatedAt() != null ? savedMerchant.getCreatedAt() : LocalDateTime.now())
+                            .transactionId(txnManaged != null ? txnManaged.getTransactionId() : null)
                             .transactionRef(ref)
                             .amount(amount)
                             .currency(curr)
