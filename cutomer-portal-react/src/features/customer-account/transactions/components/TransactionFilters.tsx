@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { Filter, X, AlertCircle } from "lucide-react";
-import type { CustomerAccount } from "../../types/accountTypes";
+import type { CustomerAccount } from "../../accounts/types/accountTypes";
 import type { TransactionFilterDraft } from "../types/transactionHistoryTypes";
 import { formatStatusLabel, formatTypeLabel } from "../types/transactionHistoryTypes";
 

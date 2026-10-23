@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
@@ -130,15 +129,13 @@ public class P2PTransferService {
                     sourceAccount.getCurrency(), destAccount.getCurrency()));
         }
 
-        BigDecimal minBalance = (sourceAccount.getMinimumBalance() != null)
-                ? sourceAccount.getMinimumBalance()
-                : BigDecimal.ZERO;
+        BigDecimal minBalance = transferLimitService.getEffectiveMinimumBalance(sourceAccount);
 
         BigDecimal netAvailable = sourceAccount.getAvailableBalance().subtract(minBalance);
         if (netAvailable.compareTo(totalDebitedAmount) < 0) {
             throw new InsufficientFundsException(String.format(
-                    "Insufficient available funds. You must maintain a minimum balance of %s MMK. Required: %s (Amount: %s + Fee: %s), Net available: %s",
-                    minBalance, totalDebitedAmount, request.getAmount(), serviceFee, netAvailable));
+                    "Insufficient available funds. You must maintain a minimum balance of %,.2f %s. Required: %,.2f %s (Amount: %,.2f + Fee: %,.2f), Net available: %,.2f %s",
+                    minBalance, reqCurrency, totalDebitedAmount, reqCurrency, request.getAmount(), serviceFee, netAvailable.max(BigDecimal.ZERO), reqCurrency));
         }
 
         // Multi-tier Transfer Limit Validations (Bank Max, One-Time Limit, Beneficiary vs Stranger, Cumulative Daily Limit)

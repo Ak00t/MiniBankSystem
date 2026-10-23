@@ -1,4 +1,4 @@
-import type { CustomerAccount } from "../../types/accountTypes";
+import type { CustomerAccount } from "../../accounts/types/accountTypes";
 
 export interface CusTransactionHistoryItemDTO {
   transactionRef: string;

@@ -55,6 +55,7 @@ export interface TransferLimitInfo {
   effectiveDailyLimit: number;
   todayTransferredAmount: number;
   remainingDailyLimit: number;
+  minimumBalance?: number;
 }
 
 export interface UpdateTransferLimitPayload {

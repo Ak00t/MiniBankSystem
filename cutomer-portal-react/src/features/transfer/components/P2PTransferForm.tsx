@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../lib/redux";
-import { submitP2PTransfer, resetTransferState } from "../store/transferSlice";
+import { submitP2PTransfer, resetTransferState, clearTransferError } from "../store/transferSlice";
 import { fetchMyAccounts } from "../../customer-account/accounts/stores/accountsSlice";
 import { lookupDestinationAccount } from "../services/transferService";
 import { getBeneficiaries, addBeneficiary } from "../../beneficiaries/services/beneficiaryService";
@@ -56,9 +56,10 @@ interface PinModalProps {
   error: string | null;
   onConfirm: (pin: string) => void;
   onClose: () => void;
+  onClearError?: () => void;
 }
 
-function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
+function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModalProps) {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -74,6 +75,7 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
   }, [error]);
 
   const handleChange = (index: number, value: string) => {
+    if (error && onClearError) onClearError();
     if (!/^\d*$/.test(value)) return;
     const digit = value.slice(-1);
     const next = [...digits];
@@ -85,12 +87,14 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (error && onClearError) onClearError();
     if (e.key === "Backspace" && !digits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (error && onClearError) onClearError();
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (!pasted) return;
@@ -121,8 +125,11 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
       {/* Modal */}
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7 animate-in zoom-in-95 duration-200">
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition"
+          disabled={loading}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition disabled:opacity-50"
+          title="Close"
         >
           <X className="w-5 h-5" />
         </button>
@@ -186,6 +193,16 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
             </>
           )}
         </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={loading}
+          className="w-full mt-2.5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+          <span>Back to Review</span>
+        </button>
       </div>
     </div>
   );
@@ -215,6 +232,7 @@ interface FormStepProps {
   beneficiaries: Beneficiary[];
   transferLimits: TransferLimitInfo | null;
   onContinue: () => void;
+  onCancel?: () => void;
 }
 
 function FormStep({
@@ -237,6 +255,7 @@ function FormStep({
   beneficiaries = [],
   transferLimits = null,
   onContinue,
+  onCancel,
 }: FormStepProps) {
   const [recipientTab, setRecipientTab] = useState<"beneficiaries" | "manual">(
     beneficiaries.length > 0 && !destinationAccount ? "beneficiaries" : "manual"
@@ -259,6 +278,8 @@ function FormStep({
     : null;
   const amountNum = Number(amount) || 0;
   const availBalance = selectedAcc ? Number(selectedAcc.availableBalance) : 0;
+  const minBalance = transferLimits?.minimumBalance ?? 10000;
+  const netAvailable = Math.max(0, availBalance - minBalance);
 
   const isOverOneTimeLimit = Boolean(
     transferLimits && effectiveOneTimeLimit && amountNum > effectiveOneTimeLimit
@@ -267,7 +288,7 @@ function FormStep({
     transferLimits && amountNum > transferLimits.remainingDailyLimit
   );
   const isInsufficientBalance = Boolean(
-    selectedAcc && amountNum > availBalance
+    selectedAcc && amountNum > netAvailable
   );
   const isAmountInvalid =
     !amount ||
@@ -323,7 +344,10 @@ function FormStep({
                   <div>
                     <p className="text-[11px] font-semibold text-blue-600">Available to Transfer</p>
                     <p className="text-sm font-extrabold text-[#08295C]">
-                      {Number(selectedAcc.availableBalance).toLocaleString()} MMK
+                      {netAvailable.toLocaleString()} MMK
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      Balance: {availBalance.toLocaleString()} MMK • Min reserve: {minBalance.toLocaleString()} MMK
                     </p>
                   </div>
                 </div>
@@ -534,7 +558,7 @@ function FormStep({
           {selectedAcc && (
             <button
               type="button"
-              onClick={() => setAmount(String(Math.floor(Number(selectedAcc.availableBalance))))}
+              onClick={() => setAmount(String(Math.floor(netAvailable)))}
               className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-black transition shrink-0"
             >
               Max
@@ -579,11 +603,16 @@ function FormStep({
             )}
 
             {isInsufficientBalance && (
-              <div className="flex items-center gap-1.5 font-bold text-red-700">
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-                <span>
-                  Insufficient balance. Available balance is {availBalance.toLocaleString()} MMK.
-                </span>
+              <div className="flex items-start gap-1.5 font-bold text-red-700">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+                <div>
+                  <p>
+                    Insufficient balance. You must maintain a minimum reserve balance of {minBalance.toLocaleString()} MMK.
+                  </p>
+                  <p className="text-[11px] font-normal text-slate-600 mt-0.5">
+                    Net available to transfer: {netAvailable.toLocaleString()} MMK (Total Balance: {availBalance.toLocaleString()} MMK)
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -613,20 +642,32 @@ function FormStep({
         </div>
       )}
 
-      {/* Continue Button */}
-      <button
-        type="button"
-        onClick={onContinue}
-        disabled={isFormInvalid}
-        className={`w-full py-4 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-2 ${
-          isFormInvalid
-            ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-            : "text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 cursor-pointer"
-        }`}
-      >
-        <span>Proceed to Review</span>
-        <ArrowRight className="w-4 h-4" />
-      </button>
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3 pt-2">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 py-4 rounded-2xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 transition flex items-center justify-center gap-1.5"
+          >
+            <span>Cancel</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={isFormInvalid}
+          className={`${onCancel ? "flex-[2]" : "w-full"} py-4 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-2 ${
+            isFormInvalid
+              ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+              : "text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 cursor-pointer"
+          }`}
+        >
+          <span>Proceed to Review</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -1189,7 +1230,10 @@ export const P2PTransferForm = () => {
     if (validationError) {
       setValidationError("");
     }
-  }, [amount, destinationAccount, sourceAccount]);
+    if (error) {
+      dispatch(clearTransferError());
+    }
+  }, [amount, destinationAccount, sourceAccount, error, dispatch]);
 
   const isSavedBeneficiary = Boolean(
     beneficiarySaved ||
@@ -1318,9 +1362,11 @@ export const P2PTransferForm = () => {
 
     const transferNum = Number(amount);
     const selected = accounts.find((a) => a.accountNumber === sourceAccount);
-    if (selected && transferNum > Number(selected.availableBalance)) {
+    const minReserve = transferLimits?.minimumBalance ?? 10000;
+    const maxTransferable = selected ? Math.max(0, Number(selected.availableBalance) - minReserve) : 0;
+    if (selected && transferNum > maxTransferable) {
       return setValidationError(
-        `Insufficient balance. Available balance is ${Number(selected.availableBalance).toLocaleString()} MMK.`
+        `Insufficient available funds. You must maintain a minimum balance of ${minReserve.toLocaleString()} MMK. Net available for transfer is ${maxTransferable.toLocaleString()} MMK.`
       );
     }
     if (transferLimits) {
@@ -1389,6 +1435,21 @@ export const P2PTransferForm = () => {
     dispatch(fetchMyAccounts());
   };
 
+  /* Cancel / Clear Form */
+  const handleCancelForm = () => {
+    if (destinationAccount || amount || description || validationError) {
+      setDestinationAccount("");
+      setRecipientName("");
+      setLookupError("");
+      setAmount("");
+      setDescription("");
+      setValidationError("");
+      dispatch(clearTransferError());
+    } else {
+      navigate(-1);
+    }
+  };
+
   const selectedAcc = accounts.find((a) => a.accountNumber === sourceAccount);
   const availBalance = selectedAcc ? Number(selectedAcc.availableBalance) : 0;
   const transferAmountNum = Number(amount) || 0;
@@ -1409,6 +1470,7 @@ export const P2PTransferForm = () => {
           loading={loading}
           error={error}
           onConfirm={handlePinConfirm}
+          onClearError={() => dispatch(clearTransferError())}
           onClose={() => {
             if (!loading) {
               setShowPinModal(false);
@@ -1443,12 +1505,12 @@ export const P2PTransferForm = () => {
                 </div>
                 <div>
                   <h2 className="text-base font-black text-slate-900">
-                    Internal P2P Fund Transfer
+                    {step === "review" ? "Review Transfer Details" : "Internal P2P Fund Transfer"}
                   </h2>
                   <p className="text-xs text-slate-400">
                     {step === "form"
                       ? "Instant, secure transfer to any account"
-                      : "Review your transfer summary before authorization"}
+                      : "Confirm transfer details before PIN authorization"}
                   </p>
                 </div>
               </div>
@@ -1505,6 +1567,7 @@ export const P2PTransferForm = () => {
                 beneficiaries={beneficiaries}
                 transferLimits={transferLimits}
                 onContinue={handleContinue}
+                onCancel={handleCancelForm}
               />
             )}
 
