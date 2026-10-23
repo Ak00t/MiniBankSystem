@@ -8,7 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 
 import {
   loginCustomer,
@@ -185,6 +185,7 @@ function LoginPage() {
         </div>
         <form onSubmit={handleLogin} autoComplete="off" className="space-y-3">
           <AuthField label="Customer ID / Account Number" htmlFor="individual-login-id">
+            <UserRound aria-hidden="true" size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               name="customerLookupValue"
@@ -196,12 +197,13 @@ function LoginPage() {
               autoComplete="off"
               disabled={loading}
               id="individual-login-id"
-              className={authInputClass}
+              className={`${authInputClass} pl-11 pr-4`}
               aria-invalid={Boolean(error)}
               aria-required={true}
             />
           </AuthField>
           <AuthField label="Password" htmlFor="individual-login-password">
+            <LockKeyhole aria-hidden="true" size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-slate-400" />
             <input
               type={showPassword ? "text" : "password"}
               name="customerSecretValue"
@@ -213,7 +215,7 @@ function LoginPage() {
               autoComplete="new-password"
               disabled={loading}
               id="individual-login-password"
-              className={authInputClass}
+              className={`${authInputClass} pl-11 pr-12`}
               aria-invalid={Boolean(error)}
               aria-required={true}
             />
