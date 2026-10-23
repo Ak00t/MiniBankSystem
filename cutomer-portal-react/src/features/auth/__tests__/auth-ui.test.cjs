@@ -222,3 +222,20 @@ test('login retains the pre-redesign welcome and sign-in wording', async t => {
     'Login securely using your Customer ID or Account Number.',
   ]) assert.ok(h.container.textContent.includes(text), text);
 });
+
+for (const page of ['OtpPage', 'PasswordResetOtpPage', 'PinResetOtpPage']) {
+  test(page + ' uses six distinct pill cells with one native OTP input', async t => {
+    const h = await setup(t, page);
+    assert.equal(h.container.querySelectorAll('input').length, 1);
+    const input = h.container.querySelector('input');
+    assert.equal(input.getAttribute('inputmode'), 'numeric');
+    assert.equal(input.getAttribute('autocomplete'), 'one-time-code');
+    assert.equal(input.maxLength, 6);
+    const cells = [...input.parentElement.querySelectorAll('[aria-hidden="true"] > span')];
+    assert.equal(cells.length, 6); assert.ok(cells.every(cell => cell.classList.contains('rounded-full')));
+    await h.fill(input.id, '12x34-56');
+    assert.equal(input.value, '123456'); assert.equal(cells.map(c => c.textContent).join(''), '123456');
+    assert.equal(input.getAttribute('aria-hidden'), null);
+    assert.equal(h.calls.length, 0);
+  });
+}

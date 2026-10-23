@@ -1,14 +1,14 @@
 import { ShieldCheck } from "lucide-react";
 import { AuthWordmark } from "./IndividualAuthUI";
 
-function PublicAuthHeader() {
+function PublicAuthHeader({ portalLabel = "Customer Portal" }: { portalLabel?: string }) {
   return (
     <header className="border-b border-slate-200/70 bg-white">
       <div className="mx-auto flex min-h-16 max-w-[1280px] items-center justify-between gap-4 px-5 md:px-8">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:gap-4">
           <AuthWordmark />
-          <span className="hidden border-l border-slate-200 pl-4 text-xs text-slate-400 sm:block">
-            Customer Portal
+          <span className={`${portalLabel === "Customer Portal" ? "hidden sm:block" : "block"} text-[10px] text-slate-400 sm:border-l sm:border-slate-200 sm:pl-4 sm:text-xs`}>
+            {portalLabel}
           </span>
         </div>
         <div className="flex items-center gap-5">

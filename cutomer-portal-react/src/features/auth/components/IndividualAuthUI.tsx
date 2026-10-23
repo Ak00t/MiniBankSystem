@@ -52,11 +52,13 @@ const panels: Record<AuthVariant, { title: string; description: string }> = {
 export function IndividualAuthCard({
   variant,
   children,
+  panelContent,
 }: {
   variant: AuthVariant;
   children: ReactNode;
+  panelContent?: { title: string; description: string };
 }) {
-  const panel = panels[variant];
+  const panel = panelContent || panels[variant];
   return (
     <section className="isolate w-full max-w-[1080px] overflow-hidden rounded-[28px] border border-white/80 bg-[#08295C] shadow-[0_24px_80px_-32px_rgba(8,41,92,0.38)] md:rounded-[32px]">
       <div className="grid md:grid-cols-[0.88fr_1.12fr]">
@@ -203,12 +205,12 @@ export function AuthCodeField({
   children: ReactNode;
 }) {
   return (
-    <div className="group relative w-full rounded-xl focus-within:ring-4 focus-within:ring-blue-100">
+    <div className="group relative mx-auto w-full max-w-[304px]">
       <div aria-hidden="true" className="grid grid-cols-6 gap-1.5 sm:gap-2">
         {Array.from({ length: 6 }, (_, index) => (
           <span
             key={index}
-            className={`flex h-12 min-w-0 items-center justify-center rounded-lg border bg-white font-mono text-xl font-semibold text-[#08295C] transition ${index === Math.min(value.length, 5) ? "border-blue-200 group-focus-within:border-[#2563EB] group-focus-within:shadow-[0_0_0_1px_#2563EB]" : "border-slate-200"}`}
+            className={`flex h-13 min-w-0 items-center justify-center rounded-full border border-blue-200 bg-white font-mono text-xl font-semibold text-[#08295C] transition motion-reduce:transition-none ${index === Math.min(value.length, 5) ? "group-focus-within:border-[#2563EB] group-focus-within:ring-4 group-focus-within:ring-blue-100" : ""}`}
           >
             {value[index] ? (masked ? "•" : value[index]) : ""}
           </span>

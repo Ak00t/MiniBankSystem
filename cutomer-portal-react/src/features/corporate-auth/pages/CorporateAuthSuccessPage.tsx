@@ -7,13 +7,13 @@ import { useCorporateAction } from "../hooks/useCorporateAction";
 export default function CorporateAuthSuccessPage() {
   const navigate = useNavigate();
   const action = useCorporateAction();
-  return <CorporateAuthCard title="Corporate authentication successful" description="Corporate Dashboard integration is pending.">
-    <p className="mb-6 text-sm leading-6 text-slate-500">You have securely signed in to Corporate Banking.</p>
+  return <CorporateAuthCard variant="success" title="Corporate authentication successful" description="Corporate Dashboard integration is pending.">
+    <p className="mb-4 text-center text-sm leading-5 text-slate-500">You have securely signed in to Corporate Banking.</p>
     <form onSubmit={event => {
       event.preventDefault();
       void action.run(async () => {
         if (await logoutCorporate()) await navigate("/corporate/login", { replace: true });
       });
-    }} className="space-y-5"><CorporateNotice error message={action.error} /><CorporateSubmit busy={action.busy}>Corporate Logout</CorporateSubmit></form>
+    }} className="space-y-3"><CorporateNotice error message={action.error} /><CorporateSubmit busy={action.busy}>Corporate Logout</CorporateSubmit></form>
   </CorporateAuthCard>;
 }
