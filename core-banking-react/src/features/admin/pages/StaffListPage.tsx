@@ -141,9 +141,8 @@ export default function StaffListPage() {
       key: 'status',
       header: 'Status',
       render: (row: StaffResponse) => {
-        const statusColors = {
+        const statusColors: Record<string, string> = {
           ACTIVE: 'bg-green-100 text-green-700',
-          SUSPENDED: 'bg-amber-100 text-amber-700',
           DEACTIVATED: 'bg-red-100 text-red-700',
         };
         return (
@@ -183,53 +182,58 @@ export default function StaffListPage() {
       key: 'actions',
       header: 'Actions',
       className: 'text-right',
-      render: (row: StaffResponse) => (
-        <div className="flex items-center justify-end gap-1.5 flex-wrap">
-          {/* View Details */}
-          <button
-            title="View Details"
-            onClick={() => {
-              setSelectedStaff(row);
-              setIsDetailsOpen(true);
-            }}
-            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-          </button>
+      render: (row: StaffResponse) => {
+        // DEACTIVATED ဖြစ်နေရင် ဘာခလုတ်မှ မပြပါနဲ့
+        if (row.status === 'DEACTIVATED') {
+          return <span className="text-gray-400 text-xs">—</span>; // လုံးဝ အလွတ်ထားချင်ရင် return null; လို့ ရေးနိုင်ပါတယ်
+        }
 
-          {/* Edit Info */}
-          <button
-            title="Edit Information"
-            onClick={() => {
-              setSelectedStaff(row);
-              setIsEditOpen(true);
-            }}
-            className="rounded p-1.5 text-blue-600 hover:bg-blue-50"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </button>
+        return (
+          <div className="flex items-center justify-end gap-1.5 flex-wrap">
+            {/* View Details */}
+            <button
+              title="View Details"
+              onClick={() => {
+                setSelectedStaff(row);
+                setIsDetailsOpen(true);
+              }}
+              className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
 
-          {/* Change Role */}
-          <button
-            title="Change Role"
-            onClick={() => {
-              setSelectedStaff(row);
-              setIsRoleOpen(true);
-            }}
-            className="rounded p-1.5 text-purple-600 hover:bg-purple-50"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          </button>
+            {/* Edit Info */}
+            <button
+              title="Edit Information"
+              onClick={() => {
+                setSelectedStaff(row);
+                setIsEditOpen(true);
+              }}
+              className="rounded p-1.5 text-blue-600 hover:bg-blue-50"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
 
-          {/* Reset Password */}
-          {row.status !== 'DEACTIVATED' && (
+            {/* Change Role */}
+            <button
+              title="Change Role"
+              onClick={() => {
+                setSelectedStaff(row);
+                setIsRoleOpen(true);
+              }}
+              className="rounded p-1.5 text-purple-600 hover:bg-purple-50"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </button>
+
+            {/* Reset Password */}
             <button
               title="Reset Password"
               onClick={() => {
@@ -242,10 +246,8 @@ export default function StaffListPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>
             </button>
-          )}
 
-          {/* Deactivate */}
-          {row.status !== 'DEACTIVATED' && (
+            {/* Deactivate */}
             <button
               title="Deactivate Staff"
               onClick={() => {
@@ -258,9 +260,9 @@ export default function StaffListPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
               </svg>
             </button>
-          )}
-        </div>
-      ),
+          </div>
+        );
+      },
     },
   ];
 
@@ -384,9 +386,6 @@ export default function StaffListPage() {
               <option value="ALL">All Statuses ({staffList.length})</option>
               <option value="ACTIVE">
                 Active ({staffList.filter((s) => s.status === 'ACTIVE').length})
-              </option>
-              <option value="SUSPENDED">
-                Suspended ({staffList.filter((s) => s.status === 'SUSPENDED').length})
               </option>
               <option value="DEACTIVATED">
                 Deactivated ({staffList.filter((s) => s.status === 'DEACTIVATED').length})
