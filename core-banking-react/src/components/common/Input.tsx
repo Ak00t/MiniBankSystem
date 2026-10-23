@@ -1,15 +1,17 @@
-import { type InputHTMLAttributes, useState } from 'react';
+import { type InputHTMLAttributes, type ReactNode, useState } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   showPasswordToggle?: boolean;
+  leadingIcon?: ReactNode;
 }
 
 export default function Input({
   label,
   error,
   showPasswordToggle = false,
+  leadingIcon,
   type = 'text',
   className = '',
   id,
@@ -17,6 +19,7 @@ export default function Input({
 }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-');
+  const errorId = `${inputId}-error`;
   const resolvedType = showPasswordToggle
     ? showPassword
       ? 'text'
@@ -24,7 +27,7 @@ export default function Input({
     : type;
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       {label && (
         <label
           htmlFor={inputId}
@@ -34,17 +37,26 @@ export default function Input({
         </label>
       )}
 
-      <div className="relative">
+      <div className="relative flex items-center">
+        {leadingIcon && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+            {leadingIcon}
+          </div>
+        )}
+
         <input
           id={inputId}
           type={resolvedType}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
           className={[
-            'w-full rounded-lg border px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-            'transition-colors duration-150',
+            'w-full rounded-xl border px-3.5 py-2.5 text-sm text-stone-900 placeholder-stone-400',
+            'focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-[#c69f4b]',
+            'transition-all duration-150',
             error
-              ? 'border-red-400 bg-red-50 focus:ring-red-400 focus:border-red-400'
-              : 'border-gray-300 bg-white hover:border-gray-400',
+              ? 'border-red-400 bg-red-50/50 focus:ring-red-400 focus:border-red-400'
+              : 'border-amber-200/70 bg-white hover:border-amber-300',
+            leadingIcon ? 'pl-10' : '',
             showPasswordToggle ? 'pr-10' : '',
             className,
           ].join(' ')}
@@ -54,9 +66,8 @@ export default function Input({
         {showPasswordToggle && (
           <button
             type="button"
-            tabIndex={-1}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+            className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-700"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? (
@@ -76,7 +87,7 @@ export default function Input({
       </div>
 
       {error && (
-        <p className="text-xs text-red-600 flex items-center gap-1">
+        <p id={errorId} className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
           <svg className="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
