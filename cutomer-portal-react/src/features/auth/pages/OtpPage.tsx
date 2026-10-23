@@ -28,6 +28,7 @@ import {
 
 import PublicAuthLayout
   from "../components/PublicAuthLayout";
+import { consumePendingPaymentRedirect } from "../utils/pendingPaymentRedirect";
 
 
 function OtpPage() {
@@ -70,6 +71,8 @@ function OtpPage() {
     completed,
     setCompleted,
   ] = useState(false);
+
+  const [completedDestination, setCompletedDestination] = useState("/dashboard");
 
 
   const [
@@ -224,6 +227,9 @@ function OtpPage() {
             response.refreshToken
           );
 
+          const destination = consumePendingPaymentRedirect();
+          setCompletedDestination(destination);
+
 
           sessionStorage.removeItem(
             "challengeGroupId"
@@ -246,7 +252,7 @@ function OtpPage() {
 
 
           navigate(
-            "/dashboard",
+            destination,
             { replace: true }
           );
 
@@ -436,11 +442,11 @@ function OtpPage() {
   // UI
   // =========================================
 
-  // Verification removes the challenge before the Dashboard transition commits.
+  // Verification removes the challenge before the destination transition commits.
   // Completed verification must never compete with that transition; after logout,
   // cleared tokens still send any restored completed page to Login.
   if (completed) {
-    return <Navigate to={hasTokens() ? "/dashboard" : "/login"} replace />;
+    return <Navigate to={hasTokens() ? completedDestination : "/login"} replace />;
   }
 
   // Login challenges are UUIDs. Never restore the form from browser history
@@ -578,7 +584,7 @@ function OtpPage() {
                     "
                   >
 
-                    MiniBank
+                    ACE Bank
 
                   </h1>
 
@@ -629,7 +635,7 @@ function OtpPage() {
 
                 Email verification adds an
                 additional security layer before
-                you access your MiniBank account.
+                you access your ACE Bank account.
 
               </p>
 
@@ -919,7 +925,7 @@ function OtpPage() {
                     "
                   >
 
-                    MiniBank
+                    ACE Bank
 
                   </h1>
 
@@ -1359,7 +1365,7 @@ function OtpPage() {
                   "
                 >
 
-                  MiniBank will never ask you to share
+                  ACE Bank will never ask you to share
                   your OTP by phone, message, or email.
 
                 </p>

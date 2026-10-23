@@ -1,4 +1,3 @@
-
 import {
   createBrowserRouter,
   RouterProvider,
@@ -32,18 +31,20 @@ import PinResetNewPinPage from "../../features/auth/pages/PinResetNewPinPage";
 // CUSTOMER PAGES
 // ======================================================
 
-import DashboardPage from "../../features/customer-account/dashboard/DashboardPage";
+import DashboardPage from "../../features/customer-account/dashboard/pages/DashboardPage";
 import MainLayout from "../../components/layout/MainLayout";
-import MyAccountsPage from "../../features/customer-account/accounts/MyaccountPage";
+import MyAccountsPage from "../../features/customer-account/accounts/pages/MyaccountPage";
 import { MerchantPaymentAuthorize } from "../../features/merchant-payment/pages/MerchantPaymentAuthorize";
-
-import ProfilePage from "../../features/customer-account/profile/ProfilePage";
+import { MerchantPaymentRouteGuard } from "../../features/merchant-payment/components/MerchantPaymentRouteGuard";
+import ProfilePage from "../../features/customer-account/profile/pages/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
-import AccountDetailPage from "../../features/customer-account/accounts/AccountDetailPage";
+import AccountDetailPage from "../../features/customer-account/accounts/pages/AccountDetailPage";
 import SettingsPage from "../../features/customer-account/settings/pages/SettingsPage";
-import AnnouncementsPage from "../../features/customer-account/announcements/AnnouncementsPage";
+import AnnouncementsPage from "../../features/customer-account/announcements/pages/AnnouncementsPage";
+
 import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
 import AccountStatementPage from "../../features/customer-account/statements/pages/AccountStatementPage";
+import TransactionHistoryPage from "../../features/customer-account/transactions/pages/TransactionHistoryPage";
 
 // ======================================================
 // ROUTER
@@ -51,11 +52,11 @@ import AccountStatementPage from "../../features/customer-account/statements/pag
 
 const router = createBrowserRouter([
 
-  ...corporateAuthRoutes,
-
   // =========================================
   // PUBLIC AUTH PAGES & STANDALONE PAGES
   // =========================================
+  ...corporateAuthRoutes,
+
   // ====================================================
   // PUBLIC AUTH PAGES
   // ====================================================
@@ -119,6 +120,40 @@ const router = createBrowserRouter([
 
 
   // ====================================================
+  // MERCHANT PAYMENT CHECKOUT (PRE-LOGIN REDIRECT GUARD)
+  // ====================================================
+
+  {
+    element: <MerchantPaymentRouteGuard />,
+
+    children: [
+      {
+        element: (
+          <SessionTimeoutProvider>
+            <MainLayout />
+          </SessionTimeoutProvider>
+        ),
+
+        children: [
+          {
+            path: "/checkout",
+            element: <MerchantPaymentAuthorize />,
+          },
+          {
+            path: "/merchant-payment/authorize",
+            element: <MerchantPaymentAuthorize />,
+          },
+          {
+            path: "/merchant-payment",
+            element: <MerchantPaymentAuthorize />,
+          },
+        ],
+      },
+    ],
+  },
+
+
+  // ====================================================
   // PROTECTED CUSTOMER PAGES
   // ====================================================
 
@@ -138,21 +173,6 @@ const router = createBrowserRouter([
         children: [
 
           {
-            path: "/checkout",
-            element: <MerchantPaymentAuthorize />,
-          },
-
-          {
-            path: "/merchant-payment/authorize",
-            element: <MerchantPaymentAuthorize />,
-          },
-
-          {
-            path: "/merchant-payment",
-            element: <MerchantPaymentAuthorize />,
-          },
-
-          {
             path: "/dashboard",
             element: <DashboardPage />,
           },
@@ -170,6 +190,11 @@ const router = createBrowserRouter([
           {
             path: "/statements",
             element: <AccountStatementPage />,
+          },
+
+          {
+            path: "/transaction",
+            element: <TransactionHistoryPage />,
           },
 
           {
