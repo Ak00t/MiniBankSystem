@@ -23,6 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -41,28 +43,18 @@ public class StaffManagementService {
 
     public StaffResponse createStaff(StaffCreateRequest request) {
 
-    	
-    	if (staffUsersRepository.existsByEmailIgnoreCase(
-    	        request.getEmail().trim())) {
-    	    throw new IllegalArgumentException(
-    	        "Email is already registered");
-    	}
-    	
+        if (staffUsersRepository.existsByEmailIgnoreCase(
+                request.getEmail().trim())) {
+            throw new IllegalArgumentException(
+                "Email is already registered");
+        }
+
         // Check username
         if (staffUsersRepository
                 .existsByUsernameCustom(request.getUsername())) {
 
             throw new RuntimeException(
                     "Username already exists"
-            );
-        }
-
-        // Check staff number
-        if (staffUsersRepository
-                .existsByStaffNo(request.getStaffNo())) {
-
-            throw new RuntimeException(
-                    "Staff number already exists"
             );
         }
 
@@ -73,6 +65,19 @@ public class StaffManagementService {
                         new RuntimeException("Role not found")
                 );
 
+        // Role Creation Restriction:
+        // An Admin should only be able to create users with 'Teller' and 'Auditor' roles.
+        String roleCode = role.getRoleCode();
+        if (!"TELLER".equalsIgnoreCase(roleCode) && !"AUDITOR".equalsIgnoreCase(roleCode)) {
+            throw new IllegalArgumentException(
+                    "Admin can only create staff users with 'Teller' or 'Auditor' roles. Provided role: " + role.getRoleName()
+            );
+        }
+
+        // =================================================
+        // Auto-generated Staff Number
+        // =================================================
+        String generatedStaffNo = generateUniqueStaffNo(roleCode);
 
         // =================================================
         // Create Staff
@@ -80,22 +85,18 @@ public class StaffManagementService {
 
         StaffUsers staff = new StaffUsers();
 
-        staff.setStaffNo(request.getStaffNo());
+        staff.setStaffNo(generatedStaffNo);
         staff.setUsername(request.getUsername());
         staff.setFullName(request.getFullName());
         staff.setEmail(request.getEmail());
         staff.setPhone(request.getPhone());
 
         staff.setPasswordHash(
-        	    passwordEncoder.encode(
-        	        java.util.UUID.randomUUID().toString()
-        	    )
-        	);
+                passwordEncoder.encode(
+                    java.util.UUID.randomUUID().toString()
+                )
+            );
 
-        	staff.setMustChangePassword(true);
-        	staff.setPasswordChangedAt(null);
-
-        // New staff must change temporary password
         staff.setMustChangePassword(true);
         staff.setPasswordChangedAt(null);
 
@@ -142,8 +143,8 @@ public class StaffManagementService {
         staffUserRolesRepository.save(staffRole);
 
 
-        // Return DTO
-        return toResponse(savedStaff);
+        // Return DTO with role information
+        return toResponse(savedStaff, role);
     }
 
 
@@ -221,9 +222,9 @@ public class StaffManagementService {
     }
 
 
- // =====================================================
- // 5. CHANGE STAFF ROLE
- // =====================================================
+    // =====================================================
+    // 5. CHANGE STAFF ROLE
+    // =====================================================
 
     @Transactional // Transactional မဖြစ်မနေ ထည့်ပေးပါ
     public StaffResponse changeRole(
@@ -238,7 +239,7 @@ public class StaffManagementService {
                          );
 
          // Check new role
-         Roles role =
+         Roles newRole =
                  rolesRepository.findById(
                          request.getRoleId()
                  )
@@ -254,6 +255,20 @@ public class StaffManagementService {
                                  new RuntimeException("Staff role not found")
                          );
 
+         Roles currentRole = rolesRepository.findById(staffRole.getRoleId()).orElse(null);
+
+         if (currentRole != null && currentRole.getRoleId().equals(newRole.getRoleId())) {
+             throw new IllegalArgumentException("Staff member already has the role: " + newRole.getRoleName());
+         }
+
+         // Allowed target roles: ADMIN, TELLER, AUDITOR
+         String targetRoleCode = newRole.getRoleCode();
+         if (!"ADMIN".equalsIgnoreCase(targetRoleCode) &&
+             !"TELLER".equalsIgnoreCase(targetRoleCode) &&
+             !"AUDITOR".equalsIgnoreCase(targetRoleCode)) {
+             throw new IllegalArgumentException("Role change to " + newRole.getRoleName() + " is not permitted.");
+         }
+
          // Primary Key ပြောင်းလို့မရတဲ့အတွက် အဟောင်းကို ဖျက်ပါ
          staffUserRolesRepository.delete(staffRole);
          staffUserRolesRepository.flush(); // Database ထဲသို့ ချက်ချင်းသက်ရောက်စေရန်
@@ -261,21 +276,23 @@ public class StaffManagementService {
          // Role အသစ်ဖြင့် အသစ်ပြန်ဆောက်ပါ
          StaffUserRoles newStaffRole = new StaffUserRoles();
          newStaffRole.setStaffId(staffId);
-         newStaffRole.setRoleId(role.getRoleId());
+         newStaffRole.setRoleId(newRole.getRoleId());
          newStaffRole.setAssignedAt(LocalDateTime.now());
          newStaffRole.setUpdatedAt(LocalDateTime.now());
 
          staffUserRolesRepository.save(newStaffRole);
 
-         
+         // Dynamic ID Update: Automatically update Staff No. to reflect the new role
+         String updatedStaffNo = updateStaffNoForRole(staff.getStaffNo(), targetRoleCode);
+         staff.setStaffNo(updatedStaffNo);
+
          staff.setTokenVersion(staff.getTokenVersion() + 1);
          staff.setUpdatedAt(LocalDateTime.now());
          staffUsersRepository.save(staff); // Staff Table ကို Update လုပ်ရန်
 
-         
          authSessionsRepository.revokeAllActiveSessionsByStaffId(staffId);
 
-         return toResponse(staff);
+         return toResponse(staff, newRole);
      }
 
 
@@ -389,36 +406,101 @@ public class StaffManagementService {
 
 
     // =====================================================
+    // 8. GET ALL ROLES
+    // =====================================================
+
+    public List<Roles> getAllRoles() {
+        return rolesRepository.findAll();
+    }
+
+
+    // =====================================================
+    // HELPER METHODS: ID GENERATION & FORMATTING
+    // =====================================================
+
+    public String getRolePrefix(String roleCode) {
+        if (roleCode == null) return "STF";
+        return switch (roleCode.toUpperCase()) {
+            case "ADMIN" -> "STF-ADM";
+            case "TELLER" -> "STF-TLR";
+            case "AUDITOR" -> "STF-AUD";
+            default -> "STF-" + roleCode.toUpperCase();
+        };
+    }
+
+    public synchronized String generateUniqueStaffNo(String roleCode) {
+        String prefix = getRolePrefix(roleCode);
+        List<StaffUsers> allStaff = staffUsersRepository.findAll();
+        int maxSeq = 0;
+        Pattern pattern = Pattern.compile("^" + Pattern.quote(prefix) + "-(\\d+)$");
+        for (StaffUsers s : allStaff) {
+            if (s.getStaffNo() != null) {
+                Matcher m = pattern.matcher(s.getStaffNo().trim());
+                if (m.matches()) {
+                    try {
+                        int val = Integer.parseInt(m.group(1));
+                        if (val > maxSeq) {
+                            maxSeq = val;
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        }
+
+        int nextSeq = maxSeq + 1;
+        String candidate;
+        do {
+            candidate = String.format("%s-%04d", prefix, nextSeq++);
+        } while (staffUsersRepository.existsByStaffNo(candidate));
+
+        return candidate;
+    }
+
+    public String updateStaffNoForRole(String currentStaffNo, String newRoleCode) {
+        String newPrefix = getRolePrefix(newRoleCode);
+        if (currentStaffNo != null && !currentStaffNo.isBlank()) {
+            Matcher matcher = Pattern.compile("(\\d+)$").matcher(currentStaffNo.trim());
+            if (matcher.find()) {
+                String numberPart = matcher.group(1);
+                String candidate = newPrefix + "-" + numberPart;
+                if (!staffUsersRepository.existsByStaffNo(candidate)) {
+                    return candidate;
+                }
+            }
+        }
+        return generateUniqueStaffNo(newRoleCode);
+    }
+
+
+    // =====================================================
     // ENTITY -> DTO
     // =====================================================
 
-    private StaffResponse toResponse(
-            StaffUsers staff
-    ) {
+    private StaffResponse toResponse(StaffUsers staff) {
+        StaffUserRoles userRole = staffUserRolesRepository.findByStaffId(staff.getStaffId()).orElse(null);
+        Roles role = (userRole != null) ? rolesRepository.findById(userRole.getRoleId()).orElse(null) : null;
+        return toResponse(staff, role);
+    }
 
-        return new StaffResponse(
-
+    private StaffResponse toResponse(StaffUsers staff, Roles role) {
+        StaffResponse response = new StaffResponse(
                 staff.getStaffId(),
-
                 staff.getStaffNo(),
-
                 staff.getUsername(),
-
                 staff.getFullName(),
-
                 staff.getEmail(),
-
                 staff.getPhone(),
-
                 staff.isMustChangePassword(),
-
                 staff.getStatus(),
-
                 staff.getLastLoginAt(),
-
                 staff.getCreatedAt(),
-
                 staff.getUpdatedAt()
         );
+        if (role != null) {
+            response.setRoleId(role.getRoleId());
+            response.setRoleCode(role.getRoleCode());
+            response.setRoleName(role.getRoleName());
+        }
+        return response;
     }
 }

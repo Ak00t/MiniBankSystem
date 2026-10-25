@@ -11,10 +11,18 @@ export default function LoginPage() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     username?: string;
     password?: string;
   }>({});
+
+  const displayError = errorMessage || error;
+
+  const handleDismissError = () => {
+    setErrorMessage(null);
+    if (error) dismissError();
+  };
 
   // If already authenticated, redirect immediately to dashboard
   useEffect(() => {
@@ -26,12 +34,14 @@ export default function LoginPage() {
   // Clear backend error when user starts typing
   const handleUsernameChange = (value: string) => {
     setUsername(value);
+    if (errorMessage) setErrorMessage(null);
     if (error) dismissError();
     if (fieldErrors.username) setFieldErrors((e) => ({ ...e, username: undefined }));
   };
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
+    if (errorMessage) setErrorMessage(null);
     if (error) dismissError();
     if (fieldErrors.password) setFieldErrors((e) => ({ ...e, password: undefined }));
   };
@@ -48,16 +58,42 @@ export default function LoginPage() {
     e.preventDefault();
     if (!validate()) return;
 
-    const result = await login({ username: username.trim(), password });
+    setErrorMessage(null);
+    if (error) dismissError();
 
-    if (loginThunk.fulfilled.match(result)) {
-      const roles: string[] = result.payload.roles ?? [];
-      if (roles.includes('ADMIN')) {
-        navigate('/admin/dashboard', { replace: true });
-      } else {
-        // Non-admin authenticated user — redirect to dashboard (backend enforces authorization)
-        navigate('/admin/dashboard', { replace: true });
+    try {
+      const result = await login({ username: username.trim(), password });
+
+      if (loginThunk.fulfilled.match(result)) {
+        const roles: string[] = result.payload.roles ?? [];
+        if (roles.includes('ADMIN')) {
+          navigate('/admin/dashboard', { replace: true });
+        } else {
+          // Non-admin authenticated user — redirect to dashboard (backend enforces authorization)
+          navigate('/admin/dashboard', { replace: true });
+        }
+      } else if (loginThunk.rejected.match(result)) {
+        const backendMessage =
+          (result.payload as string) ||
+          (result as any).error?.response?.data?.message ||
+          result.error?.message ||
+          'Login failed. Please try again.';
+        setErrorMessage(
+          typeof backendMessage === 'string'
+            ? backendMessage
+            : (backendMessage as any)?.message || 'Login failed. Please try again.'
+        );
       }
+    } catch (err: any) {
+      const backendMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        (typeof err === 'string' ? err : 'Login failed. Please try again.');
+      setErrorMessage(
+        typeof backendMessage === 'string'
+          ? backendMessage
+          : (backendMessage as any)?.message || 'Login failed. Please try again.'
+      );
     }
   };
 
@@ -87,18 +123,18 @@ export default function LoginPage() {
           <div className="px-8 py-8">
             <form onSubmit={handleSubmit} noValidate className="space-y-5">
               {/* Backend error alert */}
-              {error && (
+              {displayError && (
                 <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
                   <svg className="h-5 w-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-red-800">Login Failed</p>
-                    <p className="mt-0.5 text-sm text-red-600">{error}</p>
+                    <p className="mt-0.5 text-sm text-red-600">{displayError}</p>
                   </div>
                   <button
                     type="button"
-                    onClick={dismissError}
+                    onClick={handleDismissError}
                     className="shrink-0 text-red-400 hover:text-red-600 focus:outline-none"
                     aria-label="Dismiss error"
                   >

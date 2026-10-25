@@ -47,6 +47,11 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Do not intercept or refresh tokens for the login endpoint
+    if (!originalRequest || originalRequest.url?.includes(API_ENDPOINTS.AUTH.LOGIN)) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       
       // တကယ်လို့ Refresh လုပ်နေတုန်း တခြား API တွေ 401 တက်လာရင် Queue ထဲမှာ စောင့်ခိုင်းထားမယ်

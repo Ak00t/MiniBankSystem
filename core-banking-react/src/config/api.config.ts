@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
   ADMIN: {
     // Staff Management
     STAFF: "/api/admin/staff",
+    STAFF_ROLES: "/api/admin/staff/roles",
     STAFF_BY_ID: (id: string) => `/api/admin/staff/${id}`,
     STAFF_DEACTIVATE: (id: string) => `/api/admin/staff/${id}/deactivate`,
     STAFF_RESET_PASSWORD: (id: string) =>

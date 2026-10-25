@@ -22,6 +22,8 @@ export default function StaffDetailsModal({
 }: StaffDetailsModalProps) {
   if (!staff) return null;
 
+  const roleCode = staff.roleCode || (staff.staffNo.includes('TLR') ? 'TELLER' : staff.staffNo.includes('AUD') ? 'AUDITOR' : staff.staffNo.includes('ADM') ? 'ADMIN' : 'STAFF');
+
   return (
     <Modal
       isOpen={isOpen}
@@ -107,6 +109,12 @@ export default function StaffDetailsModal({
             <span className="font-medium text-gray-800">{staff.username}</span>
           </div>
           <div>
+            <span className="block text-xs font-medium text-gray-500">Assigned Role</span>
+            <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+              {staff.roleName || roleCode}
+            </span>
+          </div>
+          <div>
             <span className="block text-xs font-medium text-gray-500">Staff ID (UUID)</span>
             <span className="font-mono text-xs text-gray-600 truncate block" title={staff.staffId}>
               {staff.staffId}
@@ -141,7 +149,7 @@ export default function StaffDetailsModal({
             <span className="block text-xs font-medium text-gray-500">Created At</span>
             <span className="text-gray-800">{formatDateTime(staff.createdAt)}</span>
           </div>
-          <div>
+          <div className="col-span-2">
             <span className="block text-xs font-medium text-gray-500">Updated At</span>
             <span className="text-gray-800">{formatDateTime(staff.updatedAt)}</span>
           </div>

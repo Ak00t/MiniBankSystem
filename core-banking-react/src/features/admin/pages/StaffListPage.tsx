@@ -70,6 +70,8 @@ export default function StaffListPage() {
         (item.fullName && item.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (item.email && item.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (item.staffNo && item.staffNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.roleCode && item.roleCode.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (item.roleName && item.roleName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (item.phone && item.phone.includes(searchTerm));
 
       const matchesStatus =
@@ -106,6 +108,28 @@ export default function StaffListPage() {
           {row.staffNo}
         </span>
       ),
+    },
+    {
+      key: 'role',
+      header: 'Role',
+      render: (row: StaffResponse) => {
+        const code = (row.roleCode || (row.staffNo?.includes('TLR') ? 'TELLER' : row.staffNo?.includes('AUD') ? 'AUDITOR' : row.staffNo?.includes('ADM') ? 'ADMIN' : 'STAFF')).toUpperCase();
+        const roleColors: Record<string, string> = {
+          ADMIN: 'bg-purple-100 text-purple-700 border-purple-200',
+          TELLER: 'bg-blue-100 text-blue-700 border-blue-200',
+          AUDITOR: 'bg-amber-100 text-amber-700 border-amber-200',
+        };
+        return (
+          <span
+            className={[
+              'inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold border',
+              roleColors[code] || 'bg-gray-100 text-gray-700 border-gray-200',
+            ].join(' ')}
+          >
+            {row.roleName || code}
+          </span>
+        );
+      },
     },
     {
       key: 'username',
@@ -185,7 +209,7 @@ export default function StaffListPage() {
       render: (row: StaffResponse) => {
         // DEACTIVATED ဖြစ်နေရင် ဘာခလုတ်မှ မပြပါနဲ့
         if (row.status === 'DEACTIVATED') {
-          return <span className="text-gray-400 text-xs">—</span>; // လုံးဝ အလွတ်ထားချင်ရင် return null; လို့ ရေးနိုင်ပါတယ်
+          return <span className="text-gray-400 text-xs">—</span>;
         }
 
         return (
@@ -352,7 +376,7 @@ export default function StaffListPage() {
           <div className="relative flex-1 max-w-md">
             <input
               type="text"
-              placeholder="Search by username, name, email, or staff no..."
+              placeholder="Search by username, name, email, staff no, or role..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -461,7 +485,7 @@ export default function StaffListPage() {
         onClose={() => setIsRoleOpen(false)}
         staff={selectedStaff}
         onSuccess={() => {
-          handleShowSuccess('Staff role updated successfully.');
+          handleShowSuccess('Staff role and Staff No. updated successfully.');
           loadStaff();
         }}
       />
