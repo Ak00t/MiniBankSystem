@@ -40,8 +40,6 @@ export default function TransactionTable({
                 <div className="h-4 w-48 sm:w-64 rounded bg-slate-200" />
                 {/* Date & Type skeleton */}
                 <div className="h-3 w-40 sm:w-52 rounded bg-slate-200" />
-                {/* Ref skeleton */}
-                <div className="h-3 w-28 sm:w-36 rounded bg-slate-200" />
               </div>
               <div className="flex flex-col items-start sm:items-end justify-center gap-1.5 shrink-0">
                 {/* Amount skeleton */}
@@ -137,14 +135,6 @@ export default function TransactionTable({
                     </span>
                     <span>{displayType}</span>
                   </div>
-
-                  {/* Third line: Reference */}
-                  <p className="text-xs text-slate-500">
-                    Ref:{" "}
-                    <span className="font-mono text-[11px] text-slate-600">
-                      {tx.transactionRef}
-                    </span>
-                  </p>
                 </div>
 
                 {/* RIGHT SECTION */}
