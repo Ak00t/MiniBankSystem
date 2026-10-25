@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import {
-  Bell,
   Eye,
   EyeOff,
   PlusCircle,
@@ -26,6 +25,13 @@ function formatBalance(amount: number): string {
   });
 }
 
+function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function TotalBalanceCard({
   totalBalance,
   accountCount,
@@ -35,61 +41,46 @@ export default function TotalBalanceCard({
   customerName,
 }: TotalBalanceCardProps) {
   const displayName = customerName?.trim() || "Customer";
+  const greeting = `${getTimeGreeting()}, ${displayName}`;
 
   return (
     <section
       aria-label="Total Available Balance"
-      className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0A192F] via-[#102A54] to-[#153564] p-6 sm:p-8 text-white shadow-xl border border-cyan-500/25"
+      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A192F] via-[#102A54] to-[#153564] p-5 sm:p-6 text-white shadow-lg border border-cyan-500/20"
     >
-      {/* 1. Ambient Lighting & Ekararj Watermark */}
+      {/* 1. Subtle Ambient Lighting & Watermark */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/15 blur-3xl"
+        className="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-cyan-400/15 blur-3xl"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-24 -left-12 h-64 w-64 rounded-full bg-blue-600/15 blur-3xl"
+        className="pointer-events-none absolute -bottom-20 -left-10 h-52 w-52 rounded-full bg-blue-600/15 blur-3xl"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute right-4 bottom-2 opacity-15 select-none"
+        className="pointer-events-none absolute right-3 bottom-1 opacity-10 select-none"
       >
-        <CrownEmbossedWatermark theme="navy" className="w-48 h-48" />
+        <CrownEmbossedWatermark theme="navy" className="w-36 h-36" />
       </div>
 
-      <div className="relative z-10 space-y-6">
-        {/* ROW 1: Greeting & Notification Bell */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/40 shadow-xs">
-              <User size={22} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-300/80 uppercase tracking-wider">
-                Welcome back
-              </p>
-              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">
-                Hi, {displayName}
-              </h2>
-            </div>
+      <div className="relative z-10 space-y-4">
+        {/* ROW 1: Greeting without Bell icon */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/30 shadow-xs">
+            <User size={18} />
           </div>
-
-          {/* Notification Bell Button */}
-          <Link
-            to="/announcements"
-            className="group relative flex h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 hover:border-cyan-400/40 active:scale-95 shadow-xs"
-            title="Notifications & Announcements"
-            aria-label="Notifications"
-          >
-            <Bell size={18} className="transition group-hover:rotate-12" />
-            <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-[#00A3C4] ring-2 ring-[#0A192F]" />
-          </Link>
+          <div>
+            <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+              {greeting}
+            </h2>
+          </div>
         </div>
 
-        {/* ROW 2: Total Available Balance */}
-        <div className="space-y-1.5 pt-1">
+        {/* ROW 2: Total Available Balance (Compact & User-Friendly) */}
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-300">
+            <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
               Total Available Balance
             </span>
             <button
@@ -100,7 +91,7 @@ export default function TotalBalanceCard({
               title={showBalance ? "Hide Balance" : "Show Balance"}
               aria-label={showBalance ? "Hide Balance" : "Show Balance"}
             >
-              {showBalance ? <EyeOff size={16} /> : <Eye size={16} />}
+              {showBalance ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
 
             {accountCount > 0 && (
@@ -110,13 +101,13 @@ export default function TotalBalanceCard({
             )}
           </div>
 
-          <div className="flex flex-wrap items-baseline gap-2 pt-1">
-            <span className="font-mono text-xl sm:text-2xl font-bold text-cyan-200">
+          <div className="flex flex-wrap items-baseline gap-2 pt-0.5">
+            <span className="font-mono text-base sm:text-lg font-bold text-cyan-200">
               MMK
             </span>
-            <div className="font-mono text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white drop-shadow-sm">
+            <div className="font-mono text-2xl sm:text-3xl font-extrabold tracking-tight text-white drop-shadow-xs">
               {loading ? (
-                <span className="inline-block h-10 w-48 animate-pulse rounded-xl bg-white/15 align-middle" />
+                <span className="inline-block h-8 w-40 animate-pulse rounded-lg bg-white/15 align-middle" />
               ) : showBalance ? (
                 formatBalance(totalBalance)
               ) : (
@@ -129,31 +120,31 @@ export default function TotalBalanceCard({
         </div>
 
         {/* ROW 3: Quick Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5 pt-2">
+        <div className="flex flex-wrap items-center gap-2.5 pt-1">
           {/* Add Money */}
           <Link
             to="/accounts"
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-bold text-white shadow-xs backdrop-blur-md transition hover:bg-white/20 active:scale-95"
           >
-            <PlusCircle size={16} className="text-cyan-300" />
+            <PlusCircle size={15} className="text-cyan-300" />
             <span>Add Money</span>
           </Link>
 
           {/* Transfer */}
           <Link
             to="/transfer"
-            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#00A3C4] via-[#0284C7] to-[#0369A1] px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-cyan-500/25 transition hover:from-[#0891B2] hover:via-[#0369A1] hover:to-[#075985] hover:shadow-cyan-500/35 active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#00A3C4] via-[#0284C7] to-[#0369A1] px-4 py-2 text-xs font-bold text-white shadow-md shadow-cyan-500/25 transition hover:from-[#0891B2] hover:via-[#0369A1] hover:to-[#075985] active:scale-95"
           >
-            <ArrowUpRight size={17} strokeWidth={2.4} />
+            <ArrowUpRight size={15} strokeWidth={2.4} />
             <span>Transfer</span>
           </Link>
 
           {/* Pay */}
           <Link
             to="/checkout"
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-bold text-white shadow-xs backdrop-blur-md transition hover:bg-white/20 active:scale-95"
           >
-            <Receipt size={16} className="text-cyan-300" />
+            <Receipt size={15} className="text-cyan-300" />
             <span>Pay</span>
           </Link>
         </div>

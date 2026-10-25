@@ -6,7 +6,6 @@ import DashboardSkeleton from "../components/DashboardSkeleton";
 import TotalBalanceCard from "../components/TotalBalanceCard";
 import BankCardsSection from "../components/BankCardsSection";
 import RecentTransactions from "../components/RecentTransactions";
-import StatisticCard from "../components/StatisticCard";
 
 import { fetchDashboard } from "../store/dashboardSlice";
 import { useAppDispatch, useAppSelector } from "../../../../lib/redux";
@@ -51,8 +50,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#F4F6F9] px-3 py-5 text-[#0A192F] sm:px-6 sm:py-7 lg:px-10">
-      {/* Background Soft Blobs with Ekararj Cyan & Sapphire Glow */}
+    <div className="relative overflow-hidden bg-[#F4F6F9] text-[#0A192F] pb-12">
+      {/* Background Soft Blobs bounded by overflow-hidden */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-cyan-100/35 blur-3xl"
@@ -110,7 +109,7 @@ export default function DashboardPage() {
               </p>
             )}
 
-            {/* 1. TOP SECTION: Total Available Balance Hero Card (Greeting, Bell, Balance, Quick Actions) */}
+            {/* 1. TOP SECTION: Total Available Balance (Compact & User-Friendly) */}
             <TotalBalanceCard
               totalBalance={totalBalance}
               accountCount={accounts.length}
@@ -128,22 +127,16 @@ export default function DashboardPage() {
               onToggleBalance={handleToggleBalance}
             />
 
-            {/* 3. BOTTOM SECTION: Recent Transactions & Statistic (Donut Chart) */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_0.8fr] pt-2">
+            {/* 3. BOTTOM SECTION: Recent Transactions (Full Width, without redundant bottom Statistic card) */}
+            <div className="pt-2">
               <RecentTransactions
                 accountNumber={primaryAccount?.accountNumber}
-                showBalance={showBalance}
-              />
-
-              <StatisticCard
-                totalBalance={totalBalance}
-                accounts={accounts}
                 showBalance={showBalance}
               />
             </div>
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
