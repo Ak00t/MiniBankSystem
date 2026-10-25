@@ -1,6 +1,7 @@
 package com.corebanking.service;
 
 import com.corebanking.dto.*;
+import com.corebanking.controller.CusAuthController;
 import com.corebanking.entity.*;
 import com.corebanking.entity.enums.*;
 import com.corebanking.exception.*;
@@ -20,9 +21,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.*;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.mail.MailSendException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -39,6 +43,8 @@ import java.util.function.Supplier;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Real production services/proxies, Spring Data JPQL, Hibernate and MySQL 8 InnoDB
@@ -1225,6 +1231,163 @@ class CusOtpConcurrencyIntegrationTest {
         for (String protectedColumn : List.of("refresh_token_hash", "refresh_expires_at", "issued_at", "revoked_at", "revoke_reason")) {
             assertFalse(assignments.contains(protectedColumn), protectedColumn + " must never be assigned by activity");
         }
+    }
+
+    // Real servlet MVC -> controller -> production transactional facade/services
+    // -> Hibernate/MySQL audit rows. This deliberately does not install the JWT
+    // filter chain; authenticated PIN requests are validated by the real service.
+    private String recoveryHttp(CusFlow flow, String operation, Map<String, String> body,
+                                String ip, String agent, int expectedStatus) {
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new CusAuthController(auth))
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+        var json = new tools.jackson.databind.ObjectMapper();
+        try {
+            var request = post("/api/customer/auth/" + (flow == CusFlow.PASSWORD ? "password" : "pin")
+                    + "-reset/" + operation).contentType("application/json")
+                    .content(json.writeValueAsString(body)).header("Authorization", bearer)
+                    .header("X-Forwarded-For", "198.51.100.199")
+                    .header("Forwarded", "for=198.51.100.198")
+                    .with(servlet -> { servlet.setRemoteAddr(ip); return servlet; });
+            if (agent != null) request.header("User-Agent", agent);
+            return mvc.perform(request).andExpect(status().is(expectedStatus))
+                    .andReturn().getResponse().getContentAsString();
+        } catch (Exception ex) { throw new AssertionError("Isolated recovery HTTP request failed", ex); }
+    }
+    private String recoveryGroup(String response, CusFlow flow, boolean verified) {
+        return new tools.jackson.databind.ObjectMapper().readTree(response)
+                .get(verified && flow == CusFlow.PIN ? "verifiedChallengeGroupId" : "challengeGroupId").asText();
+    }
+    private String recoveryPrefix(CusFlow flow) { return flow == CusFlow.PASSWORD ? "PASSWORD_RESET" : "PIN_RESET"; }
+    private long recoveryAuditFloor() { return jdbc.queryForObject("SELECT COALESCE(MAX(audit_id),0) FROM audit_logs", Long.class); }
+    private Map<String, String> recoveryStartBody(CusFlow flow) {
+        return flow == CusFlow.PASSWORD ? Map.of("loginIdentifier", customerCode) : Map.of();
+    }
+    private Map<String, String> recoveryCompletionBody(CusFlow flow, String group) {
+        return flow == CusFlow.PASSWORD
+                ? Map.of("verifiedChallengeGroupId", group, "newPassword", NEW_PASSWORD, "confirmPassword", NEW_PASSWORD)
+                : Map.of("verifiedChallengeGroupId", group, "newPin", "246810", "confirmPin", "246810");
+    }
+    private Map<String, Object> recoveryAudit(long floor, CusFlow flow, String suffix, ActorType actor,
+                                            String ip, String agent) {
+        var rows = jdbc.queryForList("SELECT audit_id, action_type, actor_type, HEX(actor_customer_id) AS owner, "
+                + "actor_staff_id, actor_corporate_user_id, entity_type, entity_id, ip_address, user_agent, "
+                + "CAST(old_values AS CHAR) AS before_json, CAST(new_values AS CHAR) AS after_json "
+                + "FROM audit_logs WHERE audit_id>? AND action_type=? ORDER BY audit_id", floor, recoveryPrefix(flow) + suffix);
+        assertEquals(1, rows.size(), "Expected one committed audit for this request");
+        Map<String, Object> row = rows.getFirst();
+        assertEquals(actor.name(), row.get("actor_type"));
+        assertEquals(actor == ActorType.SYSTEM ? null : customerId.toString().replace("-", "").toUpperCase(Locale.ROOT), row.get("owner"));
+        assertNull(row.get("actor_staff_id")); assertNull(row.get("actor_corporate_user_id"));
+        assertEquals(suffix.equals("_SUCCESS") ? "CUSTOMER_CREDENTIALS" : "OTP_CHALLENGE", row.get("entity_type"));
+        assertNotNull(row.get("entity_id"));
+        assertEquals(ip, row.get("ip_address")); assertEquals(agent, row.get("user_agent"));
+        for (String column : List.of("before_json", "after_json")) {
+            String value = String.valueOf(row.get(column));
+            for (String secret : List.of(PASSWORD, NEW_PASSWORD, "246810", bearer, refreshToken)) assertFalse(value.contains(secret));
+            for (String key : List.of("\"otp\"", "\"newPassword\"", "\"newPin\"", "\"accessToken\"", "\"refreshToken\"")) assertFalse(value.contains(key));
+        }
+        return row;
+    }
+
+    @ParameterizedTest @EnumSource(value = CusFlow.class, names = {"PASSWORD", "PIN"})
+    void recoveryAuditHttpMetadataTraversesAllEightResetEndpoints(CusFlow flow) {
+        long floor = recoveryAuditFloor();
+        String group = recoveryGroup(recoveryHttp(flow, "request", recoveryStartBody(flow), "203.0.113.10", "Request browser", 200), flow, false);
+        Map<String, Object> sent = recoveryAudit(floor, flow, "_OTP_SENT", ActorType.CUSTOMER, "203.0.113.10", "Request browser");
+        recoveryHttp(flow, "verify-otp", Map.of("challengeGroupId", group, "otp", "wrong"), "203.0.113.11", "Wrong OTP browser", 400);
+        Map<String, Object> failed = recoveryAudit(floor, flow, "_OTP_VERIFY_FAILED", ActorType.CUSTOMER, "203.0.113.11", "Wrong OTP browser");
+        assertEquals(1, latest(flow).getAttemptCount()); assertEquals(OtpStatus.ACTIVE, latest(flow).getStatus());
+        recoveryHttp(flow, "resend-otp", Map.of("challengeGroupId", group), "203.0.113.12", "Resend browser", 200);
+        Map<String, Object> resent = recoveryAudit(floor, flow, "_OTP_RESENT", ActorType.CUSTOMER, "203.0.113.12", "Resend browser");
+        String actualCode = code(flow);
+        String verified = recoveryGroup(recoveryHttp(flow, "verify-otp", Map.of("challengeGroupId", group, "otp", actualCode),
+                "203.0.113.13", "Verify browser", 200), flow, true);
+        Map<String, Object> accepted = recoveryAudit(floor, flow, "_OTP_VERIFIED", ActorType.CUSTOMER, "203.0.113.13", "Verify browser");
+        recoveryHttp(flow, "confirm", recoveryCompletionBody(flow, verified), "203.0.113.14", "Completion browser", 200);
+        Map<String, Object> completed = recoveryAudit(floor, flow, "_SUCCESS", ActorType.CUSTOMER, "203.0.113.14", "Completion browser");
+        assertEquals(5, jdbc.queryForObject("SELECT COUNT(*) FROM audit_logs WHERE audit_id>? AND action_type LIKE ?", Integer.class, floor, recoveryPrefix(flow) + "%"));
+        // Later requests must never update metadata on earlier insert-only rows.
+        for (Map<String, Object> row : List.of(sent, failed, resent, accepted, completed)) {
+            assertEquals(row.get("ip_address"), jdbc.queryForObject("SELECT ip_address FROM audit_logs WHERE audit_id=?", String.class, row.get("audit_id")));
+            assertEquals(row.get("user_agent"), jdbc.queryForObject("SELECT user_agent FROM audit_logs WHERE audit_id=?", String.class, row.get("audit_id")));
+            assertFalse(String.valueOf(row.get("after_json")).contains(actualCode));
+        }
+        assertThrows(CusOtpException.class, () -> complete(flow, verified));
+    }
+
+    @ParameterizedTest @EnumSource(value = CusFlow.class, names = {"PASSWORD", "PIN"})
+    void recoveryAuditHttpExpiredOtpKeepsSystemActorAndCommitsMetadata(CusFlow flow) {
+        String group = start(flow); long floor = recoveryAuditFloor();
+        tx(() -> { latest(flow).setExpiresAt(LocalDateTime.now().minusSeconds(1)); return null; });
+        recoveryHttp(flow, "verify-otp", Map.of("challengeGroupId", group, "otp", code(flow)), "2001:db8::12", "Expiry browser", 400);
+        recoveryAudit(floor, flow, "_OTP_EXPIRED", ActorType.SYSTEM, "2001:db8::12", "Expiry browser");
+        assertEquals(OtpStatus.EXPIRED, latest(flow).getStatus());
+    }
+
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> recoveryMailCases() {
+        return java.util.stream.Stream.of(CusFlow.PASSWORD, CusFlow.PIN).flatMap(flow -> java.util.stream.Stream.of(false, true)
+                .map(resend -> org.junit.jupiter.params.provider.Arguments.of(flow, resend)));
+    }
+    @ParameterizedTest @org.junit.jupiter.params.provider.MethodSource("recoveryMailCases")
+    void recoveryAuditHttpMailFailureKeepsRequestMetadataAndNoRollbackPolicy(CusFlow flow, boolean resend) {
+        String group = resend ? start(flow) : null; long floor = recoveryAuditFloor();
+        if (flow == CusFlow.PASSWORD) doThrow(new MailSendException("Synthetic unavailable mail")).when(email).sendPasswordResetOtp(anyString(), anyString());
+        else doThrow(new MailSendException("Synthetic unavailable mail")).when(email).sendPinResetOtp(anyString(), anyString());
+        recoveryHttp(flow, resend ? "resend-otp" : "request", resend ? Map.of("challengeGroupId", group) : recoveryStartBody(flow),
+                "203.0.113.20", "Offline mail browser", 503);
+        recoveryAudit(floor, flow, resend ? "_OTP_RESEND_FAILED" : "_OTP_SEND_FAILED", ActorType.SYSTEM, "203.0.113.20", "Offline mail browser");
+        assertEquals(OtpStatus.EXPIRED, latest(flow).getStatus());
+    }
+
+    @ParameterizedTest @EnumSource(value = CusFlow.class, names = {"PASSWORD", "PIN"})
+    void recoveryAuditHttpMissingAgentAndBoundsUseExistingMetadataPolicy(CusFlow flow) {
+        long floor = recoveryAuditFloor();
+        String group = recoveryGroup(recoveryHttp(flow, "request", recoveryStartBody(flow), "2001:db8::21", null, 200), flow, false);
+        recoveryAudit(floor, flow, "_OTP_SENT", ActorType.CUSTOMER, "2001:db8::21", null);
+        String agent = "Synthetic browser/" + "x".repeat(300), remote = "2001:db8:" + "a".repeat(45);
+        recoveryHttp(flow, "resend-otp", Map.of("challengeGroupId", group), remote, agent, 200);
+        recoveryAudit(floor, flow, "_OTP_RESENT", ActorType.CUSTOMER, remote.substring(0, 45), agent.substring(0, 255));
+    }
+
+    @ParameterizedTest @org.junit.jupiter.params.provider.MethodSource("recoveryMailCases")
+    void recoveryAuditLegacyAndExplicitNullCallersRemainSafe(CusFlow flow, boolean explicitNull) {
+        long floor = recoveryAuditFloor();
+        String group = !explicitNull ? start(flow) : flow == CusFlow.PASSWORD
+                ? auth.requestPasswordReset(new CusPasswordResetRequest(customerCode), null).getChallengeGroupId()
+                : auth.requestPinReset(bearer, null).getChallengeGroupId();
+        if (!explicitNull) {
+            assertThrows(CusOtpException.class, () -> verify(flow, group, "wrong"));
+            resend(flow, group);
+        } else if (flow == CusFlow.PASSWORD) {
+            assertThrows(CusOtpException.class, () -> auth.verifyPasswordResetOtp(new CusPasswordResetOtpVerifyRequest(group, "wrong"), null));
+            auth.resendPasswordResetOtp(dto(CusOtpResendRequest.class, "challengeGroupId", group), null);
+        } else {
+            assertThrows(CusOtpException.class, () -> auth.verifyPinResetOtp(bearer, dto(CusPinResetOtpVerifyRequest.class, "challengeGroupId", group, "otp", "wrong"), null));
+            auth.resendPinResetOtp(bearer, dto(CusOtpResendRequest.class, "challengeGroupId", group), null);
+        }
+        Object result = !explicitNull ? verify(flow, group, code(flow)) : flow == CusFlow.PASSWORD
+                ? auth.verifyPasswordResetOtp(new CusPasswordResetOtpVerifyRequest(group, code(flow)), null)
+                : auth.verifyPinResetOtp(bearer, dto(CusPinResetOtpVerifyRequest.class, "challengeGroupId", group, "otp", code(flow)), null);
+        String verified = verifiedGroup(flow, result);
+        if (!explicitNull) complete(flow, verified);
+        else if (flow == CusFlow.PASSWORD) auth.resetPassword(dto(CusPasswordResetConfirmRequest.class, "verifiedChallengeGroupId", verified, "newPassword", NEW_PASSWORD, "confirmPassword", NEW_PASSWORD), null);
+        else auth.resetTransactionPin(bearer, dto(CusPinResetConfirmRequest.class, "verifiedChallengeGroupId", verified, "newPin", "246810", "confirmPin", "246810"), null);
+        for (String suffix : List.of("_OTP_SENT", "_OTP_VERIFY_FAILED", "_OTP_RESENT", "_OTP_VERIFIED", "_SUCCESS")) {
+            recoveryAudit(floor, flow, suffix, ActorType.CUSTOMER, null, null);
+        }
+    }
+
+    @ParameterizedTest @EnumSource(value = CusFlow.class, names = {"PASSWORD", "PIN"})
+    void recoveryAuditConcurrentHttpResendsKeepIndependentMetadata(CusFlow flow) {
+        String group = start(flow); long floor = recoveryAuditFloor();
+        var outcomes = race(flow,
+                () -> recoveryHttp(flow, "resend-otp", Map.of("challengeGroupId", group), "203.0.113.30", "Browser A", 200),
+                () -> recoveryHttp(flow, "resend-otp", Map.of("challengeGroupId", group), "203.0.113.31", "Browser B", 200));
+        assertTrue(outcomes.stream().allMatch(CusOutcome::ok));
+        var rows = jdbc.queryForList("SELECT ip_address, user_agent FROM audit_logs WHERE audit_id>? AND action_type=?", floor, recoveryPrefix(flow) + "_OTP_RESENT");
+        assertEquals(2, rows.size());
+        assertEquals(Set.of(Map.of("ip_address", "203.0.113.30", "user_agent", "Browser A"), Map.of("ip_address", "203.0.113.31", "user_agent", "Browser B")), new HashSet<>(rows));
+        assertEquals(2, latest(flow).getResendNo()); assertEquals(0, latest(flow).getAttemptCount());
     }
 
     static final class CusSqlProbe implements org.hibernate.resource.jdbc.spi.StatementInspector {

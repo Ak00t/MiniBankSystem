@@ -7,6 +7,7 @@ import com.corebanking.dto.CusPinResetOtpVerifyRequest;
 import com.corebanking.dto.CusPinResetOtpVerifyResponse;
 import com.corebanking.dto.CusPinResetStartResponse;
 import com.corebanking.entity.AuditLogs;
+import com.corebanking.dto.CusSessionClientMetadata;
 import com.corebanking.entity.AuthSession;
 import com.corebanking.entity.CustomerCredentials;
 import com.corebanking.entity.Customers;
@@ -69,6 +70,14 @@ public class CusCustomerPinResetService {
 )
 public CusPinResetStartResponse requestPinReset(
       String authorizationHeader) {
+    return requestPinReset(authorizationHeader, CusSessionClientMetadata.EMPTY);
+}
+
+@Transactional(
+      noRollbackFor = CusEmailException.class
+)
+public CusPinResetStartResponse requestPinReset(
+      String authorizationHeader, CusSessionClientMetadata metadata) {
 
   // =====================================================
   // 1. ACCESS TOKEN REQUIRED
@@ -322,7 +331,8 @@ public CusPinResetStartResponse requestPinReset(
               null,
               "{\"purpose\":\"PIN_RESET\","
                       + "\"status\":\"ACTIVE\","
-                      + "\"resendNo\":0}"
+                      + "\"resendNo\":0}",
+              metadata
       );
 
 
@@ -353,7 +363,8 @@ public CusPinResetStartResponse requestPinReset(
               ),
               "{\"status\":\"ACTIVE\"}",
               "{\"status\":\"EXPIRED\","
-                      + "\"reason\":\"EMAIL_SEND_FAILED\"}"
+                      + "\"reason\":\"EMAIL_SEND_FAILED\"}",
+              metadata
       );
 
 
@@ -382,6 +393,15 @@ public CusPinResetStartResponse requestPinReset(
 public CusOtpResendResponse resendPinResetOtp(
      String authorizationHeader,
      CusOtpResendRequest request) {
+    return resendPinResetOtp(authorizationHeader, request, CusSessionClientMetadata.EMPTY);
+}
+
+@Transactional(
+     noRollbackFor = CusEmailException.class
+)
+public CusOtpResendResponse resendPinResetOtp(
+     String authorizationHeader,
+     CusOtpResendRequest request, CusSessionClientMetadata metadata) {
 
  // =====================================================
  // 1. ACCESS TOKEN REQUIRED
@@ -697,7 +717,8 @@ public CusOtpResendResponse resendPinResetOtp(
                      + "\"status\":\"ACTIVE\","
                      + "\"resendNo\":"
                      + savedOtp.getResendNo()
-                     + "}"
+                     + "}",
+             metadata
      );
 
 
@@ -728,7 +749,8 @@ public CusOtpResendResponse resendPinResetOtp(
              ),
              "{\"status\":\"ACTIVE\"}",
              "{\"status\":\"EXPIRED\","
-                     + "\"reason\":\"EMAIL_SEND_FAILED\"}"
+                     + "\"reason\":\"EMAIL_SEND_FAILED\"}",
+             metadata
      );
 
 
@@ -755,6 +777,15 @@ public CusOtpResendResponse resendPinResetOtp(
 public CusPinResetOtpVerifyResponse verifyPinResetOtp(
      String authorizationHeader,
      CusPinResetOtpVerifyRequest request) {
+    return verifyPinResetOtp(authorizationHeader, request, CusSessionClientMetadata.EMPTY);
+}
+
+@Transactional(
+     noRollbackFor = CusOtpException.class
+)
+public CusPinResetOtpVerifyResponse verifyPinResetOtp(
+     String authorizationHeader,
+     CusPinResetOtpVerifyRequest request, CusSessionClientMetadata metadata) {
 
  // =====================================================
  // 1. ACCESS TOKEN REQUIRED
@@ -958,7 +989,8 @@ public CusPinResetOtpVerifyResponse verifyPinResetOtp(
              ),
              "{\"status\":\"ACTIVE\"}",
              "{\"status\":\"EXPIRED\","
-                     + "\"reason\":\"TIME_EXPIRED\"}"
+                     + "\"reason\":\"TIME_EXPIRED\"}",
+             metadata
      );
 
 
@@ -1062,7 +1094,8 @@ public CusPinResetOtpVerifyResponse verifyPinResetOtp(
                      + failedAttempts
                      + ",\"status\":\""
                      + otpChallenge.getStatus().name()
-                     + "\"}"
+                     + "\"}",
+             metadata
      );
 
 
@@ -1133,7 +1166,8 @@ public CusPinResetOtpVerifyResponse verifyPinResetOtp(
          ),
          "{\"status\":\"ACTIVE\"}",
          "{\"status\":\"CONSUMED\","
-                 + "\"purpose\":\"PIN_RESET\"}"
+                 + "\"purpose\":\"PIN_RESET\"}",
+         metadata
  );
 
 
@@ -1152,6 +1186,13 @@ public CusPinResetOtpVerifyResponse verifyPinResetOtp(
 public void resetTransactionPin(
      String authorizationHeader,
      CusPinResetConfirmRequest request) {
+    resetTransactionPin(authorizationHeader, request, CusSessionClientMetadata.EMPTY);
+}
+
+@Transactional
+public void resetTransactionPin(
+     String authorizationHeader,
+     CusPinResetConfirmRequest request, CusSessionClientMetadata metadata) {
 
  // =====================================================
  // 1. ACCESS TOKEN REQUIRED
@@ -1504,7 +1545,8 @@ public void resetTransactionPin(
          null,
          "{\"pinChanged\":true,"
                  + "\"failedPinAttemptCount\":0,"
-                 + "\"pinLocked\":false}"
+                 + "\"pinLocked\":false}",
+         metadata
  );
 }
 
@@ -1614,10 +1656,12 @@ public void resetTransactionPin(
          String entityType,
          String entityId,
          String oldValues,
-         String newValues) {
+         String newValues, CusSessionClientMetadata metadata) {
 
      AuditLogs auditLog =
              AuditLogs.builder()
+                     .ipAddress(metadata == null ? null : metadata.ipAddress())
+                     .userAgent(metadata == null ? null : metadata.userAgent())
 
                      .actorType(
                              actorType

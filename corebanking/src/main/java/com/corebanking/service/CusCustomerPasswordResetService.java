@@ -9,6 +9,7 @@ import com.corebanking.dto.CusPasswordResetRequest;
 import com.corebanking.dto.CusPasswordResetStartResponse;
 import com.corebanking.entity.Accounts;
 import com.corebanking.entity.AuditLogs;
+import com.corebanking.dto.CusSessionClientMetadata;
 import com.corebanking.entity.CustomerCredentials;
 import com.corebanking.entity.Customers;
 import com.corebanking.entity.OtpChallenge;
@@ -73,6 +74,14 @@ public class CusCustomerPasswordResetService {
  )
  public CusPasswordResetStartResponse requestPasswordReset(
          CusPasswordResetRequest request) {
+    return requestPasswordReset(request, CusSessionClientMetadata.EMPTY);
+}
+
+@Transactional(
+         noRollbackFor = CusEmailException.class
+ )
+ public CusPasswordResetStartResponse requestPasswordReset(
+         CusPasswordResetRequest request, CusSessionClientMetadata metadata) {
 
      // =====================================================
      // 1. REQUEST VALIDATION
@@ -295,7 +304,8 @@ public class CusCustomerPasswordResetService {
                  null,
                  "{\"purpose\":\"PASSWORD_RESET\","
                          + "\"status\":\"ACTIVE\","
-                         + "\"resendNo\":0}"
+                         + "\"resendNo\":0}",
+                 metadata
          );
 
 
@@ -330,7 +340,8 @@ public class CusCustomerPasswordResetService {
                  ),
                  "{\"status\":\"ACTIVE\"}",
                  "{\"status\":\"EXPIRED\","
-                         + "\"reason\":\"EMAIL_SEND_FAILED\"}"
+                         + "\"reason\":\"EMAIL_SEND_FAILED\"}",
+                 metadata
          );
 
 
@@ -358,6 +369,14 @@ public class CusCustomerPasswordResetService {
 )
 public CusOtpResendResponse resendPasswordResetOtp(
       CusOtpResendRequest request) {
+    return resendPasswordResetOtp(request, CusSessionClientMetadata.EMPTY);
+}
+
+@Transactional(
+      noRollbackFor = CusEmailException.class
+)
+public CusOtpResendResponse resendPasswordResetOtp(
+      CusOtpResendRequest request, CusSessionClientMetadata metadata) {
 
   // =====================================================
   // 1. REQUEST VALIDATION
@@ -615,7 +634,8 @@ public CusOtpResendResponse resendPasswordResetOtp(
                       + "\"status\":\"ACTIVE\","
                       + "\"resendNo\":"
                       + savedOtp.getResendNo()
-                      + "}"
+                      + "}",
+              metadata
       );
 
 
@@ -651,7 +671,8 @@ public CusOtpResendResponse resendPasswordResetOtp(
               ),
               "{\"status\":\"ACTIVE\"}",
               "{\"status\":\"EXPIRED\","
-                      + "\"reason\":\"EMAIL_SEND_FAILED\"}"
+                      + "\"reason\":\"EMAIL_SEND_FAILED\"}",
+              metadata
       );
 
 
@@ -683,6 +704,15 @@ public CusOtpResendResponse resendPasswordResetOtp(
 public CusPasswordResetOtpVerifyResponse
      verifyPasswordResetOtp(
              CusPasswordResetOtpVerifyRequest request) {
+    return verifyPasswordResetOtp(request, CusSessionClientMetadata.EMPTY);
+}
+
+@Transactional(
+     noRollbackFor = CusOtpException.class
+)
+public CusPasswordResetOtpVerifyResponse
+     verifyPasswordResetOtp(
+             CusPasswordResetOtpVerifyRequest request, CusSessionClientMetadata metadata) {
 
  // =====================================================
  // 1. REQUEST VALIDATION
@@ -795,7 +825,8 @@ public CusPasswordResetOtpVerifyResponse
              ),
              "{\"status\":\"ACTIVE\"}",
              "{\"status\":\"EXPIRED\","
-                     + "\"reason\":\"TIME_EXPIRED\"}"
+                     + "\"reason\":\"TIME_EXPIRED\"}",
+             metadata
      );
 
 
@@ -861,7 +892,8 @@ public CusPasswordResetOtpVerifyResponse
  if (!otpMatches) {
 
      handleFailedPasswordResetOtpAttempt(
-             otpChallenge
+             otpChallenge,
+             metadata
      );
 
      throw new CusOtpException(
@@ -933,7 +965,8 @@ public CusPasswordResetOtpVerifyResponse
          ),
          "{\"status\":\"ACTIVE\"}",
          "{\"status\":\"CONSUMED\","
-                 + "\"purpose\":\"PASSWORD_RESET\"}"
+                 + "\"purpose\":\"PASSWORD_RESET\"}",
+         metadata
  );
 
 
@@ -951,6 +984,12 @@ public CusPasswordResetOtpVerifyResponse
 @Transactional
 public void resetPassword(
      CusPasswordResetConfirmRequest request) {
+    resetPassword(request, CusSessionClientMetadata.EMPTY);
+}
+
+@Transactional
+public void resetPassword(
+     CusPasswordResetConfirmRequest request, CusSessionClientMetadata metadata) {
 
  // =====================================================
  // 1. REQUEST VALIDATION
@@ -1246,7 +1285,8 @@ public void resetPassword(
          "{\"passwordChanged\":true,"
                  + "\"sessionsRevoked\":"
                  + revokedSessions
-                 + "}"
+                 + "}",
+         metadata
  );
 }
 
@@ -1432,7 +1472,7 @@ private boolean isValidPassword(
  }
 
 private void handleFailedPasswordResetOtpAttempt(
-        OtpChallenge otpChallenge) {
+        OtpChallenge otpChallenge, CusSessionClientMetadata metadata) {
 
     int failedAttempts =
             otpChallenge.getAttemptCount() + 1;
@@ -1470,7 +1510,8 @@ private void handleFailedPasswordResetOtpAttempt(
                     + failedAttempts
                     + ",\"status\":\""
                     + otpChallenge.getStatus().name()
-                    + "\"}"
+                    + "\"}",
+            metadata
     );
 }
 
@@ -1481,10 +1522,12 @@ private void handleFailedPasswordResetOtpAttempt(
          String entityType,
          String entityId,
          String oldValues,
-         String newValues) {
+         String newValues, CusSessionClientMetadata metadata) {
 
      AuditLogs auditLog =
              AuditLogs.builder()
+                     .ipAddress(metadata == null ? null : metadata.ipAddress())
+                     .userAgent(metadata == null ? null : metadata.userAgent())
 
                      .actorType(
                              actorType
