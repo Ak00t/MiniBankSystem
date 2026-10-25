@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../lib/redux";
-import { submitP2PTransfer, resetTransferState } from "../store/transferSlice";
+import { submitP2PTransfer, resetTransferState, clearTransferError } from "../store/transferSlice";
 import { fetchMyAccounts } from "../../customer-account/accounts/stores/accountsSlice";
 import { lookupDestinationAccount } from "../services/transferService";
 import { getBeneficiaries, addBeneficiary } from "../../beneficiaries/services/beneficiaryService";
@@ -9,7 +9,8 @@ import type { Beneficiary } from "../../beneficiaries/types/beneficiaryTypes";
 import type { P2PTransferRequest } from "../types/transferTypes";
 import { getAccountTransferLimits } from "../../customer-account/accounts/api/customerAccountApi";
 import type { TransferLimitInfo } from "../../customer-account/accounts/types/accountTypes";
-import { QRCodeView } from "../../../components/common/QRCodeView";
+import TransferReceiptView from "./TransferReceiptView";
+import { mapP2PResponseToReceiptData } from "../types/transferReceiptTypes";
 import {
   Loader2,
   AlertCircle,
@@ -27,11 +28,8 @@ import {
   UserPlus,
   ShieldCheck,
   ShieldAlert,
-  Building2,
   Sparkles,
   Lock,
-  QrCode,
-  ExternalLink,
   CreditCard,
 } from "lucide-react";
 
@@ -56,9 +54,10 @@ interface PinModalProps {
   error: string | null;
   onConfirm: (pin: string) => void;
   onClose: () => void;
+  onClearError?: () => void;
 }
 
-function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
+function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModalProps) {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -66,7 +65,15 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
     inputRefs.current[0]?.focus();
   }, []);
 
+  useEffect(() => {
+    if (error) {
+      setDigits(Array(6).fill(""));
+      inputRefs.current[0]?.focus();
+    }
+  }, [error]);
+
   const handleChange = (index: number, value: string) => {
+    if (error && onClearError) onClearError();
     if (!/^\d*$/.test(value)) return;
     const digit = value.slice(-1);
     const next = [...digits];
@@ -78,12 +85,14 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (error && onClearError) onClearError();
     if (e.key === "Backspace" && !digits[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    if (error && onClearError) onClearError();
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     if (!pasted) return;
@@ -114,8 +123,11 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
       {/* Modal */}
       <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7 animate-in zoom-in-95 duration-200">
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition"
+          disabled={loading}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition disabled:opacity-50"
+          title="Close"
         >
           <X className="w-5 h-5" />
         </button>
@@ -179,6 +191,16 @@ function PinModal({ loading, error, onConfirm, onClose }: PinModalProps) {
             </>
           )}
         </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={loading}
+          className="w-full mt-2.5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+          <span>Back to Review</span>
+        </button>
       </div>
     </div>
   );
@@ -208,6 +230,7 @@ interface FormStepProps {
   beneficiaries: Beneficiary[];
   transferLimits: TransferLimitInfo | null;
   onContinue: () => void;
+  onCancel?: () => void;
 }
 
 function FormStep({
@@ -230,6 +253,7 @@ function FormStep({
   beneficiaries = [],
   transferLimits = null,
   onContinue,
+  onCancel,
 }: FormStepProps) {
   const [recipientTab, setRecipientTab] = useState<"beneficiaries" | "manual">(
     beneficiaries.length > 0 && !destinationAccount ? "beneficiaries" : "manual"
@@ -251,6 +275,36 @@ function FormStep({
       : transferLimits.effectiveOneTimeLimitStranger
     : null;
   const amountNum = Number(amount) || 0;
+  const availBalance = selectedAcc ? Number(selectedAcc.availableBalance) : 0;
+  const minBalance = transferLimits?.minimumBalance ?? 10000;
+  const netAvailable = Math.max(0, availBalance - minBalance);
+
+  const isOverOneTimeLimit = Boolean(
+    transferLimits && effectiveOneTimeLimit && amountNum > effectiveOneTimeLimit
+  );
+  const isOverDailyLimit = Boolean(
+    transferLimits && amountNum > transferLimits.remainingDailyLimit
+  );
+  const isInsufficientBalance = Boolean(
+    selectedAcc && amountNum > netAvailable
+  );
+  const isAmountInvalid =
+    !amount ||
+    amountNum <= 0 ||
+    isOverOneTimeLimit ||
+    isOverDailyLimit ||
+    isInsufficientBalance;
+
+  const isFormInvalid = Boolean(
+    accountsLoading ||
+      lookupLoading ||
+      !sourceAccount ||
+      !cleanDest ||
+      Boolean(lookupError) ||
+      !recipientName ||
+      isAmountInvalid ||
+      sourceAccount === cleanDest
+  );
 
   return (
     <div className="space-y-6">
@@ -288,7 +342,10 @@ function FormStep({
                   <div>
                     <p className="text-[11px] font-semibold text-blue-600">Available to Transfer</p>
                     <p className="text-sm font-extrabold text-[#08295C]">
-                      {Number(selectedAcc.availableBalance).toLocaleString()} MMK
+                      {netAvailable.toLocaleString()} MMK
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      Balance: {availBalance.toLocaleString()} MMK • Min reserve: {minBalance.toLocaleString()} MMK
                     </p>
                   </div>
                 </div>
@@ -499,7 +556,7 @@ function FormStep({
           {selectedAcc && (
             <button
               type="button"
-              onClick={() => setAmount(String(Math.floor(Number(selectedAcc.availableBalance))))}
+              onClick={() => setAmount(String(Math.floor(netAvailable)))}
               className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-black transition shrink-0"
             >
               Max
@@ -507,25 +564,54 @@ function FormStep({
           )}
         </div>
 
-        {/* Amount Limit Warnings */}
-        {transferLimits && amountNum > 0 && effectiveOneTimeLimit && (
-          <div className="mt-2 space-y-1">
-            {amountNum > effectiveOneTimeLimit && (
-              <p className="text-[11px] font-semibold text-red-600 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  Exceeds {isBeneficiary ? "beneficiary" : "stranger"} limit of{" "}
-                  {effectiveOneTimeLimit.toLocaleString()} MMK.
-                </span>
-              </p>
+        {/* Real-time Amount Limit Warnings & Guidance */}
+        {amountNum > 0 && (isOverOneTimeLimit || isOverDailyLimit || isInsufficientBalance) && (
+          <div className="mt-3 p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs space-y-2 transition-all">
+            {isOverOneTimeLimit && (
+              <div>
+                <div className="flex items-center gap-1.5 font-bold text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>
+                    Transfer amount of {amountNum.toLocaleString()} MMK exceeds {isBeneficiary ? "beneficiary" : "stranger"} limit of {effectiveOneTimeLimit?.toLocaleString()} MMK.
+                  </span>
+                </div>
+                {!isBeneficiary && transferLimits && (
+                  <p className="text-[11px] text-slate-600 pl-5.5 leading-relaxed mt-1">
+                    💡 <strong>Tip:</strong> Add this account to beneficiaries to transfer up to{" "}
+                    <span className="font-bold text-slate-800">
+                      {transferLimits.effectiveOneTimeLimitBeneficiary.toLocaleString()} MMK
+                    </span>.
+                  </p>
+                )}
+              </div>
             )}
-            {amountNum > transferLimits.remainingDailyLimit && (
-              <p className="text-[11px] font-semibold text-red-600 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  Exceeds remaining daily limit of {transferLimits.remainingDailyLimit.toLocaleString()} MMK.
-                </span>
-              </p>
+
+            {isOverDailyLimit && (
+              <div className="flex items-start gap-1.5 font-bold text-red-700">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+                <div>
+                  <p>
+                    Transfer exceeds your remaining daily limit of {transferLimits?.remainingDailyLimit.toLocaleString()} MMK.
+                  </p>
+                  <p className="text-[11px] font-normal text-slate-600 mt-0.5">
+                    Transferred today: {transferLimits?.todayTransferredAmount.toLocaleString()} MMK
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {isInsufficientBalance && (
+              <div className="flex items-start gap-1.5 font-bold text-red-700">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+                <div>
+                  <p>
+                    Insufficient balance. You must maintain a minimum reserve balance of {minBalance.toLocaleString()} MMK.
+                  </p>
+                  <p className="text-[11px] font-normal text-slate-600 mt-0.5">
+                    Net available to transfer: {netAvailable.toLocaleString()} MMK (Total Balance: {availBalance.toLocaleString()} MMK)
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -546,24 +632,40 @@ function FormStep({
         />
       </div>
 
-      {/* General Validation Error */}
-      {validationError && (
+      {/* General Validation Error (suppressed when already shown inline in Amount) */}
+      {validationError && !isOverOneTimeLimit && !isOverDailyLimit && !isInsufficientBalance && (
         <div className="p-3.5 bg-red-50 text-red-600 border border-red-100 rounded-2xl text-xs flex items-start gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{validationError}</span>
         </div>
       )}
 
-      {/* Continue Button */}
-      <button
-        type="button"
-        onClick={onContinue}
-        disabled={accountsLoading || lookupLoading || !destinationAccount || !amount}
-        className="w-full py-4 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 disabled:opacity-50 transition flex items-center justify-center gap-2"
-      >
-        <span>Proceed to Review</span>
-        <ArrowRight className="w-4 h-4" />
-      </button>
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3 pt-2">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex-1 py-4 rounded-2xl font-bold text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 transition flex items-center justify-center gap-1.5"
+          >
+            <span>Cancel</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={onContinue}
+          disabled={isFormInvalid}
+          className={`${onCancel ? "flex-[2]" : "w-full"} py-4 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-2 ${
+            isFormInvalid
+              ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+              : "text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 cursor-pointer"
+          }`}
+        >
+          <span>Proceed to Review</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -633,16 +735,16 @@ function ReviewStep({
 
         {/* Breakdown List */}
         <div className="p-5 divide-y divide-slate-100 text-xs">
-          <div className="flex justify-between items-center py-2.5">
+          <div className="flex justify-between items-center py-1.5">
             <span className="text-slate-500 font-medium">Payment Channel</span>
-            <span className="font-bold text-slate-800">Apex Customer Portal</span>
+            <span className="font-bold text-slate-800">Mini Bank Portal</span>
           </div>
-          <div className="flex justify-between items-center py-2.5">
+          <div className="flex justify-between items-center py-1.5">
             <span className="text-slate-500 font-medium">Service Fee</span>
             <span className="font-bold text-emerald-600">0.00 MMK (Free)</span>
           </div>
           {description && (
-            <div className="flex justify-between items-center py-2.5">
+            <div className="flex justify-between items-center py-1.5">
               <span className="text-slate-500 font-medium">Transfer Memo</span>
               <span className="font-semibold text-slate-800 italic">"{description}"</span>
             </div>
@@ -714,253 +816,37 @@ function ReceiptStep({
   beneficiarySaved,
 }: ReceiptStepProps) {
   const [copied, setCopied] = useState(false);
-  const [showQrModal, setShowQrModal] = useState(false);
 
-  const completedDate = new Date(result.completedAt || Date.now()).toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  const receiptData = React.useMemo(
+    () => mapP2PResponseToReceiptData(result, recipientName),
+    [result, recipientName]
+  );
+
+  const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = "";
+    window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+  };
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(result.transactionRef);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch {}
+    } catch {
+      // Ignore clipboard write failures gracefully
+    }
   };
 
-  // Cryptographic receipt verification payload formatted cleanly for mobile cameras
-  const qrVerificationPayload = [
-    `APEX CORE BANKING OFFICIAL RECEIPT`,
-    `Ref ID: ${result.transactionRef}`,
-    `Amount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}`,
-    `Sender: ${result.sourceAccountNumber}`,
-    `Recipient: ${recipientName || "Recipient"} (${result.destinationAccountNumber})`,
-    `Date: ${completedDate}`,
-    `Status: ${result.status || "COMPLETED"} (Verified)`,
-    `Validation: SHA256-AUTHENTICATED`,
-  ].join("\n");
-
   return (
-    <>
-      {/* Authenticity QR Modal */}
-      {showQrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in"
-            onClick={() => setShowQrModal(false)}
-          />
-          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-            <button
-              onClick={() => setShowQrModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
-              <QrCode className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-black text-slate-900">
-              Transaction Verification Code
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 mb-4">
-              Scan this QR with any device to verify this official electronic receipt.
-            </p>
-
-            <div className="flex justify-center mb-4">
-              <QRCodeView value={qrVerificationPayload} size={160} />
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-2xl text-[11px] font-mono text-left text-slate-600 space-y-1 border border-slate-100">
-              <p>
-                <strong>Bank:</strong> Apex Core Bank Node #1
-              </p>
-              <p>
-                <strong>Ref ID:</strong> {result.transactionRef}
-              </p>
-              <p>
-                <strong>Digital Signature:</strong> SHA256-AUTHENTICATED
-              </p>
-              <p>
-                <strong>Status:</strong> COMPLETED &amp; AUDITED
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Official Banking E-Receipt Card */}
-      <div className="print-receipt-container max-w-xl mx-auto bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
-        {/* Official Bank Header */}
-        <div className="bg-[#08295C] px-6 py-5 text-white flex items-center justify-between border-b border-blue-900/50">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 border border-blue-400/30">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-sm font-black tracking-wider uppercase text-white">
-                Apex Core Bank
-              </h2>
-              <p className="text-[10px] text-blue-200 font-medium">
-                Official Electronic Transfer Receipt
-              </p>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-800/60 text-blue-200 border border-blue-700/50">
-              P2P TRANSFER
-            </span>
-            <p className="text-[10px] text-blue-300 mt-1">{completedDate}</p>
-          </div>
-        </div>
-
-        {/* Transfer Status Banner */}
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-6 text-center text-white">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-white/20 rounded-2xl mb-2.5 shadow-inner">
-            <CheckCircle2 className="w-7 h-7 text-white" />
-          </div>
-          <h3 className="text-lg font-black tracking-tight">Payment Successful</h3>
-          <p className="text-xs text-emerald-100 font-medium">
-            Funds have been transferred and settled in real-time
-          </p>
-
-          <div className="mt-3.5 inline-block bg-white/15 backdrop-blur-md px-6 py-2.5 rounded-2xl border border-white/20">
-            <p className="text-3xl font-black tracking-tight">
-              {Number(result.amount).toLocaleString()}
-            </p>
-            <p className="text-xs font-bold text-emerald-100 uppercase tracking-widest mt-0.5">
-              {result.currency || "MMK"}
-            </p>
-          </div>
-        </div>
-
-        {/* Two-Party Visual Transfer Path */}
-        <div className="p-5 bg-slate-50/70 border-b border-slate-100">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
-            {/* Sender Box */}
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
-              <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
-                From (Sender)
-              </span>
-              <p className="text-xs font-mono font-bold text-slate-800 truncate">
-                {maskAccount(result.sourceAccountNumber)}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">Apex Core Bank Account</p>
-            </div>
-
-            {/* Recipient Box */}
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
-              <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
-                To (Recipient)
-              </span>
-              <p className="text-xs font-bold text-slate-900 truncate">
-                {recipientName || "Verified Account"}
-              </p>
-              <p className="text-[11px] font-mono text-slate-500 mt-0.5 truncate">
-                {result.destinationAccountNumber}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Breakdown */}
-        <div className="px-6 py-4 divide-y divide-slate-100 text-xs">
-          <div className="flex justify-between items-center py-2.5">
-            <span className="text-slate-500 font-medium">Transaction Reference</span>
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">
-                {result.transactionRef}
-              </span>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="text-slate-400 hover:text-blue-600 transition p-1"
-                title="Copy Reference ID"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center py-2.5">
-            <span className="text-slate-500 font-medium">Transfer Amount</span>
-            <span className="font-bold text-slate-800">
-              {Number(result.amount).toLocaleString()} {result.currency || "MMK"}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center py-2.5">
-            <span className="text-slate-500 font-medium">Service Fee</span>
-            <span className="font-bold text-emerald-600">
-              {Number(result.serviceFee || 0).toLocaleString()} {result.currency || "MMK"}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center py-2.5">
-            <span className="text-slate-500 font-medium">Total Debited</span>
-            <span className="font-black text-blue-700 text-sm">
-              {Number(result.totalDebitedAmount || result.amount).toLocaleString()}{" "}
-              {result.currency || "MMK"}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center py-2.5">
-            <span className="text-slate-500 font-medium">Status</span>
-            <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              COMPLETED
-            </span>
-          </div>
-
-          {result.description && (
-            <div className="flex justify-between items-center py-2.5">
-              <span className="text-slate-500 font-medium">Transfer Memo</span>
-              <span className="font-semibold text-slate-700 italic">"{result.description}"</span>
-            </div>
-          )}
-        </div>
-
-        {/* Authenticity Verification QR Code Section */}
-        <div className="mx-6 mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span className="text-xs font-black text-slate-800">Authentic Digital Receipt</span>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Scan QR code with any smartphone camera to verify authenticity directly against the bank ledger.
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowQrModal(true)}
-              className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              <span>Inspect cryptographic payload</span>
-              <ExternalLink className="w-3 h-3" />
-            </button>
-          </div>
-
-          <div
-            onClick={() => setShowQrModal(true)}
-            className="cursor-pointer transition transform hover:scale-105 shrink-0"
-            title="Click to enlarge QR"
-          >
-            <QRCodeView value={qrVerificationPayload} size={88} />
-          </div>
-        </div>
-
-        {/* Legal Disclaimer */}
-        <div className="px-6 py-2 text-center text-[10px] text-slate-400 bg-slate-50/50 border-t border-slate-100">
-          This receipt is computer-generated by Apex Core Banking System and serves as a valid proof of electronic payment.
-        </div>
-
-        {/* Action Toolbar (hidden on print) */}
-        <div className="no-print p-5 bg-white border-t border-slate-100 space-y-2.5">
+    <TransferReceiptView
+      data={receiptData}
+      showQr={true}
+      actions={
+        <>
           {/* Quick Add to Beneficiary */}
           {!isSavedBeneficiary && (
             <button
@@ -1012,7 +898,7 @@ function ReceiptStep({
 
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
             >
               <Printer className="w-3.5 h-3.5 text-slate-500" />
@@ -1039,9 +925,9 @@ function ReceiptStep({
             <Home className="w-3.5 h-3.5" />
             <span>Return to Dashboard</span>
           </button>
-        </div>
-      </div>
-    </>
+        </>
+      }
+    />
   );
 }
 
@@ -1118,6 +1004,16 @@ export const P2PTransferForm = () => {
       loadBeneficiaries();
     }
   }, [location.state]);
+
+  // Clear bottom validation error as user modifies form inputs
+  useEffect(() => {
+    if (validationError) {
+      setValidationError("");
+    }
+    if (error) {
+      dispatch(clearTransferError());
+    }
+  }, [amount, destinationAccount, sourceAccount, error, dispatch]);
 
   const isSavedBeneficiary = Boolean(
     beneficiarySaved ||
@@ -1245,6 +1141,14 @@ export const P2PTransferForm = () => {
     if (!amount || Number(amount) < 1) return setValidationError("Minimum transfer amount is 1 MMK.");
 
     const transferNum = Number(amount);
+    const selected = accounts.find((a) => a.accountNumber === sourceAccount);
+    const minReserve = transferLimits?.minimumBalance ?? 10000;
+    const maxTransferable = selected ? Math.max(0, Number(selected.availableBalance) - minReserve) : 0;
+    if (selected && transferNum > maxTransferable) {
+      return setValidationError(
+        `Insufficient available funds. You must maintain a minimum balance of ${minReserve.toLocaleString()} MMK. Net available for transfer is ${maxTransferable.toLocaleString()} MMK.`
+      );
+    }
     if (transferLimits) {
       const isBeneficiary = beneficiaries.some(
         (b) => b.beneficiaryAccountNumber === destinationAccount
@@ -1311,6 +1215,21 @@ export const P2PTransferForm = () => {
     dispatch(fetchMyAccounts());
   };
 
+  /* Cancel / Clear Form */
+  const handleCancelForm = () => {
+    if (destinationAccount || amount || description || validationError) {
+      setDestinationAccount("");
+      setRecipientName("");
+      setLookupError("");
+      setAmount("");
+      setDescription("");
+      setValidationError("");
+      dispatch(clearTransferError());
+    } else {
+      navigate(-1);
+    }
+  };
+
   const selectedAcc = accounts.find((a) => a.accountNumber === sourceAccount);
   const availBalance = selectedAcc ? Number(selectedAcc.availableBalance) : 0;
   const transferAmountNum = Number(amount) || 0;
@@ -1331,6 +1250,7 @@ export const P2PTransferForm = () => {
           loading={loading}
           error={error}
           onConfirm={handlePinConfirm}
+          onClearError={() => dispatch(clearTransferError())}
           onClose={() => {
             if (!loading) {
               setShowPinModal(false);
@@ -1365,12 +1285,12 @@ export const P2PTransferForm = () => {
                 </div>
                 <div>
                   <h2 className="text-base font-black text-slate-900">
-                    Internal P2P Fund Transfer
+                    {step === "review" ? "Review Transfer Details" : "Internal P2P Fund Transfer"}
                   </h2>
                   <p className="text-xs text-slate-400">
                     {step === "form"
                       ? "Instant, secure transfer to any account"
-                      : "Review your transfer summary before authorization"}
+                      : "Confirm transfer details before PIN authorization"}
                   </p>
                 </div>
               </div>
@@ -1427,6 +1347,7 @@ export const P2PTransferForm = () => {
                 beneficiaries={beneficiaries}
                 transferLimits={transferLimits}
                 onContinue={handleContinue}
+                onCancel={handleCancelForm}
               />
             )}
 

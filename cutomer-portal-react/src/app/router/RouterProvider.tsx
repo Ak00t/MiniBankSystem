@@ -36,7 +36,6 @@ import MainLayout from "../../components/layout/MainLayout";
 import MyAccountsPage from "../../features/customer-account/accounts/pages/MyaccountPage";
 import { MerchantPaymentAuthorize } from "../../features/merchant-payment/pages/MerchantPaymentAuthorize";
 import { MerchantPaymentRouteGuard } from "../../features/merchant-payment/components/MerchantPaymentRouteGuard";
-
 import ProfilePage from "../../features/customer-account/profile/pages/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
 import AccountDetailPage from "../../features/customer-account/accounts/pages/AccountDetailPage";
@@ -45,6 +44,7 @@ import AnnouncementsPage from "../../features/customer-account/announcements/pag
 
 import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
 import AccountStatementPage from "../../features/customer-account/statements/pages/AccountStatementPage";
+import TransactionHistoryPage from "../../features/customer-account/transactions/pages/TransactionHistoryPage";
 
 // ======================================================
 // ROUTER
@@ -52,11 +52,11 @@ import AccountStatementPage from "../../features/customer-account/statements/pag
 
 const router = createBrowserRouter([
 
-  ...corporateAuthRoutes,
-
   // =========================================
   // PUBLIC AUTH PAGES & STANDALONE PAGES
   // =========================================
+  ...corporateAuthRoutes,
+
   // ====================================================
   // PUBLIC AUTH PAGES
   // ====================================================
@@ -190,6 +190,11 @@ const router = createBrowserRouter([
           {
             path: "/statements",
             element: <AccountStatementPage />,
+          },
+
+          {
+            path: "/transaction",
+            element: <TransactionHistoryPage />,
           },
 
           {
