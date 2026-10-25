@@ -1,14 +1,17 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { FileText, AlertCircle, RefreshCw, AlertTriangle } from "lucide-react";
+import { FileText, AlertCircle, RefreshCw } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../../../lib/redux";
 import { fetchMyAccounts } from "../../accounts/stores/accountsSlice";
 import { StatementForm } from "../components/StatementForm";
 import { StatementVerify } from "../components/StatementVerify";
 import { StatementDownload } from "../components/StatementDownload";
-import { StatementErrorModal } from "../components/StatementErrorModal";
 import type { StatementAccountType, StatementFilterForm, StatementStep } from "../types/statementTypes";
-import { validateStatementForm } from "../types/statementTypes";
+import {
+  validateStatementForm,
+  getTodayLocalIso,
+  normalizeAccountOpeningDate,
+} from "../types/statementTypes";
 
 function StatementPageSkeleton() {
   return (
@@ -71,9 +74,8 @@ export default function AccountStatementPage() {
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
 
-  // Validation state (Step 6C)
-  const [latestError, setLatestError] = useState<string | null>(null);
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState<boolean>(false);
+  // Submit attempt tracker for required-field errors
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState<boolean>(false);
 
   // Step state (Step 6D)
   const [currentStep, setCurrentStep] = useState<StatementStep>("form");
@@ -125,9 +127,44 @@ export default function AccountStatementPage() {
     };
   }, [selectedType, selectedAccNo, defaultAccount, fromDate, toDate]);
 
+  // Retain access to the full selected CustomerAccount object (Rule 9)
+  const selectedAccount = useMemo(() => {
+    return accounts.find((a) => a.accountNumber === form.accountNumber) || null;
+  }, [accounts, form.accountNumber]);
+
+  // Active validation error matching Transaction History reactive pattern
+  const activeValidationError = useMemo<string | null>(() => {
+    const todayIso = getTodayLocalIso();
+
+    // Instant date errors (reactive like Transaction History)
+    if (form.fromDate && form.fromDate > todayIso) {
+      return "From Date cannot be in the future.";
+    }
+    if (form.toDate && form.toDate > todayIso) {
+      return "To Date cannot be in the future.";
+    }
+    if (form.fromDate && form.toDate && form.fromDate > form.toDate) {
+      return "From Date cannot be later than To Date.";
+    }
+    if (form.fromDate && selectedAccount?.openedAt) {
+      const openingDate = normalizeAccountOpeningDate(selectedAccount.openedAt);
+      if (openingDate && form.fromDate < openingDate) {
+        return "From Date cannot be earlier than the account opening date.";
+      }
+    }
+
+    // After submit attempt, evaluate full form validation (including required fields)
+    if (hasAttemptedSubmit) {
+      return validateStatementForm(form, selectedAccount, todayIso);
+    }
+
+    return null;
+  }, [form, selectedAccount, hasAttemptedSubmit]);
+
   // Manual Account Type change handler (Rule 6)
   const handleAccountTypeChange = (newType: StatementAccountType) => {
     setSelectedType(newType);
+    setHasAttemptedSubmit(false);
     const matchingActiveAccounts = accounts.filter(
       (a) => a.accountType === newType && a.status === "ACTIVE"
     );
@@ -148,28 +185,22 @@ export default function AccountStatementPage() {
     setToDate(date);
   };
 
-  // Retain access to the full selected CustomerAccount object (Rule 9)
-  const selectedAccount = useMemo(() => {
-    return accounts.find((a) => a.accountNumber === form.accountNumber) || null;
-  }, [accounts, form.accountNumber]);
-
-  // Validation handler for Step 6C & 6D
+  // Validation handler for Continue
   const handleContinue = () => {
     const validationError = validateStatementForm(form, selectedAccount);
     if (validationError) {
-      setLatestError(validationError);
-      setIsErrorModalOpen(true);
+      setHasAttemptedSubmit(true);
       return;
     }
 
-    // Validation succeeded: clear error and modal, transition to verify step
-    setLatestError(null);
-    setIsErrorModalOpen(false);
+    // Validation succeeded: clear attempt flag and transition to verify step
+    setHasAttemptedSubmit(false);
     setCurrentStep("verify");
   };
 
   const handleChange = () => {
     // Return to form step, preserving all entered values
+    setHasAttemptedSubmit(false);
     setCurrentStep("form");
   };
 
@@ -182,14 +213,14 @@ export default function AccountStatementPage() {
   const handleChangeDetails = () => {
     // Return to form step from download, preserving all entered values
     setConfirmedForm(null);
+    setHasAttemptedSubmit(false);
     setCurrentStep("form");
   };
 
   const handleRetry = () => {
     setSelectedType(null);
     setSelectedAccNo(null);
-    setLatestError(null);
-    setIsErrorModalOpen(false);
+    setHasAttemptedSubmit(false);
     setCurrentStep("form");
     setConfirmedForm(null);
     void dispatch(fetchMyAccounts());
@@ -247,41 +278,6 @@ export default function AccountStatementPage() {
                 </p>
               </div>
 
-              {/* Persistent Warning Trigger if previous validation error exists */}
-              {latestError && (
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setIsErrorModalOpen(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setIsErrorModalOpen(true);
-                    }
-                  }}
-                  className="mb-6 flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-amber-900 transition-all hover:bg-amber-100 hover:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-                  title="Click to view validation error details"
-                  aria-label={`Validation notice: ${latestError}. Click to view details.`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
-                      <AlertTriangle size={18} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold uppercase tracking-wider text-amber-800">
-                        Validation Notice
-                      </p>
-                      <p className="truncate text-sm font-medium text-amber-900">
-                        {latestError}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="shrink-0 text-xs font-semibold text-amber-700 underline hover:text-amber-800">
-                    View Details &rarr;
-                  </span>
-                </div>
-              )}
-
               <StatementForm
                 form={form}
                 accounts={accounts}
@@ -291,6 +287,7 @@ export default function AccountStatementPage() {
                 onFromDateChange={handleFromDateChange}
                 onToDateChange={handleToDateChange}
                 onContinue={handleContinue}
+                validationError={activeValidationError}
               />
             </section>
           )}
@@ -314,15 +311,6 @@ export default function AccountStatementPage() {
             />
           )}
         </>
-      )}
-
-      {/* Validation Error Modal (Only for form step) */}
-      {currentStep === "form" && (
-        <StatementErrorModal
-          isOpen={isErrorModalOpen}
-          error={latestError}
-          onClose={() => setIsErrorModalOpen(false)}
-        />
       )}
     </main>
   );

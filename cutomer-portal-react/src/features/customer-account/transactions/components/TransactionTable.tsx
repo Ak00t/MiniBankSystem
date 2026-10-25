@@ -1,4 +1,4 @@
-import { Inbox, RotateCcw } from "lucide-react";
+import { Inbox, RotateCcw, ChevronRight } from "lucide-react";
 import type { CusTransactionHistoryItemDTO } from "../types/transactionHistoryTypes";
 import {
   formatTransactionDateTime,
@@ -12,6 +12,7 @@ interface TransactionTableProps {
   isLoading: boolean;
   hasFiltersApplied: boolean;
   onClearFilters: () => void;
+  onSelectTransaction: (tx: CusTransactionHistoryItemDTO) => void;
 }
 
 export default function TransactionTable({
@@ -19,6 +20,7 @@ export default function TransactionTable({
   isLoading,
   hasFiltersApplied,
   onClearFilters,
+  onSelectTransaction,
 }: TransactionTableProps) {
   return (
     <div
@@ -108,12 +110,22 @@ export default function TransactionTable({
                 key={tx.transactionRef}
                 data-testid="transaction-item"
                 data-transaction-ref={tx.transactionRef}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 p-4 sm:p-5 transition hover:bg-slate-50/80"
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelectTransaction(tx)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectTransaction(tx);
+                  }
+                }}
+                className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 p-4 sm:p-5 transition-colors hover:bg-slate-50/90 active:bg-slate-100/80 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0878E8]"
+                aria-label={`View details for transaction ${tx.transactionRef}, ${primaryTitle}`}
               >
                 {/* LEFT SECTION */}
                 <div className="min-w-0 flex-1 space-y-1">
                   {/* Primary line: Display Title */}
-                  <p className="text-sm font-semibold text-slate-900 break-words">
+                  <p className="text-sm font-semibold text-slate-900 break-words group-hover:text-blue-900 transition-colors">
                     {primaryTitle}
                   </p>
 
@@ -136,19 +148,27 @@ export default function TransactionTable({
                 </div>
 
                 {/* RIGHT SECTION */}
-                <div className="flex flex-col items-start sm:items-end justify-center gap-1.5 shrink-0">
-                  {/* Primary: Signed Amount */}
-                  <div
-                    data-testid="transaction-amount"
-                    className="text-sm sm:text-base font-semibold tabular-nums text-slate-900"
-                  >
-                    {formatTransactionAmount(tx.amount, tx.currency, tx.direction)}
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0 justify-between sm:justify-end">
+                  <div className="flex flex-col items-start sm:items-end justify-center gap-1.5 shrink-0">
+                    {/* Primary: Signed Amount */}
+                    <div
+                      data-testid="transaction-amount"
+                      className="text-sm sm:text-base font-semibold tabular-nums text-slate-900"
+                    >
+                      {formatTransactionAmount(tx.amount, tx.currency, tx.direction)}
+                    </div>
+
+                    {/* Secondary: Status badge */}
+                    <div data-testid="transaction-status">
+                      <TransactionStatusBadge status={tx.status} />
+                    </div>
                   </div>
 
-                  {/* Secondary: Status badge */}
-                  <div data-testid="transaction-status">
-                    <TransactionStatusBadge status={tx.status} />
-                  </div>
+                  {/* Chevron Right indicator */}
+                  <ChevronRight
+                    className="w-4 h-4 text-slate-300 group-hover:text-slate-600 transition-colors shrink-0"
+                    aria-hidden="true"
+                  />
                 </div>
               </div>
             );
