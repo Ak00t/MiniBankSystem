@@ -161,8 +161,9 @@ export default function Sidebar() {
         w-64
         flex-col
         border-r
-        border-slate-200
-        bg-white
+        border-slate-200 dark:border-slate-800
+        bg-white dark:bg-[#0A192F]
+        transition-colors duration-200
       "
     >
 
@@ -177,7 +178,7 @@ export default function Sidebar() {
           shrink-0
           items-center
           border-b
-          border-slate-100
+          border-slate-100 dark:border-slate-800
           px-6
         "
       >
@@ -217,7 +218,7 @@ export default function Sidebar() {
                 text-[16px]
                 font-extrabold
                 tracking-tight
-                text-[#0A192F]
+                text-[#0A192F] dark:text-white
               "
             >
               EKARARJ BANK
@@ -267,7 +268,7 @@ export default function Sidebar() {
               font-bold
               uppercase
               tracking-[0.12em]
-              text-slate-400
+              text-slate-400 dark:text-slate-500
             "
           >
             {t("navigation.banking", { defaultValue: "Banking" })}
@@ -306,16 +307,16 @@ export default function Sidebar() {
                           isActive
 
                             ? `
-                              bg-cyan-50/80
+                              bg-cyan-50/80 dark:bg-cyan-950/50
                               font-semibold
                               text-[#00A3C4]
                             `
 
                             : `
                               font-medium
-                              text-slate-600
-                              hover:bg-slate-50
-                              hover:text-[#0A192F]
+                              text-slate-600 dark:text-slate-300
+                              hover:bg-slate-50 dark:hover:bg-slate-800/70
+                              hover:text-[#0A192F] dark:hover:text-white
                             `
                         }
                       `
@@ -378,7 +379,7 @@ export default function Sidebar() {
                         <span
                           className="
                             flex-1
-                            truncate
+                            truncate text-[13.5px] leading-tight
                           "
                         >
                           {t(item.labelKey)}
@@ -442,7 +443,7 @@ export default function Sidebar() {
               font-bold
               uppercase
               tracking-[0.12em]
-              text-slate-400
+              text-slate-400 dark:text-slate-500
             "
           >
             {t("navigation.account", { defaultValue: "Account" })}
@@ -482,16 +483,16 @@ export default function Sidebar() {
                           isActive
 
                             ? `
-                              bg-cyan-50/80
+                              bg-cyan-50/80 dark:bg-cyan-950/50
                               font-semibold
                               text-[#00A3C4]
                             `
 
                             : `
                               font-medium
-                              text-slate-600
-                              hover:bg-slate-50
-                              hover:text-[#0A192F]
+                              text-slate-600 dark:text-slate-300
+                              hover:bg-slate-50 dark:hover:bg-slate-800/70
+                              hover:text-[#0A192F] dark:hover:text-white
                             `
                         }
                       `
@@ -589,100 +590,39 @@ export default function Sidebar() {
 
 
       {/* =====================================================
-          LOGOUT
+          LOGOUT (Modern Card Design)
       ====================================================== */}
 
-      <div
-        className="
-          shrink-0
-          border-t
-          border-slate-100
-          p-4
-        "
-      >
-
+      <div className="shrink-0 border-t border-slate-100 dark:border-slate-800 p-3.5">
         <button
           type="button"
-
-          // Logout button click
-          onClick={
-            handleLogout
-          }
-
-          // Logout လုပ်နေတုန်း
-          // ထပ်နှိပ်မရအောင်
-          disabled={
-            loggingOut
-          }
-
-          className="
-            group
-            flex
-            w-full
-            items-center
-            gap-3
-            rounded-xl
-            px-3
-            py-2.5
-            text-sm
-            font-medium
-            text-slate-500
-            transition-all
-            duration-200
-
-            hover:bg-red-50
-            hover:text-red-600
-
-            focus:outline-none
-            focus:ring-2
-            focus:ring-red-200
-
-            disabled:cursor-not-allowed
-            disabled:opacity-60
-          "
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="group relative flex w-full items-center justify-between rounded-2xl border border-red-100/80 dark:border-red-950/60 bg-gradient-to-r from-red-50/60 via-rose-50/40 to-slate-50/60 dark:from-red-950/20 dark:via-rose-950/15 dark:to-slate-900/40 p-2.5 transition-all duration-200 hover:border-red-200 dark:hover:border-red-900/80 hover:from-red-100/70 hover:to-rose-100/50 dark:hover:from-red-950/40 dark:hover:to-rose-950/30 hover:shadow-xs active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
         >
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Icon Box */}
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100/80 dark:bg-red-950/80 text-red-600 dark:text-red-400 shadow-xs transition-all duration-200 group-hover:scale-105 group-hover:bg-red-600 group-hover:text-white">
+              <LogOut size={16} strokeWidth={2.2} />
+            </div>
 
-          <div
-            className="
-              flex
-              h-9
-              w-9
-              shrink-0
-              items-center
-              justify-center
-              rounded-lg
-              bg-slate-100
-              transition-colors
-              duration-200
-
-              group-hover:bg-red-100
-            "
-          >
-
-            <LogOut
-              size={17}
-            />
-
+            {/* Labels */}
+            <div className="text-left min-w-0">
+              <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors group-hover:text-red-700 dark:group-hover:text-red-300">
+                {loggingOut ? t("navigation.loggingOut") : t("navigation.logout")}
+              </p>
+              <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 group-hover:text-red-500/80">
+                End active session
+              </p>
+            </div>
           </div>
 
-
-          <span>
-
-            {
-              loggingOut
-                ? t("navigation.loggingOut")
-              : t("navigation.logout")
-              }
-            
-
-          </span>
-
+          {/* Right Indicator */}
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-400 dark:text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-red-600 dark:group-hover:text-red-400">
+            <ChevronRight size={14} strokeWidth={2.5} />
+          </div>
         </button>
-
       </div>
-
     </aside>
-
   );
-
 }

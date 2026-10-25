@@ -27,10 +27,18 @@ export interface EkararjCardTheme {
   themeType: "platinum" | "navy" | "gold" | "obsidian";
   textMode: "dark" | "light";
   embossedClass: string;
+  bankTitleClass: string;
+  balanceLabelClass: string;
+  balanceNumberClass: string;
+  currencyClass: string;
+  cardholderNameClass: string;
+  badgeClass: string;
+  dividerClass: string;
+  actionBtnClass: string;
 }
 
 export const EKARARJ_CARD_THEMES: EkararjCardTheme[] = [
-  // 1. Brushed Platinum Silver (Reference photo hero card)
+  // 1. Brushed Platinum Silver
   {
     id: "platinum",
     name: "Platinum Silver",
@@ -38,8 +46,16 @@ export const EKARARJ_CARD_THEMES: EkararjCardTheme[] = [
     themeType: "platinum",
     textMode: "dark",
     embossedClass: "embossed-text-silver",
+    bankTitleClass: "text-[#0A192F] drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]",
+    balanceLabelClass: "text-slate-600 font-bold",
+    balanceNumberClass: "text-[#0A192F] drop-shadow-[0_1px_0_rgba(255,255,255,0.8)]",
+    currencyClass: "text-[#007088]",
+    cardholderNameClass: "text-[#1E293B] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]",
+    badgeClass: "bg-[#0A192F]/10 text-[#0A192F] border border-[#0A192F]/20",
+    dividerClass: "border-slate-300/70",
+    actionBtnClass: "text-slate-600 hover:text-[#0A192F] hover:bg-slate-200/60",
   },
-  // 2. Royal Sapphire Navy (Ekararj Signature Navy)
+  // 2. Royal Sapphire Navy
   {
     id: "navy",
     name: "Sapphire Navy",
@@ -47,8 +63,16 @@ export const EKARARJ_CARD_THEMES: EkararjCardTheme[] = [
     themeType: "navy",
     textMode: "light",
     embossedClass: "embossed-text-navy",
+    bankTitleClass: "text-white drop-shadow-sm",
+    balanceLabelClass: "text-cyan-200/90 font-bold",
+    balanceNumberClass: "text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]",
+    currencyClass: "text-cyan-300",
+    cardholderNameClass: "text-white/95 drop-shadow-xs",
+    badgeClass: "bg-white/15 text-cyan-200 border border-white/20",
+    dividerClass: "border-white/15",
+    actionBtnClass: "text-white/80 hover:text-white hover:bg-white/20",
   },
-  // 3. Titanium Champagne Gold (Ekararj Gold VIP)
+  // 3. Titanium Champagne Gold
   {
     id: "gold",
     name: "Titanium Gold",
@@ -56,6 +80,14 @@ export const EKARARJ_CARD_THEMES: EkararjCardTheme[] = [
     themeType: "gold",
     textMode: "dark",
     embossedClass: "embossed-text-gold",
+    bankTitleClass: "text-[#1B1202] drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]",
+    balanceLabelClass: "text-[#694808] font-bold",
+    balanceNumberClass: "text-[#1B1202] drop-shadow-[0_1px_0_rgba(255,255,255,0.8)]",
+    currencyClass: "text-[#78540C]",
+    cardholderNameClass: "text-[#2D1E04] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]",
+    badgeClass: "bg-[#2D1E04]/10 text-[#2D1E04] border border-[#2D1E04]/20",
+    dividerClass: "border-amber-400/50",
+    actionBtnClass: "text-[#694808] hover:text-[#1B1202] hover:bg-amber-400/25",
   },
   // 4. Obsidian Black Diamond
   {
@@ -65,6 +97,14 @@ export const EKARARJ_CARD_THEMES: EkararjCardTheme[] = [
     themeType: "obsidian",
     textMode: "light",
     embossedClass: "embossed-text-navy",
+    bankTitleClass: "text-white drop-shadow-sm",
+    balanceLabelClass: "text-cyan-200/90 font-bold",
+    balanceNumberClass: "text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]",
+    currencyClass: "text-cyan-300",
+    cardholderNameClass: "text-white/95 drop-shadow-xs",
+    badgeClass: "bg-white/15 text-cyan-200 border border-white/20",
+    dividerClass: "border-white/15",
+    actionBtnClass: "text-white/80 hover:text-white hover:bg-white/20",
   },
 ];
 
@@ -134,7 +174,6 @@ export default function BankCard({
   ).toUpperCase();
 
   const theme = EKARARJ_CARD_THEMES[index % EKARARJ_CARD_THEMES.length];
-  const isLightText = theme.textMode === "light";
 
   const accountTypeLabel =
     account.accountType?.toUpperCase() === "SAVINGS"
@@ -173,11 +212,7 @@ export default function BankCard({
 
           <div>
             <h3
-              className={`text-[15px] sm:text-[16px] font-black tracking-wide leading-none ${
-                isLightText
-                  ? "text-white drop-shadow-sm"
-                  : "text-[#0A192F] drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]"
-              }`}
+              className={`text-[15px] sm:text-[16px] font-black tracking-wide leading-none ${theme.bankTitleClass}`}
               style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
             >
               EKARARJ BANK
@@ -195,9 +230,7 @@ export default function BankCard({
       <div className="relative z-10 my-auto py-1 space-y-1">
         <div className="flex items-center justify-between">
           <span
-            className={`text-[10px] sm:text-[11px] font-bold uppercase tracking-wider ${
-              isLightText ? "text-cyan-200/90" : "text-slate-500"
-            }`}
+            className={`text-[10px] sm:text-[11px] uppercase tracking-wider ${theme.balanceLabelClass}`}
           >
             Available Balance
           </span>
@@ -206,11 +239,7 @@ export default function BankCard({
           <button
             type="button"
             onClick={handleToggleEye}
-            className={`rounded-lg p-1 transition-colors ${
-              isLightText
-                ? "text-white/75 hover:bg-white/20 hover:text-white"
-                : "text-slate-500 hover:bg-slate-200/60 hover:text-[#0A192F]"
-            } focus:outline-none`}
+            className={`rounded-lg p-1 transition-colors ${theme.actionBtnClass} focus:outline-none`}
             title={isBalanceVisible ? "Hide balance" : "Show balance"}
             aria-label={isBalanceVisible ? "Hide balance" : "Show balance"}
           >
@@ -220,16 +249,12 @@ export default function BankCard({
 
         <div className="flex items-baseline gap-1.5">
           <span
-            className={`text-xl sm:text-2xl font-black tracking-tight ${
-              isLightText ? "text-white" : "text-[#0A192F]"
-            }`}
+            className={`text-xl sm:text-2xl font-black tracking-tight ${theme.balanceNumberClass}`}
           >
             {isBalanceVisible ? (
               <>
                 <span
-                  className={`mr-1.5 text-xs sm:text-sm font-extrabold ${
-                    isLightText ? "text-cyan-300" : "text-[#00A3C4]"
-                  }`}
+                  className={`mr-1.5 text-xs sm:text-sm font-extrabold ${theme.currencyClass}`}
                 >
                   {account.currency || "MMK"}
                 </span>
@@ -257,11 +282,7 @@ export default function BankCard({
           <button
             type="button"
             onClick={handleCopy}
-            className={`rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 ${
-              isLightText
-                ? "text-white/80 hover:bg-white/20"
-                : "text-slate-500 hover:bg-slate-200/60"
-            }`}
+            className={`rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100 ${theme.actionBtnClass}`}
             title="Copy account number"
           >
             {copied ? (
@@ -274,11 +295,7 @@ export default function BankCard({
 
         {/* Account Holder Name */}
         <p
-          className={`truncate font-mono text-[11px] sm:text-xs font-bold tracking-[0.16em] uppercase ${
-            isLightText
-              ? "text-white/90 drop-shadow-xs"
-              : "text-slate-700 drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]"
-          }`}
+          className={`truncate font-mono text-[11px] sm:text-xs font-bold tracking-[0.16em] uppercase ${theme.cardholderNameClass}`}
           style={{ letterSpacing: "0.16em" }}
         >
           {customerDisplayName}
@@ -286,13 +303,9 @@ export default function BankCard({
       </div>
 
       {/* 5. BOTTOM ROW: Account Type Badge */}
-      <div className="relative z-10 flex items-center justify-between pt-1 border-t border-black/5 dark:border-white/10">
+      <div className={`relative z-10 flex items-center justify-between pt-1 border-t ${theme.dividerClass}`}>
         <span
-          className={`rounded-full px-2.5 py-0.5 text-[9px] font-black tracking-wider uppercase ${
-            isLightText
-              ? "bg-white/15 text-cyan-200 border border-white/20"
-              : "bg-[#0A192F]/10 text-[#0A192F] border border-[#0A192F]/15"
-          }`}
+          className={`rounded-full px-2.5 py-0.5 text-[9px] font-black tracking-wider uppercase ${theme.badgeClass}`}
         >
           {accountTypeLabel}
         </span>
@@ -307,6 +320,8 @@ export default function BankCard({
   if (!isLink) {
     return (
       <div
+        data-bank-card="true"
+        data-keep-light="true"
         className={cardClasses}
         onClick={onClick}
         role={onClick ? "button" : undefined}
@@ -322,6 +337,8 @@ export default function BankCard({
       to="/accounts"
       state={{ accountNumber: account.accountNumber }}
       title="Click to view full account details"
+      data-bank-card="true"
+      data-keep-light="true"
       className={cardClasses}
       onClick={onClick}
     >

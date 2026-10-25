@@ -249,7 +249,7 @@ export default function AccountStatementPage() {
               <span className="text-[#00A3C4]" aria-current="page">Account Statement</span>
             </nav>
 
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#0A192F]">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#0A192F] dark:text-white">
               Account Statement
             </h1>
             <p className="text-xs md:text-sm text-slate-500 mt-0.5">

@@ -45,7 +45,7 @@ export const StatementVerify: FC<StatementVerifyProps> = ({
             <div>
               <span className="text-xs text-slate-400 block font-medium">Account Type</span>
               <span className="text-sm font-bold text-slate-900 inline-flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center rounded-md bg-cyan-100 px-2 py-0.5 text-xs font-semibold text-[#0A192F]">
+                <span className="inline-flex items-center rounded-md bg-cyan-100 dark:bg-cyan-500/20 px-2.5 py-0.5 text-xs font-bold text-[#007088] dark:text-cyan-300 border border-cyan-200/60 dark:border-cyan-500/30">
                   {form.accountType}
                 </span>
               </span>

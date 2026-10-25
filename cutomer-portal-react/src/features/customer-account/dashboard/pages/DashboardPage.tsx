@@ -50,15 +50,15 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="relative overflow-hidden bg-[#F4F6F9] text-[#0A192F] pb-12">
+    <div className="relative overflow-hidden bg-[#F4F6F9] dark:bg-[#060E1A] text-[#0A192F] dark:text-slate-100 pb-12 transition-colors duration-200">
       {/* Background Soft Blobs bounded by overflow-hidden */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-cyan-100/35 blur-3xl"
+        className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-cyan-100/35 dark:bg-cyan-500/10 blur-3xl"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-slate-200/40 blur-3xl"
+        className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-slate-200/40 dark:bg-blue-600/10 blur-3xl"
       />
 
       <div className="relative z-10 mx-auto max-w-[1450px] space-y-6">
@@ -75,20 +75,20 @@ export default function DashboardPage() {
         {hasError && (
           <section
             role="alert"
-            className="rounded-2xl border border-red-200 bg-white p-6 shadow-sm"
+            className="rounded-2xl border border-red-200 dark:border-red-900/60 bg-white dark:bg-[#0A192F] p-6 shadow-sm"
           >
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400">
                 <ShieldCheck size={22} />
               </div>
 
               <div className="min-w-0 flex-1">
-                <h2 className="font-bold text-red-700">{t("loadError")}</h2>
-                <p className="mt-1 break-words text-sm text-red-600">{error}</p>
+                <h2 className="font-bold text-red-700 dark:text-red-400">{t("loadError")}</h2>
+                <p className="mt-1 break-words text-sm text-red-600 dark:text-red-300">{error}</p>
                 <button
                   type="button"
                   onClick={handleRetry}
-                  className="mt-4 rounded-xl bg-[#0A192F] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#153564] focus:outline-none focus:ring-4 focus:ring-cyan-200"
+                  className="mt-4 rounded-xl bg-[#0A192F] dark:bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#153564] dark:hover:bg-cyan-500 focus:outline-none focus:ring-4 focus:ring-cyan-200 dark:focus:ring-cyan-950 cursor-pointer"
                 >
                   {t("tryAgain")}
                 </button>
@@ -109,13 +109,14 @@ export default function DashboardPage() {
               </p>
             )}
 
-            {/* 1. TOP SECTION: Total Available Balance (Compact & User-Friendly) */}
+            {/* 1. TOP SECTION: Total Available Balance (Compact & User-Friendly with Scan & My QR) */}
             <TotalBalanceCard
               totalBalance={totalBalance}
               accountCount={accounts.length}
               showBalance={showBalance}
               onToggleBalance={handleToggleBalance}
               customerName={dashboard?.fullName}
+              primaryAccountNumber={primaryAccount?.accountNumber}
               loading={refreshing}
             />
 

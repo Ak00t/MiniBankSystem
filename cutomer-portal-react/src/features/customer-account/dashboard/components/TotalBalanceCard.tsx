@@ -2,10 +2,11 @@ import { Link } from "react-router-dom";
 import {
   Eye,
   EyeOff,
-  PlusCircle,
   ArrowUpRight,
   Receipt,
-  User,
+  Sun,
+  Sunrise,
+  Moon,
 } from "lucide-react";
 import { CrownEmbossedWatermark } from "../../../../components/common/EkararjLogo";
 
@@ -16,6 +17,7 @@ interface TotalBalanceCardProps {
   loading?: boolean;
   onToggleBalance: () => void;
   customerName?: string;
+  primaryAccountNumber?: string;
 }
 
 function formatBalance(amount: number): string {
@@ -25,11 +27,35 @@ function formatBalance(amount: number): string {
   });
 }
 
-function getTimeGreeting(): string {
+function getTimeGreetingDetails(): {
+  greeting: string;
+  Icon: typeof Sun;
+  iconClass: string;
+  bgGlow: string;
+} {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
+  if (hour >= 5 && hour < 12) {
+    return {
+      greeting: "Good morning",
+      Icon: Sunrise,
+      iconClass: "text-amber-300",
+      bgGlow: "bg-amber-400/20 ring-amber-400/30",
+    };
+  }
+  if (hour >= 12 && hour < 17) {
+    return {
+      greeting: "Good afternoon",
+      Icon: Sun,
+      iconClass: "text-amber-400",
+      bgGlow: "bg-amber-400/20 ring-amber-400/30",
+    };
+  }
+  return {
+    greeting: "Good evening",
+    Icon: Moon,
+    iconClass: "text-cyan-300",
+    bgGlow: "bg-cyan-400/20 ring-cyan-400/30",
+  };
 }
 
 export default function TotalBalanceCard({
@@ -41,7 +67,7 @@ export default function TotalBalanceCard({
   customerName,
 }: TotalBalanceCardProps) {
   const displayName = customerName?.trim() || "Customer";
-  const greeting = `${getTimeGreeting()}, ${displayName}`;
+  const { greeting, Icon, iconClass, bgGlow } = getTimeGreetingDetails();
 
   return (
     <section
@@ -65,16 +91,14 @@ export default function TotalBalanceCard({
       </div>
 
       <div className="relative z-10 space-y-4">
-        {/* ROW 1: Greeting without Bell icon */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/30 shadow-xs">
-            <User size={18} />
+        {/* ROW 1: Sleek Greeting with Dynamic Time Icon (☀️ / 🌙) */}
+        <div className="flex items-center gap-2.5">
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${bgGlow} ring-1 shadow-xs`}>
+            <Icon size={17} className={iconClass} />
           </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
-              {greeting}
-            </h2>
-          </div>
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white">
+            {greeting}, <span className="font-extrabold text-cyan-200">{displayName}</span>
+          </h2>
         </div>
 
         {/* ROW 2: Total Available Balance (Compact & User-Friendly) */}
@@ -119,32 +143,30 @@ export default function TotalBalanceCard({
           </div>
         </div>
 
-        {/* ROW 3: Quick Action Buttons */}
+        {/* ROW 3: Quick Action Buttons (Transfer & Pay only, hover-activated color) */}
         <div className="flex flex-wrap items-center gap-2.5 pt-1">
-          {/* Add Money */}
-          <Link
-            to="/accounts"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-bold text-white shadow-xs backdrop-blur-md transition hover:bg-white/20 active:scale-95"
-          >
-            <PlusCircle size={15} className="text-cyan-300" />
-            <span>Add Money</span>
-          </Link>
-
           {/* Transfer */}
           <Link
             to="/transfer"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#00A3C4] via-[#0284C7] to-[#0369A1] px-4 py-2 text-xs font-bold text-white shadow-md shadow-cyan-500/25 transition hover:from-[#0891B2] hover:via-[#0369A1] hover:to-[#075985] active:scale-95"
+            className="group inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs backdrop-blur-md transition-all duration-200 hover:border-[#00A3C4] hover:bg-[#00A3C4] hover:shadow-md hover:shadow-cyan-500/25 active:scale-95"
           >
-            <ArrowUpRight size={15} strokeWidth={2.4} />
+            <ArrowUpRight
+              size={15}
+              strokeWidth={2.4}
+              className="text-cyan-300 transition-colors duration-200 group-hover:text-white"
+            />
             <span>Transfer</span>
           </Link>
 
           {/* Pay */}
           <Link
             to="/checkout"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-bold text-white shadow-xs backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+            className="group inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs backdrop-blur-md transition-all duration-200 hover:border-[#00A3C4] hover:bg-[#00A3C4] hover:shadow-md hover:shadow-cyan-500/25 active:scale-95"
           >
-            <Receipt size={15} className="text-cyan-300" />
+            <Receipt
+              size={15}
+              className="text-cyan-300 transition-colors duration-200 group-hover:text-white"
+            />
             <span>Pay</span>
           </Link>
         </div>

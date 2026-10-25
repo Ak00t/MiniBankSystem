@@ -322,7 +322,7 @@ function FormStep({
             <select
               value={sourceAccount}
               onChange={(e) => setSourceAccount(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:border-[#00A3C4] focus:bg-white focus:ring-2 focus:ring-cyan-100 outline-none transition cursor-pointer"
+              className="w-full px-4 py-3.5 bg-slate-50 dark:bg-[#0f2445] border border-slate-200 dark:border-slate-700/80 rounded-2xl text-sm font-extrabold text-slate-900 dark:text-white focus:border-[#00A3C4] focus:bg-white dark:focus:bg-[#0f2445] focus:ring-2 focus:ring-cyan-500/20 outline-none transition cursor-pointer shadow-xs"
             >
               {accounts.length === 0 && <option value="">No active accounts</option>}
               {accounts.map((acc) => (
@@ -334,22 +334,24 @@ function FormStep({
             </select>
 
             {selectedAcc && (
-              <div className="px-4 py-3 bg-gradient-to-r from-cyan-50/70 to-slate-50/50 rounded-2xl border border-cyan-100 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-cyan-100/70 flex items-center justify-center text-[#00A3C4]">
-                    <Wallet className="w-4 h-4" />
+              <div className="px-4 py-3.5 bg-gradient-to-r from-cyan-50/90 via-sky-50/60 to-slate-50/70 dark:from-[#0a1f3d] dark:via-[#0c2447] dark:to-[#0f2a52] rounded-2xl border border-cyan-200 dark:border-cyan-500/30 flex items-center justify-between shadow-xs dark:shadow-md dark:shadow-cyan-950/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-500/20 border border-cyan-200/80 dark:border-cyan-500/30 flex items-center justify-center text-[#00A3C4] dark:text-cyan-300 shrink-0 shadow-xs">
+                    <Wallet className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-[#00A3C4]">Available to Transfer</p>
-                    <p className="text-sm font-extrabold text-[#0A192F]">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#007B99] dark:text-cyan-300">
+                      Available to Transfer
+                    </p>
+                    <p className="text-base sm:text-lg font-black text-[#0A192F] dark:text-white tracking-tight">
                       {netAvailable.toLocaleString()} MMK
                     </p>
-                    <p className="text-[10px] text-slate-500 font-medium">
-                      Balance: {availBalance.toLocaleString()} MMK • Min reserve: {minBalance.toLocaleString()} MMK
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium mt-0.5">
+                      Total Balance: <span className="font-bold text-slate-800 dark:text-white">{availBalance.toLocaleString()} MMK</span> • Min reserve: {minBalance.toLocaleString()} MMK
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-cyan-100 dark:bg-cyan-500/20 text-[#007088] dark:text-cyan-300 border border-cyan-300/80 dark:border-cyan-400/40 shadow-xs">
                   {selectedAcc.accountType}
                 </span>
               </div>
@@ -365,14 +367,14 @@ function FormStep({
             Transfer To
           </label>
           {beneficiaries.length > 0 && (
-            <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
+            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-[#0f2445] p-1 text-xs font-semibold border border-slate-200/70 dark:border-slate-700/80 shadow-xs">
               <button
                 type="button"
                 onClick={() => setRecipientTab("beneficiaries")}
-                className={`px-2.5 py-1 rounded-md transition ${
+                className={`px-3 py-1.5 rounded-lg transition font-bold ${
                   recipientTab === "beneficiaries"
-                    ? "bg-white text-[#00A3C4] shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white dark:bg-[#00A3C4] text-[#00A3C4] dark:text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 Saved Contacts ({beneficiaries.length})
@@ -380,10 +382,10 @@ function FormStep({
               <button
                 type="button"
                 onClick={() => setRecipientTab("manual")}
-                className={`px-2.5 py-1 rounded-md transition ${
+                className={`px-3 py-1.5 rounded-lg transition font-bold ${
                   recipientTab === "manual"
-                    ? "bg-white text-[#00A3C4] shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white dark:bg-[#00A3C4] text-[#00A3C4] dark:text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 Enter Account No

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
+  ArrowRight,
   Plus,
   WalletCards,
 } from "lucide-react";
@@ -51,14 +52,14 @@ export default function BankCardsSection({
 
   if (!accounts || accounts.length === 0) {
     return (
-      <section className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center shadow-xs">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-50 text-[#00A3C4]">
+      <section className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0A192F] p-8 text-center shadow-xs transition-colors duration-200">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-[#00A3C4]">
           <WalletCards size={28} />
         </div>
-        <h3 className="mt-4 text-base font-extrabold text-[#0A192F]">
+        <h3 className="mt-4 text-base font-extrabold text-[#0A192F] dark:text-white">
           No Linked Accounts Found
         </h3>
-        <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
           Your active Ekararj Bank cards and accounts will appear here once linked.
         </p>
         <Link
@@ -77,10 +78,10 @@ export default function BankCardsSection({
       {/* Header: Section Title (My Accounts) and Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#0A192F]">
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#0A192F] dark:text-white">
             My Accounts
           </h2>
-          <span className="inline-flex items-center justify-center rounded-full bg-cyan-50 px-2.5 py-0.5 text-xs font-extrabold text-[#00A3C4] border border-cyan-200/60">
+          <span className="inline-flex items-center justify-center rounded-full bg-cyan-50 dark:bg-cyan-950/50 px-2.5 py-0.5 text-xs font-extrabold text-[#00A3C4] border border-cyan-200/60 dark:border-cyan-800/60">
             {accounts.length}
           </span>
         </div>
@@ -94,7 +95,7 @@ export default function BankCardsSection({
                 onClick={() => handleScroll("left")}
                 disabled={!canScrollLeft}
                 aria-label="Previous card"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs transition hover:bg-slate-50 hover:text-[#0A192F] hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-xs transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#0A192F] dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -104,18 +105,21 @@ export default function BankCardsSection({
                 onClick={() => handleScroll("right")}
                 disabled={!canScrollRight}
                 aria-label="Next card"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs transition hover:bg-slate-50 hover:text-[#0A192F] hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 shadow-xs transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-[#0A192F] dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ChevronRight size={16} />
               </button>
             </div>
           )}
 
+          {/* Arrow (→) Button linking to Accounts */}
           <Link
             to="/accounts"
-            className="text-xs font-bold text-[#00A3C4] hover:text-[#0891B2] hover:underline"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#0f2445] text-[#00A3C4] hover:bg-cyan-50 dark:hover:bg-cyan-950/40 hover:border-cyan-300 dark:hover:border-cyan-500/50 shadow-xs transition-all hover:scale-105 group cursor-pointer"
+            title="View accounts"
+            aria-label="View accounts"
           >
-            See All
+            <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
       </div>

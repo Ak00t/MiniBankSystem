@@ -186,14 +186,14 @@ export const StatementForm: FC<StatementFormProps> = ({
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
             Account Type <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-[#0f2445] rounded-xl border border-slate-200 dark:border-slate-700/60">
             <button
               type="button"
               onClick={() => onAccountTypeChange("CURRENT")}
               className={`py-2 px-3 text-sm font-semibold rounded-lg transition-all ${
                 form.accountType === "CURRENT"
-                  ? "bg-white text-[#00A3C4] shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-[#0a192f] text-[#00A3C4] shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Current Account
@@ -203,8 +203,8 @@ export const StatementForm: FC<StatementFormProps> = ({
               onClick={() => onAccountTypeChange("SAVINGS")}
               className={`py-2 px-3 text-sm font-semibold rounded-lg transition-all ${
                 form.accountType === "SAVINGS"
-                  ? "bg-white text-[#00A3C4] shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-[#0a192f] text-[#00A3C4] shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Savings Account
@@ -282,10 +282,10 @@ className={`w-full appearance-none rounded-xl border ${
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-slate-900">{selectedAccount.accountNumber}</span>
-                <span className="inline-flex items-center rounded-md bg-cyan-100 px-2 py-0.5 text-[11px] font-semibold text-[#0A192F]">
+                <span className="inline-flex items-center rounded-md bg-cyan-100 dark:bg-cyan-500/20 px-2.5 py-0.5 text-[11px] font-bold text-[#007088] dark:text-cyan-300 border border-cyan-200/60 dark:border-cyan-500/30">
                   {selectedAccount.accountType}
                 </span>
-                <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                <span className="inline-flex items-center rounded-md bg-emerald-100 dark:bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-500/30">
                   {selectedAccount.status}
                 </span>
               </div>

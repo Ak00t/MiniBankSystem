@@ -94,7 +94,7 @@ export const StatementDownload: FC<StatementDownloadProps> = ({
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
             <CheckCircle2 size={18} />
           </div>
-          <h2 className="text-base font-bold text-[#0A192F]">Statement Ready</h2>
+          <h2 className="text-base font-bold text-[#0A192F] dark:text-white">Statement Ready</h2>
         </div>
         <p className="text-xs text-slate-500 mt-1">
           Your statement criteria have been confirmed. Choose your preferred export format below.
