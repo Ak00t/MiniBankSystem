@@ -1,8 +1,9 @@
-import { useId } from "react";
-import { Filter, X, AlertCircle } from "lucide-react";
+import { useId, useRef, useState, type ChangeEvent } from "react";
+import { Filter, X, AlertCircle, Calendar } from "lucide-react";
 import type { CustomerAccount } from "../../accounts/types/accountTypes";
 import type { TransactionFilterDraft } from "../types/transactionHistoryTypes";
 import { formatStatusLabel, formatTypeLabel } from "../types/transactionHistoryTypes";
+import { isoToDisplay, displayToIso, getTodayLocalIso } from "../../statements/types/statementTypes";
 
 interface TransactionFiltersProps {
   accounts: CustomerAccount[];
@@ -16,6 +17,126 @@ interface TransactionFiltersProps {
   onClear: () => void;
   isApplying?: boolean;
   validationError: string | null;
+}
+
+// Format raw digits to DD-MM-YYYY as user types
+function formatToDatePattern(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4)}`;
+}
+
+// Controlled date field that strictly displays DD-MM-YYYY and emits YYYY-MM-DD, matching Account Statement
+function ControlledDateField({
+  id,
+  label,
+  isoValue,
+  maxIso,
+  hasError,
+  onChangeIso,
+}: {
+  id: string;
+  label: string;
+  isoValue: string;
+  maxIso?: string;
+  hasError?: boolean;
+  onChangeIso: (iso: string) => void;
+}) {
+  const hiddenDateRef = useRef<HTMLInputElement>(null);
+  const [typedValue, setTypedValue] = useState<string | null>(null);
+  const [prevIsoValue, setPrevIsoValue] = useState<string>(isoValue);
+
+  if (prevIsoValue !== isoValue) {
+    setPrevIsoValue(isoValue);
+    setTypedValue(null);
+  }
+
+  const displayValue = typedValue !== null ? typedValue : isoToDisplay(isoValue);
+
+  const handleTextChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatToDatePattern(e.target.value);
+    setTypedValue(formatted);
+    if (formatted.length === 10) {
+      const iso = displayToIso(formatted);
+      if (iso) {
+        onChangeIso(iso);
+      }
+    } else if (formatted === "") {
+      onChangeIso("");
+    }
+  };
+
+  const handleBlur = () => {
+    setTypedValue(null);
+  };
+
+  const handleNativePickerChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.value; // YYYY-MM-DD
+    setTypedValue(null);
+    onChangeIso(picked || "");
+  };
+
+  const openNativePicker = () => {
+    if (hiddenDateRef.current) {
+      if (typeof hiddenDateRef.current.showPicker === "function") {
+        try {
+          hiddenDateRef.current.showPicker();
+        } catch {
+          hiddenDateRef.current.focus();
+        }
+      } else {
+        hiddenDateRef.current.focus();
+      }
+    }
+  };
+
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2"
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          type="text"
+          value={displayValue}
+          onChange={handleTextChange}
+          onBlur={handleBlur}
+          placeholder="DD-MM-YYYY"
+          maxLength={10}
+          className={`w-full rounded-xl border ${
+            hasError
+              ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+              : "border-slate-200 focus:border-[#0878E8] focus:ring-[#0878E8]/20"
+          } bg-white px-4 py-2.5 pr-11 text-sm font-medium text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus:ring-2`}
+        />
+        {/* Native Hidden Date Picker Overlay Trigger */}
+        <input
+          ref={hiddenDateRef}
+          type="date"
+          value={isoValue}
+          max={maxIso}
+          onChange={handleNativePickerChange}
+          tabIndex={-1}
+          className="sr-only"
+          aria-hidden="true"
+        />
+        <button
+          type="button"
+          onClick={openNativePicker}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-[#0878E8] hover:bg-slate-50 rounded-lg transition-colors"
+          title="Open calendar"
+          aria-label={`Open calendar for ${label}`}
+        >
+          <Calendar size={18} />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export default function TransactionFilters({
@@ -40,6 +161,14 @@ export default function TransactionFilters({
   const maxAmountId = useId();
 
   const activeAccounts = accounts.filter((acc) => acc.status === "ACTIVE");
+  const todayIso = getTodayLocalIso();
+  const isDateRangeInvalid = Boolean(
+    draftFilters.fromDate &&
+    draftFilters.toDate &&
+    draftFilters.fromDate > draftFilters.toDate
+  );
+  const isFromFuture = Boolean(draftFilters.fromDate && draftFilters.fromDate > todayIso);
+  const isToFuture = Boolean(draftFilters.toDate && draftFilters.toDate > todayIso);
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
@@ -144,38 +273,24 @@ export default function TransactionFilters({
           </div>
 
           {/* 4. Date From */}
-          <div>
-            <label
-              htmlFor={fromDateId}
-              className="mb-1.5 block text-xs font-semibold text-slate-700"
-            >
-              From Date
-            </label>
-            <input
-              id={fromDateId}
-              type="date"
-              value={draftFilters.fromDate}
-              onChange={(e) => onDraftChange("fromDate", e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#0878E8] focus:outline-none focus:ring-1 focus:ring-[#0878E8]"
-            />
-          </div>
+          <ControlledDateField
+            id={fromDateId}
+            label="From Date"
+            isoValue={draftFilters.fromDate}
+            maxIso={todayIso}
+            hasError={isFromFuture || isDateRangeInvalid}
+            onChangeIso={(val) => onDraftChange("fromDate", val)}
+          />
 
           {/* 5. Date To */}
-          <div>
-            <label
-              htmlFor={toDateId}
-              className="mb-1.5 block text-xs font-semibold text-slate-700"
-            >
-              To Date
-            </label>
-            <input
-              id={toDateId}
-              type="date"
-              value={draftFilters.toDate}
-              onChange={(e) => onDraftChange("toDate", e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#0878E8] focus:outline-none focus:ring-1 focus:ring-[#0878E8]"
-            />
-          </div>
+          <ControlledDateField
+            id={toDateId}
+            label="To Date"
+            isoValue={draftFilters.toDate}
+            maxIso={todayIso}
+            hasError={isToFuture || isDateRangeInvalid}
+            onChangeIso={(val) => onDraftChange("toDate", val)}
+          />
 
           {/* 6. Amount Range */}
           <div>

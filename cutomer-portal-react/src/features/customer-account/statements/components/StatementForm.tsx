@@ -1,5 +1,5 @@
 import { useRef, type ChangeEvent, type FormEvent, type FC } from "react";
-import { Calendar, ChevronDown, Wallet, Info } from "lucide-react";
+import { Calendar, ChevronDown, Wallet, Info, AlertCircle } from "lucide-react";
 import type { CustomerAccount } from "../../accounts/types/accountTypes";
 import type {
   StatementAccountType,
@@ -17,6 +17,7 @@ interface StatementFormProps {
   onToDateChange: (isoDate: string) => void;
   onContinue: () => void;
   isContinueDisabled?: boolean;
+  validationError?: string | null;
 }
 
 // Format raw digits to DD-MM-YYYY as user types
@@ -33,12 +34,14 @@ function ControlledDateField({
   label,
   isoValue,
   maxIso,
+  hasError,
   onChangeIso,
 }: {
   id: string;
   label: string;
   isoValue: string;
   maxIso: string;
+  hasError?: boolean;
   onChangeIso: (iso: string) => void;
 }) {
   const hiddenDateRef = useRef<HTMLInputElement>(null);
@@ -91,7 +94,11 @@ function ControlledDateField({
           onChange={handleTextChange}
           placeholder="DD-MM-YYYY"
           maxLength={10}
-          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-11 text-sm font-medium text-slate-800 placeholder-slate-400 transition-colors focus:border-[#0878E8] focus:outline-none focus:ring-2 focus:ring-[#0878E8]/20"
+          className={`w-full rounded-xl border ${
+            hasError
+              ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+              : "border-slate-200 focus:border-[#0878E8] focus:ring-[#0878E8]/20"
+          } bg-white px-4 py-2.5 pr-11 text-sm font-medium text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus:ring-2`}
         />
         {/* Native Hidden Date Picker Overlay Trigger */}
         <input
@@ -129,11 +136,24 @@ export const StatementForm: FC<StatementFormProps> = ({
   onToDateChange,
   onContinue,
   isContinueDisabled = false,
+  validationError = null,
 }) => {
   // Filter active accounts of selected type
   const activeAccounts = accounts.filter(
     (acc) => acc.accountType === form.accountType && acc.status === "ACTIVE"
   );
+
+  // Check which specific fields are invalid based on validationError
+  const isAccountInvalid = validationError === "Please select an account number.";
+  const isFromDateInvalid =
+    validationError === "Please select a From Date." ||
+    validationError === "From Date cannot be in the future." ||
+    validationError === "From Date cannot be later than To Date." ||
+    validationError === "From Date cannot be earlier than the account opening date.";
+  const isToDateInvalid =
+    validationError === "Please select a To Date." ||
+    validationError === "To Date cannot be in the future." ||
+    validationError === "From Date cannot be later than To Date.";
 
   // Today in YYYY-MM-DD
   const today = new Date();
@@ -141,13 +161,24 @@ export const StatementForm: FC<StatementFormProps> = ({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!isContinueDisabled) {
+    if (!isContinueDisabled && !validationError) {
       onContinue();
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Validation Error Banner - exact Transaction History visual pattern */}
+      {validationError && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700"
+        >
+          <AlertCircle size={16} className="shrink-0" aria-hidden="true" />
+          <span>{validationError}</span>
+        </div>
+      )}
+
       {/* 2-Column Responsive Layout for Criteria */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Field 1: Account Type Selection */}
@@ -195,7 +226,11 @@ export const StatementForm: FC<StatementFormProps> = ({
               value={form.accountNumber}
               onChange={(e) => onAccountNumberChange(e.target.value)}
               disabled={activeAccounts.length === 0}
-              className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm font-medium text-slate-800 transition-colors focus:border-[#0878E8] focus:outline-none focus:ring-2 focus:ring-[#0878E8]/20 disabled:bg-slate-50 disabled:text-slate-400"
+              className={`w-full appearance-none rounded-xl border ${
+                isAccountInvalid
+                  ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-slate-200 focus:border-[#0878E8] focus:ring-[#0878E8]/20"
+              } bg-white px-4 py-2.5 pr-10 text-sm font-medium text-slate-800 transition-colors focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-slate-400`}
             >
               {activeAccounts.length === 0 ? (
                 <option value="">No active {form.accountType} accounts found</option>
@@ -222,6 +257,7 @@ export const StatementForm: FC<StatementFormProps> = ({
           label="From Date"
           isoValue={form.fromDate}
           maxIso={todayIso}
+          hasError={isFromDateInvalid}
           onChangeIso={onFromDateChange}
         />
 
@@ -231,6 +267,7 @@ export const StatementForm: FC<StatementFormProps> = ({
           label="To Date"
           isoValue={form.toDate}
           maxIso={todayIso}
+          hasError={isToDateInvalid}
           onChangeIso={onToDateChange}
         />
       </div>
@@ -280,7 +317,7 @@ export const StatementForm: FC<StatementFormProps> = ({
       <div className="flex justify-end pt-2">
         <button
           type="submit"
-          disabled={isContinueDisabled}
+          disabled={isContinueDisabled || Boolean(validationError)}
           className="inline-flex items-center justify-center rounded-xl bg-[#0878E8] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#0878E8] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue
