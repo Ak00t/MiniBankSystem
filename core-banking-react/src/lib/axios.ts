@@ -13,9 +13,9 @@ const axiosInstance = axios.create({
   timeout: 30000,
 });
 
-// ============================================================
+// ============================================================++++
 // Request interceptor — attach JWT access token from localStorage
-// ============================================================
+// ============================================================++++
 
 axiosInstance.interceptors.request.use(
   (config) => {
