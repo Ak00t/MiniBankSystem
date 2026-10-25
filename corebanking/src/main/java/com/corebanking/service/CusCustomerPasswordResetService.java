@@ -29,6 +29,8 @@ import com.corebanking.repository.CusCredentialsRepository;
 import com.corebanking.repository.CusCustomerRepository;
 import com.corebanking.repository.CusOtpChallengesRepository;
 import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -55,6 +57,9 @@ public class CusCustomerPasswordResetService {
     private final CusSessionService cusSessionService;
     private final CusEmailService cusEmailService;
     private final CusAuditLogsRepository auditLogsRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private static final int OTP_EXPIRY_MINUTES = 5;
     private static final int MAX_OTP_ATTEMPTS = 5;
@@ -102,6 +107,9 @@ public class CusCustomerPasswordResetService {
      // 3. CUSTOMER MUST BE ACTIVE
      // =====================================================
 
+      customer = CusCustomerOtpLocks.lockCustomer(entityManager, credentialsRepository,
+              customer.getCustomerId()).getCustomer();
+
      validateCustomerStatus(
              customer
      );
@@ -118,36 +126,6 @@ public class CusCustomerPasswordResetService {
                  "No registered email address is available for password reset."
          );
      }
-
-
-     // =====================================================
-     // 5. EXPIRE PREVIOUS ACTIVE PASSWORD RESET OTPs
-     // =====================================================
-
-     var activeResetOtps =
-             otpChallengesRepository
-                     .findByCustomerAndPurposeAndStatus(
-                             customer,
-                             OtpPurpose.PASSWORD_RESET,
-                             OtpStatus.ACTIVE
-                     );
-
-
-     for (OtpChallenge otp : activeResetOtps) {
-
-         otp.setStatus(
-                 OtpStatus.EXPIRED
-         );
-
-         markOtpUpdatedByCustomer(
-                 otp
-         );
-     }
-
-
-     otpChallengesRepository.saveAll(
-             activeResetOtps
-     );
 
 
      // =====================================================
@@ -255,6 +233,39 @@ public class CusCustomerPasswordResetService {
              otpChallengesRepository.save(
                      otpChallenge
              );
+
+
+     // =====================================================
+     // Expire predecessors after INSERT; avoid an empty InnoDB gap lock.
+     // =====================================================
+
+     var activeResetOtps =
+             otpChallengesRepository
+                     .findByCustomerAndPurposeAndStatus(
+                             customer,
+                             OtpPurpose.PASSWORD_RESET,
+                             OtpStatus.ACTIVE
+                     )
+                     .stream()
+                     .filter(otp -> !savedOtp.getOtpId().equals(otp.getOtpId()))
+                     .toList();
+
+
+     for (OtpChallenge otp : activeResetOtps) {
+
+         otp.setStatus(
+                 OtpStatus.EXPIRED
+         );
+
+         markOtpUpdatedByCustomer(
+                 otp
+         );
+     }
+
+
+     otpChallengesRepository.saveAll(
+             activeResetOtps
+     );
 
 
      // =====================================================
@@ -372,16 +383,8 @@ public CusOtpResendResponse resendPasswordResetOtp(
   // =====================================================
 
   OtpChallenge latestOtp =
-          otpChallengesRepository
-                  .findTopByChallengeGroupIdAndPurposeOrderByOtpIdDesc(
-                          challengeGroupId,
-                          OtpPurpose.PASSWORD_RESET
-                  )
-                  .orElseThrow(() ->
-                          new CusOtpException(
-                                  "Invalid password reset challenge."
-                          )
-                  );
+          CusCustomerOtpLocks.lockRequested(entityManager, credentialsRepository,
+                  otpChallengesRepository, challengeGroupId, OtpPurpose.PASSWORD_RESET);
 
 
   // =====================================================
@@ -712,16 +715,8 @@ public CusPasswordResetOtpVerifyResponse
  // =====================================================
 
  OtpChallenge otpChallenge =
-         otpChallengesRepository
-                 .findTopByChallengeGroupIdAndPurposeOrderByOtpIdDesc(
-                         challengeGroupId,
-                         OtpPurpose.PASSWORD_RESET
-                 )
-                 .orElseThrow(() ->
-                         new CusOtpException(
-                                 "Invalid password reset challenge."
-                         )
-                 );
+         CusCustomerOtpLocks.lockRequested(entityManager, credentialsRepository,
+                  otpChallengesRepository, challengeGroupId, OtpPurpose.PASSWORD_RESET);
 
 
  // =====================================================
@@ -1020,16 +1015,8 @@ public void resetPassword(
  // =====================================================
 
  OtpChallenge verifiedChallenge =
-         otpChallengesRepository
-                 .findTopByChallengeGroupIdAndPurposeOrderByOtpIdDesc(
-                         verifiedChallengeGroupId,
-                         OtpPurpose.PASSWORD_RESET
-                 )
-                 .orElseThrow(() ->
-                         new CusOtpException(
-                                 "Invalid password reset authorization."
-                         )
-                 );
+         CusCustomerOtpLocks.lockRequested(entityManager, credentialsRepository,
+                  otpChallengesRepository, verifiedChallengeGroupId, OtpPurpose.PASSWORD_RESET);
 
 
  // =====================================================
@@ -1038,7 +1025,9 @@ public void resetPassword(
 
  if (verifiedChallenge.getStatus()
          != OtpStatus.CONSUMED
-         || verifiedChallenge.getConsumedAt() == null) {
+         || verifiedChallenge.getConsumedAt() == null
+         || verifiedChallenge.getExpiresAt() == null
+         || !verifiedChallenge.getExpiresAt().isAfter(LocalDateTime.now())) {
 
      throw new CusOtpException(
              "Password reset authorization is not valid."
@@ -1156,21 +1145,12 @@ public void resetPassword(
  // Repository uses clearAutomatically = true
  // =====================================================
 
- customer =
-         customerRepository
-                 .findById(
-                         customerId
-                 )
-                 .orElseThrow(() ->
-                         new RuntimeException(
-                                 "Customer not found."
-                         )
-                 );
+ // The claim clears JPA state. A locking read avoids the provisional RR snapshot.
 
 
  credentials =
          credentialsRepository
-                 .findById(
+                 .findByCustomerIdForUpdate(
                          customerId
                  )
                  .orElseThrow(() ->
@@ -1179,6 +1159,9 @@ public void resetPassword(
                          )
                  );
 
+
+ // Fresh owner from the same authoritative locking read.
+ customer = credentials.getCustomer();
 
  // =====================================================
  // 12. HASH NEW PASSWORD
