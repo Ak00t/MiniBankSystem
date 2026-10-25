@@ -442,8 +442,8 @@ function ResetPasswordPage() {
               hidden
               overflow-hidden
               bg-gradient-to-br
-              from-[#08295C]
-              via-[#0B3A78]
+              from-[#0A192F]
+              via-[#153564]
               to-[#125AA3]
               p-10
               text-white
@@ -525,7 +525,7 @@ function ResetPasswordPage() {
                     "
                   >
 
-                    ACE Bank
+                    EKARARJ BANK
 
                   </h1>
 
@@ -576,7 +576,7 @@ function ResetPasswordPage() {
 
                 Your email verification is complete.
                 Create a new password to securely
-                regain access to your ACE Bank account.
+                regain access to your EKARARJ BANK account.
 
               </p>
 
@@ -890,7 +890,7 @@ function ResetPasswordPage() {
                         text-3xl
                         font-bold
                         tracking-tight
-                        text-[#08295C]
+                        text-[#0A192F]
                         lg:text-4xl
                       "
                     >
@@ -930,7 +930,7 @@ function ResetPasswordPage() {
                     >
 
                       You can now login to your
-                      ACE Bank account using your
+                      EKARARJ BANK account using your
                       new password.
 
                     </p>
@@ -953,7 +953,7 @@ function ResetPasswordPage() {
                         items-center
                         justify-center
                         rounded-xl
-                        bg-blue-600
+                        bg-[#00A3C4]
                         px-5
                         py-3.5
                         text-sm
@@ -961,7 +961,7 @@ function ResetPasswordPage() {
                         text-white
                         shadow-sm
                         transition
-                        hover:bg-blue-700
+                        hover:bg-[#0891B2]
                         focus:outline-none
                         focus:ring-4
                         focus:ring-blue-200
@@ -1026,7 +1026,7 @@ function ResetPasswordPage() {
                           items-center
                           justify-center
                           rounded-xl
-                          bg-[#08295C]
+                          bg-[#0A192F]
                           text-white
                         "
                       >
@@ -1044,11 +1044,11 @@ function ResetPasswordPage() {
                           className="
                             text-xl
                             font-bold
-                            text-[#08295C]
+                            text-[#0A192F]
                           "
                         >
 
-                          ACE Bank
+                          EKARARJ BANK
 
                         </h1>
 
@@ -1080,8 +1080,8 @@ function ResetPasswordPage() {
                         items-center
                         justify-center
                         rounded-2xl
-                        bg-blue-50
-                        text-blue-600
+                        bg-cyan-50
+                        text-[#00A3C4]
                       "
                     >
 
@@ -1103,7 +1103,7 @@ function ResetPasswordPage() {
                           font-semibold
                           uppercase
                           tracking-wider
-                          text-blue-600
+                          text-[#00A3C4]
                         "
                       >
 
@@ -1117,7 +1117,7 @@ function ResetPasswordPage() {
                           text-3xl
                           font-bold
                           tracking-tight
-                          text-[#08295C]
+                          text-[#0A192F]
                           lg:text-4xl
                         "
                       >
@@ -1137,7 +1137,7 @@ function ResetPasswordPage() {
                       >
 
                         Create a secure new password
-                        for your ACE Bank account.
+                        for your EKARARJ BANK account.
 
                       </p>
 
@@ -1233,9 +1233,9 @@ function ResetPasswordPage() {
                               outline-none
                               transition
                               placeholder:text-slate-400
-                              focus:border-blue-500
+                              focus:border-[#00A3C4]
                               focus:ring-4
-                              focus:ring-blue-100
+                              focus:ring-cyan-100
                               disabled:cursor-not-allowed
                               disabled:bg-slate-50
                             "
@@ -1375,9 +1375,9 @@ function ResetPasswordPage() {
                               outline-none
                               transition
                               placeholder:text-slate-400
-                              focus:border-blue-500
+                              focus:border-[#00A3C4]
                               focus:ring-4
-                              focus:ring-blue-100
+                              focus:ring-cyan-100
                               disabled:cursor-not-allowed
                               disabled:bg-slate-50
                             "
@@ -1448,8 +1448,8 @@ function ResetPasswordPage() {
                         className="
                           rounded-xl
                           border
-                          border-blue-100
-                          bg-blue-50/60
+                          border-cyan-100
+                          bg-cyan-50/60
                           px-4
                           py-4
                         "
@@ -1460,7 +1460,7 @@ function ResetPasswordPage() {
                             mb-3
                             text-sm
                             font-semibold
-                            text-[#08295C]
+                            text-[#0A192F]
                           "
                         >
 
@@ -1482,7 +1482,7 @@ function ResetPasswordPage() {
 
                             <Check
                               size={15}
-                              className="shrink-0 text-blue-600"
+                              className="shrink-0 text-[#00A3C4]"
                             />
 
                             <span className="text-xs text-slate-600">
@@ -1498,7 +1498,7 @@ function ResetPasswordPage() {
 
                             <Check
                               size={15}
-                              className="shrink-0 text-blue-600"
+                              className="shrink-0 text-[#00A3C4]"
                             />
 
                             <span className="text-xs text-slate-600">
@@ -1514,7 +1514,7 @@ function ResetPasswordPage() {
 
                             <Check
                               size={15}
-                              className="shrink-0 text-blue-600"
+                              className="shrink-0 text-[#00A3C4]"
                             />
 
                             <span className="text-xs text-slate-600">
@@ -1530,7 +1530,7 @@ function ResetPasswordPage() {
 
                             <Check
                               size={15}
-                              className="shrink-0 text-blue-600"
+                              className="shrink-0 text-[#00A3C4]"
                             />
 
                             <span className="text-xs text-slate-600">
@@ -1546,7 +1546,7 @@ function ResetPasswordPage() {
 
                             <Check
                               size={15}
-                              className="shrink-0 text-blue-600"
+                              className="shrink-0 text-[#00A3C4]"
                             />
 
                             <span className="text-xs text-slate-600">
@@ -1562,7 +1562,7 @@ function ResetPasswordPage() {
 
                             <Check
                               size={15}
-                              className="shrink-0 text-blue-600"
+                              className="shrink-0 text-[#00A3C4]"
                             />
 
                             <span className="text-xs text-slate-600">
@@ -1627,7 +1627,7 @@ function ResetPasswordPage() {
                           items-center
                           justify-center
                           rounded-xl
-                          bg-blue-600
+                          bg-[#00A3C4]
                           px-5
                           py-3.5
                           text-sm
@@ -1635,7 +1635,7 @@ function ResetPasswordPage() {
                           text-white
                           shadow-sm
                           transition
-                          hover:bg-blue-700
+                          hover:bg-[#0891B2]
                           focus:outline-none
                           focus:ring-4
                           focus:ring-blue-200

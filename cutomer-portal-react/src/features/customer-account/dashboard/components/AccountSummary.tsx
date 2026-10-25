@@ -181,11 +181,11 @@ export default function AccountSummary({
         aria-label={t("myAccounts")}
         className="rounded-xl border border-dashed border-slate-300 bg-white px-5 py-10 text-center"
       >
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#0878E8]">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-[#00A3C4]">
           <WalletCards size={24} aria-hidden="true" />
         </div>
 
-        <h2 className="mt-3 text-base font-semibold text-[#08295C]">
+        <h2 className="mt-3 text-base font-semibold text-[#0A192F]">
           {t("noAccountsAvailable")}
         </h2>
 
@@ -234,16 +234,16 @@ export default function AccountSummary({
             {/* Account Header */}
             <div className="flex items-start justify-between gap-3">
               <Link
-                to={`/accounts/${encodeURIComponent(account.accountNumber)}`}
+                to="/accounts" state={{ accountNumber: account.accountNumber }}
                 aria-label={`${accountTypeLabel}, ${t("accountNumber")} ending ${account.accountNumber.slice(-4)}`}
-                className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8]"
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3C4]"
               >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0878E8] transition-colors group-hover:bg-[#0878E8] group-hover:text-white">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#00A3C4] transition-colors group-hover:bg-[#00A3C4] group-hover:text-white">
                   <AccountIcon size={22} strokeWidth={1.8} />
                 </div>
 
                 <div className="min-w-0">
-                  <h3 className="truncate text-sm font-semibold text-[#08295C] sm:text-base">
+                  <h3 className="truncate text-sm font-semibold text-[#0A192F] sm:text-base">
                     {accountTypeLabel}
                   </h3>
                 </div>
@@ -272,7 +272,7 @@ export default function AccountSummary({
                 aria-label={visibilityLabel}
                 aria-pressed={isVisible}
                 title={visibilityLabel}
-                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-blue-50 hover:text-[#0878E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8]"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-blue-50 hover:text-[#00A3C4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3C4]"
               >
                 {isVisible ? (
                   <EyeOff size={14} aria-hidden="true" />
@@ -296,7 +296,7 @@ export default function AccountSummary({
                     ? t("copied")
                     : t("copyAccountNumber")
                 }
-                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-blue-50 hover:text-[#0878E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8]"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-500 transition hover:bg-blue-50 hover:text-[#00A3C4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3C4]"
               >
                 {isCopied ? (
                   <Check
@@ -335,7 +335,7 @@ export default function AccountSummary({
               </p>
 
               <div className="mt-1.5 flex min-w-0 flex-wrap items-baseline gap-x-2">
-                <span className="break-words text-xl font-bold leading-tight tracking-tight text-[#08295C] sm:text-2xl">
+                <span className="break-words text-xl font-bold leading-tight tracking-tight text-[#0A192F] sm:text-2xl">
                   {formatMoney(account.availableBalance)}
                 </span>
 
@@ -358,8 +358,8 @@ export default function AccountSummary({
               </div>
 
               <Link
-                to={`/accounts/${encodeURIComponent(account.accountNumber)}`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-md text-xs font-semibold text-[#0878E8] transition-colors hover:text-[#0668ca] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8] sm:text-sm"
+                to="/accounts" state={{ accountNumber: account.accountNumber }}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md text-xs font-semibold text-[#00A3C4] transition-colors hover:text-[#0891B2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3C4] sm:text-sm"
               >
                 {accountDetailsLabel}
 

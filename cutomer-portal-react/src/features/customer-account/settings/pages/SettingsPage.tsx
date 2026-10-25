@@ -11,7 +11,7 @@ export default function SettingsPage() {
   return (
     <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <header className="flex items-start gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-[#00A3C4] dark:bg-blue-950 dark:text-blue-300">
           <Settings2 size={24} aria-hidden="true" />
         </div>
 

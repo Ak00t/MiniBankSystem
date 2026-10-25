@@ -28,7 +28,7 @@ export default function CorporateSetupForm({ mode }: { mode: "password" | "pin" 
   }, [deadline]);
 
   if (hasCorporateSession()) return <Navigate to="/corporate/auth-success" replace />;
-  if (expired) return <CorporateAuthCard variant="setup" title="Setup session expired" description="Your 10-minute Corporate first-login setup window has ended."><Link to="/corporate/login" replace className="font-semibold text-blue-600">Return to Corporate Login</Link></CorporateAuthCard>;
+  if (expired) return <CorporateAuthCard variant="setup" title="Setup session expired" description="Your 10-minute Corporate first-login setup window has ended."><Link to="/corporate/login" replace className="font-semibold text-[#00A3C4]">Return to Corporate Login</Link></CorporateAuthCard>;
   const step = getCorporateSetupStep();
   if (!getCorporateChallenge() || !deadline || !step) return <Navigate to="/corporate/login" replace />;
   if (step !== "complete" && step !== mode) return <Navigate to={corporateSetupRoute()} replace />;
@@ -67,6 +67,6 @@ export default function CorporateSetupForm({ mode }: { mode: "password" | "pin" 
       <CorporateNotice error message={action.error} />
       <CorporateSubmit variant="verification" busy={action.busy}>{step === "complete" ? "Complete Corporate Login" : password ? "Change Password" : "Set Up PIN"}</CorporateSubmit>
     </form>
-    <Link to="/corporate/login" replace className="mt-6 block text-center text-sm font-semibold text-blue-600">Return to Corporate Login</Link>
+    <Link to="/corporate/login" replace className="mt-6 block text-center text-sm font-semibold text-[#00A3C4]">Return to Corporate Login</Link>
   </CorporateAuthCard>;
 }

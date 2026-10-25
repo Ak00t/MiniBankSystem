@@ -257,11 +257,7 @@ export default function Navbar() {
      * `/accounts/:accountNumber`, this
      * navigates directly to that account.
      */
-    navigate(
-      `/accounts/${encodeURIComponent(
-        accountNumber
-      )}`
-    );
+    navigate("/accounts", { state: { accountNumber } });
   };
 
   const handleLogout = () => {
@@ -309,7 +305,7 @@ export default function Navbar() {
               outline-none
               transition-all duration-200
               hover:border-slate-300
-              focus:border-[#0878E8]
+              focus:border-[#00A3C4]
               focus:bg-white
               focus:ring-4 focus:ring-blue-50
             "
@@ -337,7 +333,7 @@ export default function Navbar() {
             text-slate-500
             transition
             hover:bg-slate-50
-            hover:text-[#08295C]
+            hover:text-[#0A192F]
             focus:outline-none
             focus:ring-2
             focus:ring-blue-100
@@ -465,7 +461,7 @@ export default function Navbar() {
                     flex h-10 w-10
                     items-center justify-center
                     rounded-full
-                    bg-[#08295C]
+                    bg-[#0A192F]
                     text-sm
                     font-bold
                     text-white
@@ -612,7 +608,7 @@ export default function Navbar() {
                         shrink-0
                         items-center justify-center
                         rounded-full
-                        bg-[#08295C]
+                        bg-[#0A192F]
                         text-sm
                         font-bold
                         text-white
@@ -872,7 +868,7 @@ export default function Navbar() {
                     text-left
                     text-xs
                     font-semibold
-                    text-[#0878E8]
+                    text-[#00A3C4]
                     transition
                     hover:bg-blue-50
                   "
@@ -999,7 +995,7 @@ function AccountItem({
           items-center justify-center
           rounded-lg
           bg-white
-          text-[#0878E8]
+          text-[#00A3C4]
           shadow-sm
           ring-1 ring-slate-100
         "

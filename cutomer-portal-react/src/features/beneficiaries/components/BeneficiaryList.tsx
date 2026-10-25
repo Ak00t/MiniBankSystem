@@ -75,7 +75,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search beneficiaries by name, nickname, or account number..."
-          className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-medium text-gray-800 placeholder-gray-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition-all shadow-sm"
+          className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-medium text-gray-800 placeholder-gray-400 focus:border-[#00A3C4] focus:ring-2 focus:ring-cyan-100 outline-none transition-all shadow-sm"
         />
         {search && (
           <button
@@ -90,7 +90,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
       {/* Loading State */}
       {loading && (
         <div className="py-16 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#00A3C4]" />
           <p className="text-sm font-medium text-gray-400">Loading beneficiaries...</p>
         </div>
       )}
@@ -98,8 +98,8 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
       {/* Empty State */}
       {!loading && beneficiaries.length === 0 && (
         <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-blue-500" />
+          <div className="w-16 h-16 rounded-2xl bg-cyan-50 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-[#00A3C4]" />
           </div>
           <h3 className="text-lg font-black text-gray-900 mb-1">No Beneficiaries Saved Yet</h3>
           <p className="text-sm text-gray-400 max-w-sm mx-auto mb-6">
@@ -107,7 +107,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
           </p>
           <button
             onClick={onAddNew}
-            className="px-6 py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-200 transition-all inline-flex items-center gap-2"
+            className="px-6 py-3 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-lg shadow-cyan-500/25 transition-all inline-flex items-center gap-2"
           >
             + Add Your First Beneficiary
           </button>
@@ -145,19 +145,19 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
             return (
               <div
                 key={b.beneficiaryId}
-                className="bg-white rounded-3xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50/50 transition-all group flex flex-col justify-between"
+                className="bg-white rounded-3xl p-5 border border-gray-100 hover:border-cyan-300 hover:shadow-lg hover:shadow-cyan-50/50 transition-all group flex flex-col justify-between"
               >
                 <div>
                   {/* Top Bar: Avatar, Nickname/Name, Delete */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-3">
                       {/* Avatar */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-100">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00A3C4] to-[#0284C7] flex items-center justify-center text-white font-black text-sm shadow-md shadow-cyan-500/20">
                         {initials}
                       </div>
 
                       <div>
-                        <h4 className="font-black text-base text-gray-900 group-hover:text-blue-600 transition-colors">
+                        <h4 className="font-black text-base text-gray-900 group-hover:text-[#00A3C4] transition-colors">
                           {b.nickname || b.beneficiaryAccountName}
                         </h4>
                         {b.nickname && b.beneficiaryAccountName && (
@@ -191,7 +191,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
                       onClick={() =>
                         handleCopy(b.beneficiaryAccountNumber, b.beneficiaryId)
                       }
-                      className="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold"
+                      className="p-1.5 text-gray-400 hover:text-[#00A3C4] rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold"
                     >
                       {copiedId === b.beneficiaryId ? (
                         <>
@@ -220,7 +220,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
 
                   <button
                     onClick={() => handleTransfer(b.beneficiaryAccountNumber)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-[#00A3C4] bg-cyan-50 hover:bg-[#00A3C4] hover:text-white transition-all shadow-sm"
                   >
                     <Send className="w-3 h-3" /> Send Money
                   </button>

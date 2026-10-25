@@ -44,7 +44,7 @@ export const StatementErrorModal: FC<StatementErrorModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-[#0878E8]/20"
+          className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors focus:outline-none focus:ring-2 focus:ring-[#00A3C4]/20"
           aria-label="Close error dialog"
         >
           <X size={18} />
@@ -72,7 +72,7 @@ export const StatementErrorModal: FC<StatementErrorModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-xl bg-[#0878E8] py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#0878E8] focus:ring-offset-2"
+              className="w-full rounded-xl bg-[#00A3C4] py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0891B2] focus:outline-none focus:ring-2 focus:ring-[#00A3C4] focus:ring-offset-2"
             >
               OK
             </button>

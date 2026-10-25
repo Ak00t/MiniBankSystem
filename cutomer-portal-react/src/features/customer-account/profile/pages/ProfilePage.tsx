@@ -660,7 +660,7 @@ export default function ProfilePage() {
 
         {/* PROFILE SUMMARY */}
         <section className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="bg-gradient-to-r from-[#08295C] to-[#0878E8] px-6 py-8">
+          <div className="bg-gradient-to-r from-[#0A192F] to-[#00A3C4] px-6 py-8">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
               {/* Profile Photo */}
               <div className="relative h-28 w-28 shrink-0">
@@ -689,7 +689,7 @@ export default function ProfilePage() {
                   disabled={isSaving || isPhotoSaving}
                   aria-label={t("changeProfilePhoto")}
                   title={t("changeProfilePhoto")}
-                  className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#0878E8] text-white shadow-md transition hover:bg-[#0668ca] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#00A3C4] text-white shadow-md transition hover:bg-[#0891B2] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Camera size={17} />
                 </button>
@@ -731,7 +731,7 @@ export default function ProfilePage() {
           <div className="flex items-start gap-3 border-t border-slate-100 px-6 py-4">
             <ShieldCheck
               size={18}
-              className="mt-0.5 shrink-0 text-[#0878E8]"
+              className="mt-0.5 shrink-0 text-[#00A3C4]"
             />
 
             <p className="text-xs leading-relaxed text-slate-500">
@@ -771,9 +771,9 @@ export default function ProfilePage() {
         {/* SECURITY */}
         <section className="mt-8">
           <div className="mb-3 flex items-center gap-2">
-            <ShieldCheck size={20} className="text-[#08295C]" />
+            <ShieldCheck size={20} className="text-[#0A192F]" />
 
-            <h2 className="text-lg font-bold text-[#08295C]">
+            <h2 className="text-lg font-bold text-[#0A192F]">
               {t("security")}
             </h2>
           </div>
@@ -809,7 +809,7 @@ export default function ProfilePage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
               <div>
-                <h3 className="text-base font-bold text-[#08295C]">
+                <h3 className="text-base font-bold text-[#0A192F]">
                   {t("cropProfilePhoto")}
                 </h3>
 
@@ -864,7 +864,7 @@ export default function ProfilePage() {
                   setZoom(Number(event.target.value))
                 }
                 disabled={isPhotoSaving}
-                className="w-full accent-[#0878E8]"
+                className="w-full accent-[#00A3C4]"
               />
             </div>
 
@@ -883,7 +883,7 @@ export default function ProfilePage() {
                 type="button"
                 onClick={handleCropSave}
                 disabled={!croppedAreaPixels || isPhotoSaving}
-                className="flex items-center gap-2 rounded-lg bg-[#0878E8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0668ca] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-2 rounded-lg bg-[#00A3C4] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0891B2] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPhotoSaving && (
                   <Loader2 size={16} className="animate-spin" />
@@ -928,7 +928,7 @@ function SecurityRow({
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className="text-sm font-semibold text-blue-600 transition hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="text-sm font-semibold text-[#00A3C4] transition hover:text-[#00A3C4] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {action} →
       </button>

@@ -423,8 +423,8 @@ function PasswordResetOtpPage() {
               hidden
               overflow-hidden
               bg-gradient-to-br
-              from-[#08295C]
-              via-[#0B3A78]
+              from-[#0A192F]
+              via-[#153564]
               to-[#125AA3]
               p-10
               text-white
@@ -506,7 +506,7 @@ function PasswordResetOtpPage() {
                     "
                   >
 
-                    ACE Bank
+                    EKARARJ BANK
 
                   </h1>
 
@@ -829,7 +829,7 @@ function PasswordResetOtpPage() {
                     items-center
                     justify-center
                     rounded-xl
-                    bg-[#08295C]
+                    bg-[#0A192F]
                     text-white
                   "
                 >
@@ -847,11 +847,11 @@ function PasswordResetOtpPage() {
                     className="
                       text-xl
                       font-bold
-                      text-[#08295C]
+                      text-[#0A192F]
                     "
                   >
 
-                    ACE Bank
+                    EKARARJ BANK
 
                   </h1>
 
@@ -883,8 +883,8 @@ function PasswordResetOtpPage() {
                   items-center
                   justify-center
                   rounded-2xl
-                  bg-blue-50
-                  text-blue-600
+                  bg-cyan-50
+                  text-[#00A3C4]
                 "
               >
 
@@ -906,7 +906,7 @@ function PasswordResetOtpPage() {
                     font-semibold
                     uppercase
                     tracking-wider
-                    text-blue-600
+                    text-[#00A3C4]
                   "
                 >
 
@@ -920,7 +920,7 @@ function PasswordResetOtpPage() {
                     text-3xl
                     font-bold
                     tracking-tight
-                    text-[#08295C]
+                    text-[#0A192F]
                     lg:text-4xl
                   "
                 >
@@ -959,7 +959,7 @@ function PasswordResetOtpPage() {
                         items-center
                         gap-2
                         rounded-full
-                        bg-blue-50
+                        bg-cyan-50
                         px-4
                         py-2
                         text-sm
@@ -1065,9 +1065,9 @@ function PasswordResetOtpPage() {
                     outline-none
                     transition
                     placeholder:text-slate-300
-                    focus:border-blue-500
+                    focus:border-[#00A3C4]
                     focus:ring-4
-                    focus:ring-blue-100
+                    focus:ring-cyan-100
                     disabled:cursor-not-allowed
                     disabled:bg-slate-50
                   "
@@ -1183,7 +1183,7 @@ function PasswordResetOtpPage() {
                     items-center
                     justify-center
                     rounded-xl
-                    bg-blue-600
+                    bg-[#00A3C4]
                     px-5
                     py-3.5
                     text-sm
@@ -1191,7 +1191,7 @@ function PasswordResetOtpPage() {
                     text-white
                     shadow-sm
                     transition
-                    hover:bg-blue-700
+                    hover:bg-[#0891B2]
                     focus:outline-none
                     focus:ring-4
                     focus:ring-blue-200
@@ -1249,9 +1249,9 @@ function PasswordResetOtpPage() {
                     className="
                       text-sm
                       font-semibold
-                      text-blue-600
+                      text-[#00A3C4]
                       transition
-                      hover:text-blue-700
+                      hover:text-[#0891B2]
                       disabled:cursor-not-allowed
                       disabled:opacity-50
                     "

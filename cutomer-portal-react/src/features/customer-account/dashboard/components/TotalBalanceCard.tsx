@@ -37,7 +37,7 @@ export default function TotalBalanceCard({
   return (
     <section
       aria-label={t("totalBalance")}
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0878E8] via-[#176FE0] to-[#0755B8] p-6 shadow-md ring-1 ring-white/10 sm:p-8"
+      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A192F] via-[#102A54] to-[#173B6F] p-6 shadow-md ring-1 ring-white/10 border border-cyan-500/20 sm:p-8"
     >
       {/* Decorative Background */}
       <div

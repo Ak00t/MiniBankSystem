@@ -1,24 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  ArrowRight,
-  Check,
-  Copy,
-  CreditCard,
-  Eye,
-  EyeOff,
-  PiggyBank,
-  WalletCards,
-} from "lucide-react";
 import { Link } from "react-router-dom";
+import { ArrowRight, FileText, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { CustomerAccount } from "../types/accountTypes";
+import BankCard from "../../dashboard/components/BankCard";
 
 interface AccountCardProps {
   account: CustomerAccount;
+  index?: number;
+  onSelect?: (accountNumber: string) => void;
 }
-
-type CopyStatus = "idle" | "success" | "error";
 
 const statusStyles: Record<CustomerAccount["status"], string> = {
   ACTIVE: "bg-emerald-50 text-emerald-700",
@@ -27,17 +18,6 @@ const statusStyles: Record<CustomerAccount["status"], string> = {
   CLOSED: "bg-red-50 text-red-700",
 };
 
-const copyFeedbackDuration = 2000;
-
-function getAccountIcon(accountType: string) {
-  const type = accountType.toUpperCase();
-
-  if (type.includes("SAVING")) return PiggyBank;
-  if (type.includes("CURRENT")) return CreditCard;
-
-  return WalletCards;
-}
-
 function formatMoney(amount: number): string {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
@@ -45,226 +25,147 @@ function formatMoney(amount: number): string {
   }).format(Number.isFinite(amount) ? amount : 0);
 }
 
-function maskAccountNumber(accountNumber: string): string {
-  if (accountNumber.length <= 4) {
-    return "•".repeat(accountNumber.length);
-  }
-
-  return `**** **** ${accountNumber.slice(-4)}`;
-}
-
-export default function AccountCard({ account }: AccountCardProps) {
+export default function AccountCard({
+  account,
+  index = 0,
+  onSelect,
+}: AccountCardProps) {
   const { t } = useTranslation("accounts");
-
-  const [showAccountNumber, setShowAccountNumber] = useState(false);
-  const [copyStatus, setCopyStatus] = useState<CopyStatus>("idle");
-
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
-  const AccountIcon = getAccountIcon(account.accountType);
-
-  const accountDetailsPath = `/accounts/${encodeURIComponent(
-    account.accountNumber,
-  )}`;
 
   const statusClass =
     statusStyles[account.status] ?? "bg-slate-100 text-slate-600";
 
   const accountTypeLabel =
     account.accountType.toUpperCase().includes("SAVING")
-      ? t("accountTypeSavings")
+      ? t("accountTypeSavings", { defaultValue: "Savings Account" })
       : account.accountType.toUpperCase().includes("CURRENT")
-        ? t("accountTypeCurrent")
+        ? t("accountTypeCurrent", { defaultValue: "Current Account" })
         : account.accountType;
 
   const statusLabels: Record<CustomerAccount["status"], string> = {
-    ACTIVE: t("statusActive"),
-    DORMANT: t("statusDormant"),
-    FROZEN: t("statusFrozen"),
-    CLOSED: t("statusClosed"),
+    ACTIVE: t("statusActive", { defaultValue: "Active" }),
+    DORMANT: t("statusDormant", { defaultValue: "Dormant" }),
+    FROZEN: t("statusFrozen", { defaultValue: "Frozen" }),
+    CLOSED: t("statusClosed", { defaultValue: "Closed" }),
   };
 
   const statusLabel = statusLabels[account.status] ?? account.status;
 
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current !== null) {
-        clearTimeout(copyTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  async function handleCopyAccountNumber() {
-    if (copyTimeoutRef.current !== null) {
-      clearTimeout(copyTimeoutRef.current);
-      copyTimeoutRef.current = null;
-    }
-
-    setCopyStatus("idle");
-
-    try {
-      if (!navigator.clipboard?.writeText) {
-        throw new Error("Clipboard API is unavailable.");
-      }
-
-      await navigator.clipboard.writeText(account.accountNumber);
-      setCopyStatus("success");
-    } catch (error) {
-      console.error("Failed to copy account number:", error);
-      setCopyStatus("error");
-    }
-
-    copyTimeoutRef.current = setTimeout(() => {
-      setCopyStatus("idle");
-      copyTimeoutRef.current = null;
-    }, copyFeedbackDuration);
-  }
-
   return (
-    <article className="group min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0878E8] transition-colors duration-200 group-hover:bg-[#0878E8] group-hover:text-white">
-            <AccountIcon size={22} strokeWidth={1.8} aria-hidden="true" />
+    <article className="overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-200">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
+        {/* Bank Card Visual on Left */}
+        <div className="shrink-0 flex justify-center">
+          <BankCard
+            account={{
+              accountNumber: account.accountNumber,
+              accountCategory: account.accountCategory,
+              accountType: account.accountType,
+              currency: account.currency,
+              currentBalance: account.currentBalance,
+              availableBalance: account.availableBalance,
+              status: account.status,
+              jointAccount: account.jointAccount,
+              openedAt: account.openedAt,
+            }}
+            index={index}
+            showBalance={true}
+            isLink={false}
+            onClick={() => onSelect?.(account.accountNumber)}
+          />
+        </div>
+
+        {/* Account Details & Management on Right */}
+        <div className="flex-1 space-y-4 min-w-0">
+          {/* Header row: Account Type and Status badge */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                {account.accountCategory}
+              </p>
+              <h2 className="text-lg font-extrabold text-[#0A192F]">
+                {accountTypeLabel}
+              </h2>
+            </div>
+
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${statusClass}`}
+            >
+              <span className="h-2 w-2 rounded-full bg-current opacity-80" />
+              {statusLabel}
+            </span>
           </div>
 
-          <div className="min-w-0">
-            <h2 className="truncate text-sm font-semibold text-[#08295C] sm:text-base">
-              <Link
-                to={accountDetailsPath}
-                aria-label={`${t("viewDetails")}: ${accountTypeLabel}, ${account.accountNumber.slice(-4)}`}
-                className="rounded-sm hover:text-[#0878E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8]"
-              >
-                {accountTypeLabel}
-              </Link>
-            </h2>
-
-            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1">
-              <p className="min-w-0 break-all font-mono text-xs tracking-wide text-slate-500">
-                {showAccountNumber
-                  ? account.accountNumber
-                  : maskAccountNumber(account.accountNumber)}
+          {/* Account Metrics Grid (Real-World: Non-redundant operational metrics, never truncated) */}
+          <div className="flex flex-wrap gap-3">
+            {/* 1. Current / Ledger Balance */}
+            <div className="flex-1 min-w-[140px] rounded-2xl bg-slate-50/80 p-3.5 border border-slate-100">
+              <p className="text-[11px] font-semibold text-slate-400">
+                Current Balance
               </p>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setShowAccountNumber((previous) => !previous)
-                }
-                aria-label={
-                  showAccountNumber
-                    ? t("hideAccountNumber")
-                    : t("showAccountNumber")
-                }
-                aria-pressed={showAccountNumber}
-                title={
-                  showAccountNumber
-                    ? t("hideAccountNumber")
-                    : t("showAccountNumber")
-                }
-                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-blue-50 hover:text-[#0878E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8]"
-              >
-                {showAccountNumber ? (
-                  <EyeOff size={14} aria-hidden="true" />
-                ) : (
-                  <Eye size={14} aria-hidden="true" />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleCopyAccountNumber}
-                aria-label={
-                  copyStatus === "success"
-                    ? t("accountNumberCopied")
-                    : t("copyAccountNumber")
-                }
-                title={
-                  copyStatus === "success"
-                    ? t("copied")
-                    : copyStatus === "error"
-                      ? t("copyFailed")
-                      : t("copyAccountNumber")
-                }
-                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-blue-50 hover:text-[#0878E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8]"
-              >
-                {copyStatus === "success" ? (
-                  <Check
-                    size={14}
-                    className="text-emerald-600"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <Copy size={14} aria-hidden="true" />
-                )}
-              </button>
-
-              {copyStatus === "success" && (
-                <span
-                  className="whitespace-nowrap text-xs font-medium text-emerald-600"
-                  role="status"
-                >
-                  {t("copied")}
+              <p className="mt-1 font-mono text-sm sm:text-base font-extrabold text-[#0A192F] whitespace-nowrap">
+                {formatMoney(account.currentBalance)}{" "}
+                <span className="font-sans text-xs font-normal text-slate-500">
+                  {account.currency}
                 </span>
-              )}
+              </p>
+            </div>
 
-              {copyStatus === "error" && (
-                <span
-                  className="whitespace-nowrap text-xs text-red-600"
-                  role="status"
-                >
-                  {t("copyFailed")}
+            {/* 2. Daily Transfer Limit */}
+            <div className="flex-1 min-w-[140px] rounded-2xl bg-slate-50/80 p-3.5 border border-slate-100">
+              <p className="text-[11px] font-semibold text-slate-400">
+                Daily Limit
+              </p>
+              <p className="mt-1 font-mono text-sm sm:text-base font-bold text-slate-700 whitespace-nowrap">
+                {formatMoney(account.dailyTransferLimit)}{" "}
+                <span className="font-sans text-xs font-normal text-slate-500">
+                  {account.currency}
                 </span>
-              )}
+              </p>
+            </div>
+
+            {/* 3. Minimum Balance */}
+            <div className="flex-1 min-w-[140px] rounded-2xl bg-slate-50/80 p-3.5 border border-slate-100">
+              <p className="text-[11px] font-semibold text-slate-400">
+                Minimum Balance
+              </p>
+              <p className="mt-1 font-mono text-sm sm:text-base font-bold text-slate-700 whitespace-nowrap">
+                {formatMoney(account.minimumBalance ?? 0)}{" "}
+                <span className="font-sans text-xs font-normal text-slate-500">
+                  {account.currency}
+                </span>
+              </p>
             </div>
           </div>
+
+          {/* Action Shortcuts Bar */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-slate-100">
+            <Link
+              to="/transfer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition-all duration-200 hover:border-[#00A3C4] hover:bg-[#00A3C4] hover:text-white hover:shadow-xs"
+            >
+              <Send size={14} />
+              <span>Transfer</span>
+            </Link>
+
+            <Link
+              to="/statements"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-all duration-200 hover:border-[#00A3C4] hover:bg-[#00A3C4] hover:text-white hover:shadow-xs"
+            >
+              <FileText size={14} />
+              <span>Statement</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => onSelect?.(account.accountNumber)}
+              className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[#0A192F] transition hover:text-[#00A3C4] hover:underline"
+            >
+              <span>{t("viewDetails", { defaultValue: "View Details" })}</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
         </div>
-
-        <span
-          className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold sm:text-xs ${statusClass}`}
-        >
-          {statusLabel}
-        </span>
-      </div>
-
-      <div className="mt-5">
-        <p className="text-xs font-medium text-slate-500 sm:text-sm">
-          {t("availableBalance")}
-        </p>
-
-        <div className="mt-1.5 flex min-w-0 flex-wrap items-baseline gap-x-2">
-          <span className="break-words text-xl font-bold leading-tight tracking-tight text-[#08295C] sm:text-2xl">
-            {formatMoney(account.availableBalance)}
-          </span>
-
-          <span className="text-sm font-medium text-slate-500">
-            {account.currency}
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-        <div className="min-w-0">
-          <p className="text-xs text-slate-500">{t("accountType")}</p>
-          <p className="mt-1 truncate text-sm font-medium text-slate-700">
-            {accountTypeLabel}
-          </p>
-        </div>
-
-        <Link
-          to={accountDetailsPath}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md text-xs font-semibold text-[#0878E8] transition-colors hover:text-[#0668ca] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8] sm:text-sm"
-        >
-          {t("viewDetails")}
-          <ArrowRight
-            size={16}
-            strokeWidth={1.8}
-            aria-hidden="true"
-            className="transition-transform duration-200 group-hover:translate-x-0.5"
-          />
-        </Link>
       </div>
     </article>
   );

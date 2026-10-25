@@ -38,7 +38,7 @@ export default function MainLayout() {
   }, [accounts.length, dispatch]);
 
   return (
-    <div className="min-h-screen bg-[#F5F7FB]">
+    <div className="min-h-screen bg-[#F4F6F9]">
       {/* Real-time Toast Notifications */}
       <ToastContainer />
 
@@ -50,7 +50,7 @@ export default function MainLayout() {
 
       {/* Main Content */}
       <main className="ml-64 pt-20">
-        <div className="p-8">
+        <div className="p-4 sm:p-6 lg:p-8">
           <Outlet />
         </div>
       </main>

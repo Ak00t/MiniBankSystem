@@ -121,7 +121,7 @@ export const AddBeneficiaryModal: React.FC<AddBeneficiaryModalProps> = ({
 
         {/* Header Icon */}
         <div className="flex items-center gap-3.5 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00A3C4] to-[#0284C7] flex items-center justify-center shadow-lg shadow-cyan-500/25">
             <UserPlus className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -145,7 +145,7 @@ export const AddBeneficiaryModal: React.FC<AddBeneficiaryModalProps> = ({
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
                 placeholder="Enter account number"
-                className="w-full px-4 py-3.5 border-2 border-gray-100 rounded-2xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-gray-50"
+                className="w-full px-4 py-3.5 border-2 border-gray-100 rounded-2xl text-sm font-semibold text-gray-800 placeholder-gray-400 focus:border-[#00A3C4] focus:bg-white focus:ring-2 focus:ring-cyan-100 outline-none transition-all bg-gray-50"
                 maxLength={34}
                 required
               />
@@ -156,7 +156,7 @@ export const AddBeneficiaryModal: React.FC<AddBeneficiaryModalProps> = ({
 
             {/* Lookup Status */}
             {lookupLoading && (
-              <div className="flex items-center gap-2 mt-2 px-3.5 py-2 bg-blue-50/80 border border-blue-100 rounded-xl text-xs text-blue-600 font-medium">
+              <div className="flex items-center gap-2 mt-2 px-3.5 py-2 bg-cyan-50/80 border border-cyan-100 rounded-xl text-xs text-[#00A3C4] font-medium">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>Checking account...</span>
               </div>
@@ -196,7 +196,7 @@ export const AddBeneficiaryModal: React.FC<AddBeneficiaryModalProps> = ({
                 onChange={(e) => setNickname(e.target.value)}
                 placeholder={verifiedName ? `e.g. ${verifiedName}` : "e.g. Mom, Rent, Office"}
                 maxLength={100}
-                className="w-full px-4 py-3.5 border-2 border-gray-100 rounded-2xl text-sm font-medium text-gray-800 placeholder-gray-400 focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all bg-gray-50"
+                className="w-full px-4 py-3.5 border-2 border-gray-100 rounded-2xl text-sm font-medium text-gray-800 placeholder-gray-400 focus:border-[#00A3C4] focus:bg-white focus:ring-2 focus:ring-cyan-100 outline-none transition-all bg-gray-50"
               />
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
                 <Tag className="w-4 h-4 text-gray-300" />
@@ -229,7 +229,7 @@ export const AddBeneficiaryModal: React.FC<AddBeneficiaryModalProps> = ({
             <button
               type="submit"
               disabled={!verifiedName || lookupLoading || submitting}
-              className="flex-[2] py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              className="flex-[2] py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-lg shadow-cyan-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

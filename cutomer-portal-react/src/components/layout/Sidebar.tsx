@@ -1,14 +1,13 @@
 import {
   LayoutDashboard,
   WalletCards,
-  ArrowLeftRight,
-  History,
+  Send,
+  Clock,
   Users,
   User,
   Settings,
   HelpCircle,
   LogOut,
-  Building2,
   ChevronRight,
   Megaphone,
   FileText,
@@ -28,6 +27,7 @@ import { isIndividualLogoutInProgress, useIndividualLogout } from "../../feature
 import { getAuthenticationGeneration, subscribeToAuthenticationChanges } from "../../utils/tokenStorage";
 import { useAppDispatch ,useAppSelector } from "../../lib/redux";
 import { fetchAnnouncements } from "../../features/customer-account/announcements/store/announcementSlice";
+import { EkararjCrown } from "../common/EkararjLogo";
 
 
 
@@ -41,36 +41,50 @@ const mainMenuItems = [
     labelKey: "navigation.dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
+    iconColor: "text-blue-600",
+    bgColor: "bg-blue-50",
   },
   {
     labelKey: "navigation.accounts",
     path: "/accounts",
     icon: WalletCards,
+    iconColor: "text-violet-600",
+    bgColor: "bg-violet-50",
   },
   {
     labelKey: "navigation.transfer",
     path: "/transfer",
-    icon: ArrowLeftRight,
+    icon: Send,
+    iconColor: "text-blue-600",
+    bgColor: "bg-blue-50",
   },
   {
     labelKey: "navigation.transactionHistory",
     path: "/transaction",
-    icon: History,
+    icon: Clock,
+    iconColor: "text-amber-600",
+    bgColor: "bg-amber-50",
   },
   {
     labelKey: "navigation.accountStatement",
     path: "/statements",
     icon: FileText,
+    iconColor: "text-sky-600",
+    bgColor: "bg-sky-50",
   },
   {
     labelKey: "navigation.beneficiaries",
     path: "/beneficiaries",
     icon: Users,
+    iconColor: "text-emerald-600",
+    bgColor: "bg-emerald-50",
   },
   {
     labelKey: "navigation.announcements",
     path: "/announcements",
     icon: Megaphone,
+    iconColor: "text-rose-600",
+    bgColor: "bg-rose-50",
   },
 ] as const;
 
@@ -84,16 +98,22 @@ const accountMenuItems = [
     labelKey: "navigation.profile",
     path: "/profile",
     icon: User,
+    iconColor: "text-indigo-600",
+    bgColor: "bg-indigo-50",
   },
   {
     labelKey: "navigation.settings",
     path: "/settings",
     icon: Settings,
+    iconColor: "text-slate-600",
+    bgColor: "bg-slate-100",
   },
   {
     labelKey: "navigation.support",
     path: "/support",
     icon: HelpCircle,
+    iconColor: "text-teal-600",
+    bgColor: "bg-teal-50",
   },
 ] as const;
 
@@ -174,15 +194,15 @@ export default function Sidebar() {
               items-center
               justify-center
               rounded-xl
-              bg-[#08295C]
+              bg-gradient-to-br from-[#0A192F] to-[#153564]
               text-white
               shadow-sm
+              ring-1 ring-white/10
             "
           >
 
-            <Building2
-              size={21}
-              strokeWidth={2.2}
+            <EkararjCrown
+              size={28}
             />
 
           </div>
@@ -194,13 +214,13 @@ export default function Sidebar() {
 
             <h1
               className="
-                text-[17px]
-                font-bold
+                text-[16px]
+                font-extrabold
                 tracking-tight
-                text-[#08295C]
+                text-[#0A192F]
               "
             >
-              ACE Bank
+              EKARARJ BANK
             </h1>
 
             <p
@@ -250,7 +270,7 @@ export default function Sidebar() {
               text-slate-400
             "
           >
-            {t("navigation.banking")}
+            {t("navigation.banking", { defaultValue: "Banking" })}
           </p>
 
 
@@ -286,16 +306,16 @@ export default function Sidebar() {
                           isActive
 
                             ? `
-                              bg-[#EAF3FF]
+                              bg-cyan-50/80
                               font-semibold
-                              text-[#0878E8]
+                              text-[#00A3C4]
                             `
 
                             : `
                               font-medium
                               text-slate-600
                               hover:bg-slate-50
-                              hover:text-[#08295C]
+                              hover:text-[#0A192F]
                             `
                         }
                       `
@@ -326,16 +346,16 @@ export default function Sidebar() {
                               isActive
 
                                 ? `
-                                  bg-[#0878E8]
+                                  bg-gradient-to-r from-[#00A3C4] to-[#0284C7]
                                   text-white
                                   shadow-sm
+                                  shadow-cyan-500/20
                                 `
 
                                 : `
-                                  bg-slate-100
-                                  text-slate-500
-                                  group-hover:bg-slate-200
-                                  group-hover:text-[#08295C]
+                                  ${item.bgColor}
+                                  ${item.iconColor}
+                                  group-hover:scale-105
                                 `
                             }
                           `}
@@ -386,7 +406,7 @@ export default function Sidebar() {
                             strokeWidth={2.5}
                             className="
                               shrink-0
-                              text-[#0878E8]
+                              text-[#00A3C4]
                             "
                           />
 
@@ -425,7 +445,7 @@ export default function Sidebar() {
               text-slate-400
             "
           >
-            {t("navigation.account")}
+            {t("navigation.account", { defaultValue: "Account" })}
           </p>
 
 
@@ -462,16 +482,16 @@ export default function Sidebar() {
                           isActive
 
                             ? `
-                              bg-[#EAF3FF]
+                              bg-cyan-50/80
                               font-semibold
-                              text-[#0878E8]
+                              text-[#00A3C4]
                             `
 
                             : `
                               font-medium
                               text-slate-600
                               hover:bg-slate-50
-                              hover:text-[#08295C]
+                              hover:text-[#0A192F]
                             `
                         }
                       `
@@ -500,16 +520,16 @@ export default function Sidebar() {
                               isActive
 
                                 ? `
-                                  bg-[#0878E8]
+                                  bg-gradient-to-r from-[#00A3C4] to-[#0284C7]
                                   text-white
                                   shadow-sm
+                                  shadow-cyan-500/20
                                 `
 
                                 : `
-                                  bg-slate-100
-                                  text-slate-500
-                                  group-hover:bg-slate-200
-                                  group-hover:text-[#08295C]
+                                  ${item.bgColor}
+                                  ${item.iconColor}
+                                  group-hover:scale-105
                                 `
                             }
                           `}
@@ -544,7 +564,7 @@ export default function Sidebar() {
                             strokeWidth={2.5}
                             className="
                               shrink-0
-                              text-[#0878E8]
+                              text-[#00A3C4]
                             "
                           />
 

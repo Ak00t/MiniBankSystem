@@ -74,7 +74,7 @@ export default function BeneficiariesPage() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-200">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00A3C4] to-[#0284C7] flex items-center justify-center shadow-lg shadow-cyan-500/25">
             <Users className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -89,7 +89,7 @@ export default function BeneficiariesPage() {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-200 hover:shadow-xl transition-all"
+          className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-lg shadow-cyan-500/25 hover:shadow-xl transition-all"
         >
           <UserPlus className="w-4 h-4" /> Add Beneficiary
         </button>

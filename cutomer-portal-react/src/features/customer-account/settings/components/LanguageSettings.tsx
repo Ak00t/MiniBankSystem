@@ -46,7 +46,7 @@ export default function LanguageSettings() {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
       <div className="flex items-start gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#0878E8] dark:bg-blue-950 dark:text-blue-300">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-[#00A3C4] dark:bg-blue-950 dark:text-blue-300">
           <Languages size={20} aria-hidden="true" />
         </div>
 
@@ -69,9 +69,9 @@ export default function LanguageSettings() {
                   type="button"
                   aria-pressed={selected}
                   onClick={() => void handleLanguageChange(value)}
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8] ${
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3C4] ${
                     selected
-                      ? "border-[#0878E8] bg-blue-50 text-[#0878E8] dark:bg-blue-950 dark:text-blue-300"
+                      ? "border-[#00A3C4] bg-cyan-50 text-[#00A3C4] dark:bg-blue-950 dark:text-blue-300"
                       : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   }`}
                 >

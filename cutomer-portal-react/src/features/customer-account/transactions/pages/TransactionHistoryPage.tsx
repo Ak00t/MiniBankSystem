@@ -275,7 +275,7 @@ export default function TransactionHistoryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0878E8]/10 text-[#0878E8] shadow-sm">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#00A3C4]/10 text-[#00A3C4] shadow-sm">
             <History size={24} aria-hidden="true" />
           </div>
           <div>
@@ -313,7 +313,7 @@ export default function TransactionHistoryPage() {
           <button
             type="button"
             onClick={() => void dispatch(fetchMyAccounts())}
-            className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#0878E8] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A3C4] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0891B2]"
           >
             <RefreshCw size={15} aria-hidden="true" />
             Try Again
