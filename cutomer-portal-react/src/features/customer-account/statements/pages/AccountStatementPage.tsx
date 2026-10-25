@@ -55,7 +55,7 @@ function StatementPageError({ onRetry }: { onRetry: () => void }) {
       <button
         type="button"
         onClick={onRetry}
-        className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#0878E8] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+        className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#00A3C4] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0891B2]"
       >
         <RefreshCw size={15} aria-hidden="true" />
         Try Again
@@ -232,7 +232,7 @@ export default function AccountStatementPage() {
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5">
           {/* Header Icon */}
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#0878E8] shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-50/70 text-[#00A3C4] shadow-sm">
             <FileText size={24} />
           </div>
 
@@ -241,15 +241,15 @@ export default function AccountStatementPage() {
             <nav aria-label="Breadcrumb" className="mb-1 flex flex-wrap items-center gap-2 text-xs font-semibold">
               <Link
                 to="/dashboard"
-                className="text-slate-500 transition-colors hover:text-[#0878E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8]"
+                className="text-slate-500 transition-colors hover:text-[#00A3C4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3C4]"
               >
                 Dashboard
               </Link>
               <span className="text-slate-300" aria-hidden="true">/</span>
-              <span className="text-[#0878E8]" aria-current="page">Account Statement</span>
+              <span className="text-[#00A3C4]" aria-current="page">Account Statement</span>
             </nav>
 
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#08295C]">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-[#0A192F] dark:text-white">
               Account Statement
             </h1>
             <p className="text-xs md:text-sm text-slate-500 mt-0.5">

@@ -34,6 +34,7 @@ export interface DashboardAccount {
   availableBalance: number;
   status: DashboardAccountStatus;
   jointAccount: boolean;
+  openedAt?: string;
 }
 
 export interface DashboardResponse {

@@ -187,6 +187,10 @@ public class CusDashboardService {
                         account.isJointAccount()
                 )
 
+                .openedAt(
+                        account.getOpenedAt()
+                )
+
                 .build();
     }
 }

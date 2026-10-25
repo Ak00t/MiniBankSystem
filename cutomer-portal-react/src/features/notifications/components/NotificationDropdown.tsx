@@ -390,7 +390,7 @@ export const NotificationDropdown: React.FC = () => {
         className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition focus:outline-none focus:ring-2 focus:ring-blue-100 ${
           isOpen
             ? "bg-blue-50 text-blue-600 shadow-inner"
-            : "text-slate-500 hover:bg-slate-50 hover:text-[#08295C]"
+            : "text-slate-500 hover:bg-slate-50 hover:text-[#0A192F]"
         }`}
       >
         <Bell size={19} />

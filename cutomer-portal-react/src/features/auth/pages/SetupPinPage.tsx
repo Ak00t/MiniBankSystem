@@ -199,7 +199,7 @@
 //           <div className="setup-pin-brand-content">
 
 //             <h1>
-//               ACE Bank
+//               EKARARJ BANK
 //             </h1>
 
 //             <h3>
@@ -862,8 +862,8 @@ function SetupPinPage() {
               hidden
               overflow-hidden
               bg-gradient-to-br
-              from-[#08295C]
-              via-[#0B3A78]
+              from-[#0A192F]
+              via-[#153564]
               to-[#125AA3]
               p-10
               text-white
@@ -945,7 +945,7 @@ function SetupPinPage() {
                     "
                   >
 
-                    ACE Bank
+                    EKARARJ BANK
 
                   </h1>
 
@@ -1252,7 +1252,7 @@ function SetupPinPage() {
                     items-center
                     justify-center
                     rounded-xl
-                    bg-[#08295C]
+                    bg-[#0A192F]
                     text-white
                   "
                 >
@@ -1270,11 +1270,11 @@ function SetupPinPage() {
                     className="
                       text-xl
                       font-bold
-                      text-[#08295C]
+                      text-[#0A192F]
                     "
                   >
 
-                    ACE Bank
+                    EKARARJ BANK
 
                   </h1>
 
@@ -1304,8 +1304,8 @@ function SetupPinPage() {
                   mb-7
                   rounded-2xl
                   border
-                  border-blue-100
-                  bg-blue-50/60
+                  border-cyan-100
+                  bg-cyan-50/60
                   px-5
                   py-4
                 "
@@ -1326,7 +1326,7 @@ function SetupPinPage() {
                       font-bold
                       uppercase
                       tracking-wider
-                      text-blue-600
+                      text-[#00A3C4]
                     "
                   >
 
@@ -1434,7 +1434,7 @@ function SetupPinPage() {
                         items-center
                         justify-center
                         rounded-full
-                        bg-blue-600
+                        bg-[#00A3C4]
                         text-xs
                         font-bold
                         text-white
@@ -1477,8 +1477,8 @@ function SetupPinPage() {
                   items-center
                   justify-center
                   rounded-2xl
-                  bg-blue-50
-                  text-blue-600
+                  bg-cyan-50
+                  text-[#00A3C4]
                 "
               >
 
@@ -1500,7 +1500,7 @@ function SetupPinPage() {
                     font-semibold
                     uppercase
                     tracking-wider
-                    text-blue-600
+                    text-[#00A3C4]
                   "
                 >
 
@@ -1514,7 +1514,7 @@ function SetupPinPage() {
                     text-3xl
                     font-bold
                     tracking-tight
-                    text-[#08295C]
+                    text-[#0A192F]
                     lg:text-4xl
                   "
                 >
@@ -1639,9 +1639,9 @@ function SetupPinPage() {
                         outline-none
                         transition
                         placeholder:text-slate-400
-                        focus:border-blue-500
+                        focus:border-[#00A3C4]
                         focus:ring-4
-                        focus:ring-blue-100
+                        focus:ring-cyan-100
                         disabled:cursor-not-allowed
                         disabled:bg-slate-50
                       "
@@ -1789,9 +1789,9 @@ function SetupPinPage() {
                         outline-none
                         transition
                         placeholder:text-slate-400
-                        focus:border-blue-500
+                        focus:border-[#00A3C4]
                         focus:ring-4
-                        focus:ring-blue-100
+                        focus:ring-cyan-100
                         disabled:cursor-not-allowed
                         disabled:bg-slate-50
                       "
@@ -1862,8 +1862,8 @@ function SetupPinPage() {
                   className="
                     rounded-xl
                     border
-                    border-blue-100
-                    bg-blue-50/60
+                    border-cyan-100
+                    bg-cyan-50/60
                     px-4
                     py-4
                   "
@@ -1874,7 +1874,7 @@ function SetupPinPage() {
                       mb-3
                       text-sm
                       font-semibold
-                      text-[#08295C]
+                      text-[#0A192F]
                     "
                   >
 
@@ -1898,7 +1898,7 @@ function SetupPinPage() {
                         size={15}
                         className="
                           shrink-0
-                          text-blue-600
+                          text-[#00A3C4]
                         "
                       />
 
@@ -1923,7 +1923,7 @@ function SetupPinPage() {
                         size={15}
                         className="
                           shrink-0
-                          text-blue-600
+                          text-[#00A3C4]
                         "
                       />
 
@@ -1948,7 +1948,7 @@ function SetupPinPage() {
                         size={15}
                         className="
                           shrink-0
-                          text-blue-600
+                          text-[#00A3C4]
                         "
                       />
 
@@ -2046,7 +2046,7 @@ function SetupPinPage() {
                     justify-center
                     gap-2
                     rounded-xl
-                    bg-blue-600
+                    bg-[#00A3C4]
                     px-5
                     py-3.5
                     text-sm
@@ -2054,7 +2054,7 @@ function SetupPinPage() {
                     text-white
                     shadow-sm
                     transition
-                    hover:bg-blue-700
+                    hover:bg-[#0891B2]
                     focus:outline-none
                     focus:ring-4
                     focus:ring-blue-200

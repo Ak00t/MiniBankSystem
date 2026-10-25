@@ -133,7 +133,7 @@ function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModal
         </button>
 
         <div className="flex justify-center mb-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-200 text-white">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#00A3C4] to-[#0284C7] flex items-center justify-center shadow-lg shadow-cyan-500/25 text-white">
             <Lock className="w-7 h-7" />
           </div>
         </div>
@@ -162,9 +162,9 @@ function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModal
               onPaste={handlePaste}
               className={`w-11 h-12 text-center text-xl font-bold border-2 rounded-xl outline-none transition-all ${
                 d
-                  ? "border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-100"
+                  ? "border-[#00A3C4] bg-cyan-50/70 text-[#00A3C4] ring-2 ring-cyan-100"
                   : "border-slate-200 bg-slate-50 text-slate-800"
-              } focus:border-blue-500 focus:bg-blue-50 focus:ring-2 focus:ring-blue-200`}
+              } focus:border-[#00A3C4] focus:bg-cyan-50/70 focus:ring-2 focus:ring-cyan-200`}
             />
           ))}
         </div>
@@ -179,7 +179,7 @@ function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModal
         <button
           onClick={handleSubmit}
           disabled={pin.length < 6 || loading}
-          className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-md shadow-cyan-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -315,14 +315,14 @@ function FormStep({
         </label>
         {accountsLoading ? (
           <div className="flex items-center gap-2 py-3 text-sm text-slate-400">
-            <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> Loading your accounts...
+            <Loader2 className="w-4 h-4 animate-spin text-cyan-500" /> Loading your accounts...
           </div>
         ) : (
           <div className="space-y-2">
             <select
               value={sourceAccount}
               onChange={(e) => setSourceAccount(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition cursor-pointer"
+              className="w-full px-4 py-3.5 bg-slate-50 dark:bg-[#0f2445] border border-slate-200 dark:border-slate-700/80 rounded-2xl text-sm font-extrabold text-slate-900 dark:text-white focus:border-[#00A3C4] focus:bg-white dark:focus:bg-[#0f2445] focus:ring-2 focus:ring-cyan-500/20 outline-none transition cursor-pointer shadow-xs"
             >
               {accounts.length === 0 && <option value="">No active accounts</option>}
               {accounts.map((acc) => (
@@ -334,22 +334,24 @@ function FormStep({
             </select>
 
             {selectedAcc && (
-              <div className="px-4 py-3 bg-gradient-to-r from-blue-50/70 to-indigo-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100/70 flex items-center justify-center text-blue-600">
-                    <Wallet className="w-4 h-4" />
+              <div className="px-4 py-3.5 bg-gradient-to-r from-cyan-50/90 via-sky-50/60 to-slate-50/70 dark:from-[#0a1f3d] dark:via-[#0c2447] dark:to-[#0f2a52] rounded-2xl border border-cyan-200 dark:border-cyan-500/30 flex items-center justify-between shadow-xs dark:shadow-md dark:shadow-cyan-950/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-500/20 border border-cyan-200/80 dark:border-cyan-500/30 flex items-center justify-center text-[#00A3C4] dark:text-cyan-300 shrink-0 shadow-xs">
+                    <Wallet className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-blue-600">Available to Transfer</p>
-                    <p className="text-sm font-extrabold text-[#08295C]">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#007B99] dark:text-cyan-300">
+                      Available to Transfer
+                    </p>
+                    <p className="text-base sm:text-lg font-black text-[#0A192F] dark:text-white tracking-tight">
                       {netAvailable.toLocaleString()} MMK
                     </p>
-                    <p className="text-[10px] text-slate-500 font-medium">
-                      Balance: {availBalance.toLocaleString()} MMK • Min reserve: {minBalance.toLocaleString()} MMK
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium mt-0.5">
+                      Total Balance: <span className="font-bold text-slate-800 dark:text-white">{availBalance.toLocaleString()} MMK</span> • Min reserve: {minBalance.toLocaleString()} MMK
                     </p>
                   </div>
                 </div>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-cyan-100 dark:bg-cyan-500/20 text-[#007088] dark:text-cyan-300 border border-cyan-300/80 dark:border-cyan-400/40 shadow-xs">
                   {selectedAcc.accountType}
                 </span>
               </div>
@@ -365,14 +367,14 @@ function FormStep({
             Transfer To
           </label>
           {beneficiaries.length > 0 && (
-            <div className="inline-flex rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
+            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-[#0f2445] p-1 text-xs font-semibold border border-slate-200/70 dark:border-slate-700/80 shadow-xs">
               <button
                 type="button"
                 onClick={() => setRecipientTab("beneficiaries")}
-                className={`px-2.5 py-1 rounded-md transition ${
+                className={`px-3 py-1.5 rounded-lg transition font-bold ${
                   recipientTab === "beneficiaries"
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white dark:bg-[#00A3C4] text-[#00A3C4] dark:text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 Saved Contacts ({beneficiaries.length})
@@ -380,10 +382,10 @@ function FormStep({
               <button
                 type="button"
                 onClick={() => setRecipientTab("manual")}
-                className={`px-2.5 py-1 rounded-md transition ${
+                className={`px-3 py-1.5 rounded-lg transition font-bold ${
                   recipientTab === "manual"
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-white dark:bg-[#00A3C4] text-[#00A3C4] dark:text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 Enter Account No
@@ -411,13 +413,13 @@ function FormStep({
                   }}
                   className={`p-2.5 rounded-2xl border text-left transition flex items-center gap-2.5 ${
                     isSelected
-                      ? "border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-100"
-                      : "border-slate-200 bg-slate-50/60 hover:bg-white hover:border-blue-300"
+                      ? "border-[#00A3C4] bg-cyan-50/70 shadow-sm ring-2 ring-cyan-100"
+                      : "border-slate-200 bg-slate-50/60 hover:bg-white hover:border-cyan-300"
                   }`}
                 >
                   <div
                     className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                      isSelected ? "bg-blue-600 text-white" : "bg-blue-100 text-blue-700"
+                      isSelected ? "bg-[#00A3C4] text-white" : "bg-cyan-100 text-[#00A3C4]"
                     }`}
                   >
                     {initial}
@@ -446,7 +448,7 @@ function FormStep({
             value={destinationAccount}
             onChange={(e) => setDestinationAccount(e.target.value.replace(/\D/g, ""))}
             placeholder="Enter 10 to 16 digit recipient account number"
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition"
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:border-[#00A3C4] focus:bg-white focus:ring-2 focus:ring-cyan-100 outline-none transition"
             maxLength={34}
             required
           />
@@ -459,8 +461,8 @@ function FormStep({
 
         {/* Recipient Verification Status Badge */}
         {lookupLoading && (
-          <div className="flex items-center gap-2 mt-2 px-3.5 py-2 bg-blue-50/80 border border-blue-100 rounded-xl text-xs text-blue-600 font-medium">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
+          <div className="flex items-center gap-2 mt-2 px-3.5 py-2 bg-cyan-50/80 border border-cyan-100 rounded-xl text-xs text-[#00A3C4] font-medium">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-500" />
             <span>Verifying recipient account with Core Banking...</span>
           </div>
         )}
@@ -533,7 +535,7 @@ function FormStep({
               setAmount(raw);
             }}
             placeholder="0.00"
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-black text-slate-900 placeholder-slate-300 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition"
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-lg font-black text-slate-900 placeholder-slate-300 focus:border-[#00A3C4] focus:bg-white focus:ring-2 focus:ring-cyan-100 outline-none transition"
             required
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
@@ -548,7 +550,7 @@ function FormStep({
               key={q}
               type="button"
               onClick={() => setAmount(String(q))}
-              className="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 transition shrink-0"
+              className="px-2.5 py-1 bg-slate-100 hover:bg-cyan-50 hover:text-[#00A3C4] hover:border-cyan-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 transition shrink-0"
             >
               +{q.toLocaleString()}
             </button>
@@ -557,7 +559,7 @@ function FormStep({
             <button
               type="button"
               onClick={() => setAmount(String(Math.floor(netAvailable)))}
-              className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-black transition shrink-0"
+              className="px-2.5 py-1 bg-cyan-50/70 text-[#00A3C4] border border-cyan-200 rounded-xl text-xs font-black transition shrink-0"
             >
               Max
             </button>
@@ -628,7 +630,7 @@ function FormStep({
           onChange={(e) => setDescription(e.target.value)}
           placeholder="e.g. Project payment, rent, dinner split"
           maxLength={100}
-          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition"
+          className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:border-[#00A3C4] focus:bg-white focus:ring-2 focus:ring-cyan-100 outline-none transition"
         />
       </div>
 
@@ -659,7 +661,7 @@ function FormStep({
           className={`${onCancel ? "flex-[2]" : "w-full"} py-4 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-2 ${
             isFormInvalid
               ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-              : "text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 cursor-pointer"
+              : "text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-md shadow-cyan-500/25 cursor-pointer"
           }`}
         >
           <span>Proceed to Review</span>
@@ -697,12 +699,12 @@ function ReviewStep({
     <div className="space-y-6">
       {/* Hero Confirmation Card */}
       <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <div className="bg-gradient-to-br from-[#08295C] to-blue-900 p-6 text-white text-center">
-          <p className="text-xs uppercase font-extrabold text-blue-200 tracking-wider mb-1">
+        <div className="bg-gradient-to-br from-[#0A192F] to-[#153564] p-6 text-white text-center">
+          <p className="text-xs uppercase font-extrabold text-cyan-200 tracking-wider mb-1">
             Review Transfer Amount
           </p>
           <p className="text-4xl font-black tracking-tight">{amount.toLocaleString()}</p>
-          <p className="text-xs font-bold text-blue-200 mt-1">Myanmar Kyat (MMK)</p>
+          <p className="text-xs font-bold text-cyan-200 mt-1">Myanmar Kyat (MMK)</p>
         </div>
 
         {/* Transfer Pathway (Sender ➔ Recipient) */}
@@ -716,7 +718,7 @@ function ReviewStep({
             </p>
           </div>
 
-          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-cyan-100 text-[#00A3C4] flex items-center justify-center shrink-0">
             <ArrowRight className="w-4 h-4" />
           </div>
 
@@ -751,7 +753,7 @@ function ReviewStep({
           )}
           <div className="flex justify-between items-center pt-3 text-sm">
             <span className="font-bold text-slate-900">Total Debited Amount</span>
-            <span className="font-black text-blue-600 text-base">
+            <span className="font-black text-[#00A3C4] text-base">
               {amount.toLocaleString()} MMK
             </span>
           </div>
@@ -759,8 +761,8 @@ function ReviewStep({
       </div>
 
       {/* Security Assurance Notice */}
-      <div className="p-3.5 bg-blue-50/60 border border-blue-100 rounded-2xl flex items-start gap-2.5 text-xs text-blue-900">
-        <Lock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+      <div className="p-3.5 bg-cyan-50/70/60 border border-cyan-100 rounded-2xl flex items-start gap-2.5 text-xs text-blue-900">
+        <Lock className="w-4 h-4 text-[#00A3C4] shrink-0 mt-0.5" />
         <p>
           This transaction is authenticated with 2-Factor Transaction PIN. Funds will be deposited instantly.
         </p>
@@ -780,7 +782,7 @@ function ReviewStep({
         <button
           type="button"
           onClick={onConfirm}
-          className="flex-[2] py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 transition flex items-center justify-center gap-2"
+          className="flex-[2] py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-md shadow-cyan-500/25 transition flex items-center justify-center gap-2"
         >
           <Lock className="w-4 h-4" />
           <span>Authorize &amp; Enter PIN</span>
@@ -847,6 +849,7 @@ function ReceiptStep({
       showQr={true}
       actions={
         <>
+
           {/* Quick Add to Beneficiary */}
           {!isSavedBeneficiary && (
             <button
@@ -910,7 +913,7 @@ function ReceiptStep({
           <button
             type="button"
             onClick={onNewTransfer}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md shadow-blue-200 transition"
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-md shadow-cyan-500/25 transition"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Make Another Transfer</span>
@@ -1280,7 +1283,7 @@ export const P2PTransferForm = () => {
             {/* Header with Visual Stepper */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 mb-6 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-blue-200 shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A3C4] to-[#0284C7] flex items-center justify-center text-white shadow-md shadow-cyan-500/25 shrink-0">
                   <Send className="w-5 h-5" />
                 </div>
                 <div>
@@ -1300,7 +1303,7 @@ export const P2PTransferForm = () => {
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
                     step === "form"
-                      ? "bg-blue-600 text-white shadow-sm"
+                      ? "bg-[#00A3C4] text-white shadow-sm"
                       : "bg-slate-100 text-slate-600"
                   }`}
                 >
@@ -1313,7 +1316,7 @@ export const P2PTransferForm = () => {
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
                     step === "review"
-                      ? "bg-blue-600 text-white shadow-sm"
+                      ? "bg-[#00A3C4] text-white shadow-sm"
                       : "bg-slate-100 text-slate-400"
                   }`}
                 >
@@ -1370,7 +1373,7 @@ export const P2PTransferForm = () => {
             {/* Live Calculation Preview Card */}
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                <CreditCard className="w-4 h-4 text-blue-600" />
+                <CreditCard className="w-4 h-4 text-[#00A3C4]" />
                 <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
                   Transfer Summary
                 </h3>
@@ -1390,7 +1393,7 @@ export const P2PTransferForm = () => {
                 </div>
                 <div className="flex justify-between items-center text-xs border-t border-slate-200/60 pt-2">
                   <span className="text-slate-500 font-medium">Transfer Amount</span>
-                  <span className="font-black text-blue-600">
+                  <span className="font-black text-[#00A3C4]">
                     -{formatMMK(transferAmountNum)}
                   </span>
                 </div>
@@ -1404,13 +1407,13 @@ export const P2PTransferForm = () => {
 
               {/* Multi-Tier Transfer Limit Monitor */}
               {transferLimits && (
-                <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2.5">
+                <div className="p-3.5 rounded-2xl bg-cyan-50/70/50 border border-cyan-100 space-y-2.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-blue-600" />
+                      <ShieldCheck className="w-4 h-4 text-[#00A3C4]" />
                       Today's Limit Usage
                     </span>
-                    <span className="font-bold text-blue-700">
+                    <span className="font-bold text-[#00A3C4]">
                       {Math.min(
                         100,
                         Math.round(
@@ -1424,9 +1427,9 @@ export const P2PTransferForm = () => {
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full h-2 bg-blue-100 rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-cyan-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                      className="h-full bg-[#00A3C4] rounded-full transition-all duration-300"
                       style={{
                         width: `${Math.min(
                           100,

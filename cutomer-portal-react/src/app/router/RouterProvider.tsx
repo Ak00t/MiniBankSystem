@@ -2,6 +2,7 @@ import {
   createBrowserRouter,
   RouterProvider,
   Navigate,
+  useParams,
 } from "react-router-dom";
 
 import ProtectedRoute from "../../features/auth/components/ProtectedRoute";
@@ -38,7 +39,6 @@ import { MerchantPaymentAuthorize } from "../../features/merchant-payment/pages/
 import { MerchantPaymentRouteGuard } from "../../features/merchant-payment/components/MerchantPaymentRouteGuard";
 import ProfilePage from "../../features/customer-account/profile/pages/ProfilePage";
 import { P2PTransferForm } from "../../features/transfer/components/P2PTransferForm";
-import AccountDetailPage from "../../features/customer-account/accounts/pages/AccountDetailPage";
 import SettingsPage from "../../features/customer-account/settings/pages/SettingsPage";
 import AnnouncementsPage from "../../features/customer-account/announcements/pages/AnnouncementsPage";
 
@@ -49,6 +49,12 @@ import TransactionHistoryPage from "../../features/customer-account/transactions
 // ======================================================
 // ROUTER
 // ======================================================
+
+
+function AccountRouteRedirect() {
+  const { accountNumber } = useParams<{ accountNumber: string }>();
+  return <Navigate to="/accounts" state={{ accountNumber }} replace />;
+}
 
 const router = createBrowserRouter([
 
@@ -183,8 +189,13 @@ const router = createBrowserRouter([
           },
 
           {
+            path: "/account",
+            element: <Navigate to="/accounts" replace />,
+          },
+
+          {
             path: "/accounts/:accountNumber",
-            element: <AccountDetailPage />,
+            element: <AccountRouteRedirect />,
           },
 
           {

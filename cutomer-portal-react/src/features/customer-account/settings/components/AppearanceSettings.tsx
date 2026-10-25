@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "../../../../lib/redux";
 import { setTheme } from "../store/SettingsSlice";
 import type { ThemePreference } from "../types/settingsTypes";
@@ -8,22 +9,26 @@ const themes: ThemePreference[] = ["light", "dark", "system"];
 
 export default function AppearanceSettings() {
   const dispatch = useAppDispatch();
-  const selectedTheme = useAppSelector(
-    (state) => state.settings.theme,
-  );
+  const selectedTheme = useAppSelector((state) => state.settings.theme);
+  const { t } = useTranslation("settings");
 
   return (
     <SettingsSection
-      title="Appearance"
-      description="Customize how your banking portal looks on this device."
+      title={t("appearance", { defaultValue: "Appearance" })}
+      description={t("appearanceDescription", {
+        defaultValue:
+          "Customize how your banking portal looks on this device.",
+      })}
     >
       <div>
         <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200">
-          Theme preference
+          {t("theme", { defaultValue: "Theme preference" })}
         </h3>
 
         <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-          Choose the appearance that works best for you.
+          {t("themeDescription", {
+            defaultValue: "Choose the appearance that works best for you.",
+          })}
         </p>
       </div>
 

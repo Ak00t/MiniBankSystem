@@ -174,7 +174,7 @@ export default function TransactionFilters({
     <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-[#0878E8]" aria-hidden="true" />
+          <Filter className="h-4 w-4 text-[#00A3C4]" aria-hidden="true" />
           <h2 className="text-sm font-bold text-slate-800">Filter Transactions</h2>
         </div>
       </div>
@@ -212,7 +212,7 @@ export default function TransactionFilters({
               id={accountSelectId}
               value={selectedAccountNumber}
               onChange={(e) => onAccountChange(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#0878E8] focus:outline-none focus:ring-1 focus:ring-[#0878E8]"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#00A3C4] focus:outline-none focus:ring-1 focus:ring-[#00A3C4]"
             >
               {activeAccounts.length === 0 ? (
                 <option value="">No active accounts</option>
@@ -238,7 +238,7 @@ export default function TransactionFilters({
               id={typeSelectId}
               value={draftFilters.transactionType}
               onChange={(e) => onDraftChange("transactionType", e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#0878E8] focus:outline-none focus:ring-1 focus:ring-[#0878E8]"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#00A3C4] focus:outline-none focus:ring-1 focus:ring-[#00A3C4]"
             >
               <option value="">All Types</option>
               {availableTypes.map((type) => (
@@ -261,7 +261,7 @@ export default function TransactionFilters({
               id={statusSelectId}
               value={draftFilters.status}
               onChange={(e) => onDraftChange("status", e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#0878E8] focus:outline-none focus:ring-1 focus:ring-[#0878E8]"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#00A3C4] focus:outline-none focus:ring-1 focus:ring-[#00A3C4]"
             >
               <option value="">All Statuses</option>
               {availableStatuses.map((st) => (
@@ -273,6 +273,7 @@ export default function TransactionFilters({
           </div>
 
           {/* 4. Date From */}
+
           <ControlledDateField
             id={fromDateId}
             label="From Date"
@@ -292,6 +293,7 @@ export default function TransactionFilters({
             onChangeIso={(val) => onDraftChange("toDate", val)}
           />
 
+
           {/* 6. Amount Range */}
           <div>
             <label
@@ -309,7 +311,7 @@ export default function TransactionFilters({
                 placeholder="Min"
                 value={draftFilters.minAmount}
                 onChange={(e) => onDraftChange("minAmount", e.target.value)}
-                className="w-1/2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#0878E8] focus:outline-none focus:ring-1 focus:ring-[#0878E8]"
+                className="w-1/2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#00A3C4] focus:outline-none focus:ring-1 focus:ring-[#00A3C4]"
               />
               <span className="text-slate-400 text-xs font-bold">-</span>
               <input
@@ -320,7 +322,7 @@ export default function TransactionFilters({
                 placeholder="Max"
                 value={draftFilters.maxAmount}
                 onChange={(e) => onDraftChange("maxAmount", e.target.value)}
-                className="w-1/2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#0878E8] focus:outline-none focus:ring-1 focus:ring-[#0878E8]"
+                className="w-1/2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-400 focus:border-[#00A3C4] focus:outline-none focus:ring-1 focus:ring-[#00A3C4]"
               />
             </div>
           </div>
@@ -340,7 +342,7 @@ export default function TransactionFilters({
           <button
             type="submit"
             disabled={Boolean(validationError) || isApplying}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#0878E8] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#0878E8] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-[#00A3C4] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0891B2] focus:outline-none focus:ring-2 focus:ring-[#00A3C4] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isApplying ? (
               <>

@@ -84,7 +84,7 @@ function SessionTimeoutModal({
         <h2
           className="
             text-2xl font-bold
-            text-[#08295C]
+            text-[#0A192F]
           "
         >
 
@@ -119,7 +119,7 @@ function SessionTimeoutModal({
         >
 
           Please login again to continue
-          using ACE Bank securely.
+          using EKARARJ BANK securely.
 
         </p>
 
@@ -133,11 +133,11 @@ function SessionTimeoutModal({
             items-center justify-center
             gap-2
             rounded-xl
-            bg-blue-600
+            bg-[#00A3C4]
             px-5 py-3.5
             font-semibold
             text-white
-            hover:bg-blue-700
+            hover:bg-[#0891B2]
           "
         >
 

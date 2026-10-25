@@ -341,7 +341,7 @@ function PinResetNewPinPage() {
                 text-2xl
                 font-bold
                 tracking-tight
-                text-[#08295C]
+                text-[#0A192F]
                 sm:text-3xl
               "
             >
@@ -422,7 +422,7 @@ function PinResetNewPinPage() {
                   text-3xl
                   font-bold
                   tracking-tight
-                  text-[#08295C]
+                  text-[#0A192F]
                 "
               >
 
@@ -521,7 +521,7 @@ function PinResetNewPinPage() {
                   items-center
                   justify-center
                   rounded-xl
-                  bg-blue-600
+                  bg-[#00A3C4]
                   px-5
                   py-3.5
                   text-sm
@@ -529,7 +529,7 @@ function PinResetNewPinPage() {
                   text-white
                   shadow-sm
                   transition
-                  hover:bg-blue-700
+                  hover:bg-[#0891B2]
                   focus:outline-none
                   focus:ring-4
                   focus:ring-blue-200
@@ -620,7 +620,7 @@ function PinResetNewPinPage() {
               font-semibold
               uppercase
               tracking-wider
-              text-blue-600
+              text-[#00A3C4]
             "
           >
 
@@ -634,7 +634,7 @@ function PinResetNewPinPage() {
               text-2xl
               font-bold
               tracking-tight
-              text-[#08295C]
+              text-[#0A192F]
               sm:text-3xl
             "
           >
@@ -698,8 +698,8 @@ function PinResetNewPinPage() {
                 items-center
                 justify-center
                 rounded-2xl
-                bg-blue-50
-                text-blue-600
+                bg-cyan-50
+                text-[#00A3C4]
               "
             >
 
@@ -718,7 +718,7 @@ function PinResetNewPinPage() {
                 className="
                   text-2xl
                   font-bold
-                  text-[#08295C]
+                  text-[#0A192F]
                   sm:text-3xl
                 "
               >
@@ -845,9 +845,9 @@ function PinResetNewPinPage() {
                       outline-none
                       transition
                       placeholder:text-slate-400
-                      focus:border-blue-500
+                      focus:border-[#00A3C4]
                       focus:ring-4
-                      focus:ring-blue-100
+                      focus:ring-cyan-100
                       disabled:cursor-not-allowed
                       disabled:bg-slate-50
                     "
@@ -998,9 +998,9 @@ function PinResetNewPinPage() {
                       outline-none
                       transition
                       placeholder:text-slate-400
-                      focus:border-blue-500
+                      focus:border-[#00A3C4]
                       focus:ring-4
-                      focus:ring-blue-100
+                      focus:ring-cyan-100
                       disabled:cursor-not-allowed
                       disabled:bg-slate-50
                     "
@@ -1072,8 +1072,8 @@ function PinResetNewPinPage() {
                   mb-5
                   rounded-xl
                   border
-                  border-blue-100
-                  bg-blue-50/60
+                  border-cyan-100
+                  bg-cyan-50/60
                   px-4
                   py-4
                 "
@@ -1084,7 +1084,7 @@ function PinResetNewPinPage() {
                     mb-3
                     text-sm
                     font-semibold
-                    text-[#08295C]
+                    text-[#0A192F]
                   "
                 >
 
@@ -1111,7 +1111,7 @@ function PinResetNewPinPage() {
                       size={16}
                       className="
                         shrink-0
-                        text-blue-600
+                        text-[#00A3C4]
                       "
                     />
 
@@ -1141,7 +1141,7 @@ function PinResetNewPinPage() {
                       size={16}
                       className="
                         shrink-0
-                        text-blue-600
+                        text-[#00A3C4]
                       "
                     />
 
@@ -1213,7 +1213,7 @@ function PinResetNewPinPage() {
                   items-center
                   justify-center
                   rounded-xl
-                  bg-blue-600
+                  bg-[#00A3C4]
                   px-5
                   py-3.5
                   text-sm
@@ -1221,7 +1221,7 @@ function PinResetNewPinPage() {
                   text-white
                   shadow-sm
                   transition
-                  hover:bg-blue-700
+                  hover:bg-[#0891B2]
                   focus:outline-none
                   focus:ring-4
                   focus:ring-blue-200

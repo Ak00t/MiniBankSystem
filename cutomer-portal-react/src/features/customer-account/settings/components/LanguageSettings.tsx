@@ -1,32 +1,44 @@
-
-import { Languages } from "lucide-react";
+import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { useAppDispatch, useAppSelector } from "../../../../lib/redux";
 import { setLanguage } from "../store/SettingsSlice";
 import { saveLanguage } from "../utils/SettingsStorage";
 import type { LanguagePreference } from "../types/settingsTypes";
+import SettingsSection from "./SettingsSection";
 
 const languages: {
   value: LanguagePreference;
-  label: string;
+  labelKey: string;
+  defaultLabel: string;
+  descKey: string;
+  defaultDesc: string;
+  badge: string;
 }[] = [
-  { value: "en", label: "English" },
-  { value: "my", label: "မြန်မာ" },
+  {
+    value: "en",
+    labelKey: "english",
+    defaultLabel: "English",
+    descKey: "englishDesc",
+    defaultDesc: "English (US)",
+    badge: "EN",
+  },
+  {
+    value: "my",
+    labelKey: "myanmar",
+    defaultLabel: "မြန်မာ",
+    descKey: "myanmarDesc",
+    defaultDesc: "Myanmar (Burmese)",
+    badge: "MY",
+  },
 ];
 
 export default function LanguageSettings() {
   const dispatch = useAppDispatch();
-
-  const language = useAppSelector(
-    (state) => state.settings.language,
-  );
-
+  const language = useAppSelector((state) => state.settings.language);
   const { t, i18n } = useTranslation("settings");
 
-  async function handleLanguageChange(
-    nextLanguage: LanguagePreference,
-  ) {
+  async function handleLanguageChange(nextLanguage: LanguagePreference) {
     if (i18n.resolvedLanguage === nextLanguage) {
       dispatch(setLanguage(nextLanguage));
       saveLanguage(nextLanguage);
@@ -35,7 +47,6 @@ export default function LanguageSettings() {
 
     try {
       await i18n.changeLanguage(nextLanguage);
-
       dispatch(setLanguage(nextLanguage));
       saveLanguage(nextLanguage);
     } catch (error) {
@@ -44,44 +55,75 @@ export default function LanguageSettings() {
   }
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:p-6">
-      <div className="flex items-start gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#0878E8] dark:bg-blue-950 dark:text-blue-300">
-          <Languages size={20} aria-hidden="true" />
-        </div>
+    <SettingsSection
+      title={t("language", { defaultValue: "Language" })}
+      description={t("languageDescription", {
+        defaultValue: "Choose your preferred language",
+      })}
+    >
+      <div>
+        <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200">
+          {t("displayLanguage", { defaultValue: "Display language" })}
+        </h3>
 
-        <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-slate-900 dark:text-white">
-            {t("language")}
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {t("languageDescription")}
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            {languages.map(({ value, label }) => {
-              const selected = language === value;
-
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => void handleLanguageChange(value)}
-                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0878E8] ${
-                    selected
-                      ? "border-[#0878E8] bg-blue-50 text-[#0878E8] dark:bg-blue-950 dark:text-blue-300"
-                      : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+          {t("displayLanguageDesc", {
+            defaultValue:
+              "Select the language you want to use across the banking portal.",
+          })}
+        </p>
       </div>
-    </section>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {languages.map((item) => {
+          const selected = language === item.value;
+
+          return (
+            <button
+              key={item.value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => void handleLanguageChange(item.value)}
+              className={[
+                "relative flex w-full items-start gap-3.5 rounded-xl border p-4 text-left transition-colors cursor-pointer",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00A3C4] focus-visible:ring-offset-2",
+                selected
+                  ? "border-[#00A3C4] bg-cyan-50/70 dark:border-blue-400 dark:bg-blue-950/40"
+                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800",
+              ].join(" ")}
+            >
+              <span
+                className={[
+                  "flex size-10 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
+                  selected
+                    ? "bg-cyan-100 text-[#00A3C4] dark:bg-blue-900 dark:text-blue-300"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+                ].join(" ")}
+              >
+                {item.badge}
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-slate-900 dark:text-white">
+                  {t(item.labelKey, { defaultValue: item.defaultLabel })}
+                </span>
+
+                <span className="mt-1 block text-xs leading-5 text-slate-500 dark:text-slate-400">
+                  {t(item.descKey, { defaultValue: item.defaultDesc })}
+                </span>
+              </span>
+
+              {selected && (
+                <Check
+                  size={18}
+                  className="shrink-0 text-[#00A3C4] dark:text-blue-400 mt-1"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </SettingsSection>
   );
 }

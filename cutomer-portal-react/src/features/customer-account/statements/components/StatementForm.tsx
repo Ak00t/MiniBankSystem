@@ -94,10 +94,10 @@ function ControlledDateField({
           onChange={handleTextChange}
           placeholder="DD-MM-YYYY"
           maxLength={10}
-          className={`w-full rounded-xl border ${
+className={`w-full rounded-xl border ${
             hasError
               ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-              : "border-slate-200 focus:border-[#0878E8] focus:ring-[#0878E8]/20"
+              : "border-slate-200 focus:border-[#00A3C4] focus:ring-[#00A3C4]/20"
           } bg-white px-4 py-2.5 pr-11 text-sm font-medium text-slate-800 placeholder-slate-400 transition-colors focus:outline-none focus:ring-2`}
         />
         {/* Native Hidden Date Picker Overlay Trigger */}
@@ -114,7 +114,7 @@ function ControlledDateField({
         <button
           type="button"
           onClick={openNativePicker}
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-[#0878E8] hover:bg-slate-50 rounded-lg transition-colors"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-[#00A3C4] hover:bg-slate-50 rounded-lg transition-colors"
           title="Open calendar"
           aria-label={`Open calendar for ${label}`}
         >
@@ -186,14 +186,14 @@ export const StatementForm: FC<StatementFormProps> = ({
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
             Account Type <span className="text-red-500">*</span>
           </label>
-          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-[#0f2445] rounded-xl border border-slate-200 dark:border-slate-700/60">
             <button
               type="button"
               onClick={() => onAccountTypeChange("CURRENT")}
               className={`py-2 px-3 text-sm font-semibold rounded-lg transition-all ${
                 form.accountType === "CURRENT"
-                  ? "bg-white text-[#0878E8] shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-[#0a192f] text-[#00A3C4] shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Current Account
@@ -203,8 +203,8 @@ export const StatementForm: FC<StatementFormProps> = ({
               onClick={() => onAccountTypeChange("SAVINGS")}
               className={`py-2 px-3 text-sm font-semibold rounded-lg transition-all ${
                 form.accountType === "SAVINGS"
-                  ? "bg-white text-[#0878E8] shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-[#0a192f] text-[#00A3C4] shadow-sm"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               Savings Account
@@ -226,10 +226,10 @@ export const StatementForm: FC<StatementFormProps> = ({
               value={form.accountNumber}
               onChange={(e) => onAccountNumberChange(e.target.value)}
               disabled={activeAccounts.length === 0}
-              className={`w-full appearance-none rounded-xl border ${
+className={`w-full appearance-none rounded-xl border ${
                 isAccountInvalid
                   ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
-                  : "border-slate-200 focus:border-[#0878E8] focus:ring-[#0878E8]/20"
+                  : "border-slate-200 focus:border-[#00A3C4] focus:ring-[#00A3C4]/20"
               } bg-white px-4 py-2.5 pr-10 text-sm font-medium text-slate-800 transition-colors focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-slate-400`}
             >
               {activeAccounts.length === 0 ? (
@@ -276,16 +276,16 @@ export const StatementForm: FC<StatementFormProps> = ({
       {selectedAccount && (
         <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0878E8]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-50/70 text-[#00A3C4]">
               <Wallet size={20} />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-slate-900">{selectedAccount.accountNumber}</span>
-                <span className="inline-flex items-center rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                <span className="inline-flex items-center rounded-md bg-cyan-100 dark:bg-cyan-500/20 px-2.5 py-0.5 text-[11px] font-bold text-[#007088] dark:text-cyan-300 border border-cyan-200/60 dark:border-cyan-500/30">
                   {selectedAccount.accountType}
                 </span>
-                <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                <span className="inline-flex items-center rounded-md bg-emerald-100 dark:bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-500/30">
                   {selectedAccount.status}
                 </span>
               </div>
@@ -305,8 +305,8 @@ export const StatementForm: FC<StatementFormProps> = ({
       )}
 
       {/* Information Tip */}
-      <div className="flex items-start gap-2.5 rounded-xl bg-blue-50/60 p-3.5 text-xs text-blue-900">
-        <Info size={16} className="shrink-0 text-[#0878E8] mt-0.5" />
+      <div className="flex items-start gap-2.5 rounded-xl bg-cyan-50/60 p-3.5 text-xs text-[#0A192F]">
+        <Info size={16} className="shrink-0 text-[#00A3C4] mt-0.5" />
         <p>
           Statements can be generated for any date range between account opening date and today.
           You will have the option to verify your criteria before downloading.
@@ -317,8 +317,8 @@ export const StatementForm: FC<StatementFormProps> = ({
       <div className="flex justify-end pt-2">
         <button
           type="submit"
-          disabled={isContinueDisabled || Boolean(validationError)}
-          className="inline-flex items-center justify-center rounded-xl bg-[#0878E8] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#0878E8] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+disabled={isContinueDisabled || Boolean(validationError)}
+          className="inline-flex items-center justify-center rounded-xl bg-[#00A3C4] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0891B2] focus:outline-none focus:ring-2 focus:ring-[#00A3C4] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue
         </button>
