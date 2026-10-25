@@ -11,8 +11,10 @@ import ConfirmModal from '../components/ConfirmModal';
 import { staffApi } from '../../../services/apiClient';
 import type { StaffResponse, StaffUserStatus } from '../../../types/api.types';
 import type { AxiosError } from 'axios';
+import { useAuth } from '../../auth/hooks/useAuth';
 
 export default function StaffListPage() {
+  const { user } = useAuth();
   const [staffList, setStaffList] = useState<StaffResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,23 @@ export default function StaffListPage() {
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isDeactivateConfirmOpen, setIsDeactivateConfirmOpen] = useState(false);
   const [deactivateLoading, setDeactivateLoading] = useState(false);
+
+  // Dropdown menu state
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-dropdown-container]')) {
+        setOpenDropdownId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, []);
 
   const loadStaff = async () => {
     setIsLoading(true);
@@ -84,6 +103,18 @@ export default function StaffListPage() {
   // Handle deactivation
   const handleConfirmDeactivate = async () => {
     if (!selectedStaff) return;
+
+    const currentUsername = user?.username?.trim().toLowerCase();
+    const targetUsername = selectedStaff.username?.trim().toLowerCase();
+    const isSelf = !!currentUsername && !!targetUsername && currentUsername === targetUsername;
+    const roleCode = (selectedStaff.roleCode || (selectedStaff.staffNo?.includes('TLR') ? 'TELLER' : selectedStaff.staffNo?.includes('AUD') ? 'AUDITOR' : selectedStaff.staffNo?.includes('ADM') ? 'ADMIN' : '')).toUpperCase();
+
+    if (roleCode === 'ADMIN' || isSelf) {
+      setError(isSelf ? 'Administrators cannot deactivate their own account.' : 'Administrators cannot deactivate other administrators.');
+      setIsDeactivateConfirmOpen(false);
+      return;
+    }
+
     setDeactivateLoading(true);
     try {
       await staffApi.deactivate(selectedStaff.staffId);
@@ -207,83 +238,150 @@ export default function StaffListPage() {
       header: 'Actions',
       className: 'text-right',
       render: (row: StaffResponse) => {
-        // DEACTIVATED ဖြစ်နေရင် ဘာခလုတ်မှ မပြပါနဲ့
-        if (row.status === 'DEACTIVATED') {
-          return <span className="text-gray-400 text-xs">—</span>;
-        }
+        const currentUsername = user?.username?.trim().toLowerCase();
+        const rowUsername = row.username?.trim().toLowerCase();
+        const isSelf = !!currentUsername && !!rowUsername && currentUsername === rowUsername;
+
+        const roleCode = (row.roleCode || (row.staffNo?.includes('TLR') ? 'TELLER' : row.staffNo?.includes('AUD') ? 'AUDITOR' : row.staffNo?.includes('ADM') ? 'ADMIN' : '')).toUpperCase();
+        const isRowAdmin = roleCode === 'ADMIN';
+        const isOtherAdmin = isRowAdmin && !isSelf;
+
+        const isDeactivated = row.status === 'DEACTIVATED';
+
+        // RBAC Permissions:
+        // Admin to Other Admin: An Admin can ONLY view details of another Admin. All other actions (Edit Information, Change Role, Reset Password, Deactivate) must be hidden.
+        // Admin to Themselves: An Admin modifying their own profile can ONLY do "View Details", "Edit Information", and "Reset Password".
+        const canEdit = !isOtherAdmin && !isDeactivated;
+        const canChangeRole = !isRowAdmin && !isSelf && !isDeactivated;
+        const canResetPassword = !isOtherAdmin && !isDeactivated;
+        const canDeactivate = !isRowAdmin && !isSelf && !isDeactivated;
+
+        const isOpen = openDropdownId === row.staffId;
+        const rowIndex = filteredStaff.findIndex((s) => s.staffId === row.staffId);
+        const isNearBottom = filteredStaff.length > 2 && rowIndex >= filteredStaff.length - 2;
 
         return (
-          <div className="flex items-center justify-end gap-1.5 flex-wrap">
-            {/* View Details */}
+          <div className="relative inline-block text-left" data-dropdown-container>
             <button
-              title="View Details"
-              onClick={() => {
-                setSelectedStaff(row);
-                setIsDetailsOpen(true);
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenDropdownId(isOpen ? null : row.staffId);
               }}
-              className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+              aria-expanded={isOpen}
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <span>Actions</span>
+              <svg
+                className={`h-3.5 w-3.5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
-            {/* Edit Info */}
-            <button
-              title="Edit Information"
-              onClick={() => {
-                setSelectedStaff(row);
-                setIsEditOpen(true);
-              }}
-              className="rounded p-1.5 text-blue-600 hover:bg-blue-50"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
+            {isOpen && (
+              <div
+                className={`absolute right-0 z-50 w-44 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none divide-y divide-gray-100 ${
+                  isNearBottom ? 'bottom-full mb-1 origin-bottom-right' : 'top-full mt-1 origin-top-right'
+                }`}
+              >
+                <div className="py-1">
+                  {/* View Details - Always accessible */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpenDropdownId(null);
+                      setSelectedStaff(row);
+                      setIsDetailsOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <svg className="h-4 w-4 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>View Details</span>
+                  </button>
 
-            {/* Change Role */}
-            <button
-              title="Change Role"
-              onClick={() => {
-                setSelectedStaff(row);
-                setIsRoleOpen(true);
-              }}
-              className="rounded p-1.5 text-purple-600 hover:bg-purple-50"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </button>
+                  {/* Edit Information */}
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenDropdownId(null);
+                        setSelectedStaff(row);
+                        setIsEditOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 transition-colors"
+                    >
+                      <svg className="h-4 w-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span>Edit Information</span>
+                    </button>
+                  )}
 
-            {/* Reset Password */}
-            <button
-              title="Reset Password"
-              onClick={() => {
-                setSelectedStaff(row);
-                setIsResetPasswordOpen(true);
-              }}
-              className="rounded p-1.5 text-amber-600 hover:bg-amber-50"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-              </svg>
-            </button>
+                  {/* Change Role */}
+                  {canChangeRole && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenDropdownId(null);
+                        setSelectedStaff(row);
+                        setIsRoleOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-purple-600 hover:bg-purple-50 transition-colors"
+                    >
+                      <svg className="h-4 w-4 text-purple-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <span>Change Role</span>
+                    </button>
+                  )}
 
-            {/* Deactivate */}
-            <button
-              title="Deactivate Staff"
-              onClick={() => {
-                setSelectedStaff(row);
-                setIsDeactivateConfirmOpen(true);
-              }}
-              className="rounded p-1.5 text-red-600 hover:bg-red-50"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-              </svg>
-            </button>
+                  {/* Reset Password */}
+                  {canResetPassword && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenDropdownId(null);
+                        setSelectedStaff(row);
+                        setIsResetPasswordOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-amber-600 hover:bg-amber-50 transition-colors"
+                    >
+                      <svg className="h-4 w-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
+                      <span>Reset Password</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Deactivate */}
+                {canDeactivate && (
+                  <div className="py-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenDropdownId(null);
+                        setSelectedStaff(row);
+                        setIsDeactivateConfirmOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <svg className="h-4 w-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                      <span>Deactivate</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
       },
@@ -427,7 +525,7 @@ export default function StaffListPage() {
           </p>
         </div>
 
-        <div className="p-4">
+        <div className="p-4 min-h-[360px]">
           <DataTable
             columns={columns}
             data={filteredStaff}

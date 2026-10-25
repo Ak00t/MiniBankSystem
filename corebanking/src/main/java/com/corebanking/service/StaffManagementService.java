@@ -16,12 +16,15 @@ import com.corebanking.repository.StaffUsersRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -196,6 +199,16 @@ public class StaffManagementService {
                                 )
                         );
 
+        // Security check: An Admin can ONLY edit their own profile info or non-admin staff info.
+        // Admins cannot edit the information of other administrators.
+        StaffUsers currentStaff = getCurrentAuthenticatedStaff();
+        if (currentStaff != null && isAdministrator(currentStaff)) {
+            boolean targetIsAdmin = isAdministrator(staff);
+            boolean isSelf = currentStaff.getStaffId().equals(staff.getStaffId());
+            if (targetIsAdmin && !isSelf) {
+                throw new IllegalArgumentException("Administrators cannot edit the information of other administrators.");
+            }
+        }
 
         staff.setFullName(
                 request.getFullName()
@@ -237,6 +250,20 @@ public class StaffManagementService {
                          .orElseThrow(() ->
                                  new RuntimeException("Staff not found")
                          );
+
+         // Security check: Role modification restrictions
+         StaffUsers currentStaff = getCurrentAuthenticatedStaff();
+         if (currentStaff != null && isAdministrator(currentStaff)) {
+             boolean targetIsAdmin = isAdministrator(staff);
+             boolean isSelf = currentStaff.getStaffId().equals(staff.getStaffId());
+
+             if (isSelf) {
+                 throw new IllegalArgumentException("Administrators cannot change their own role.");
+             }
+             if (targetIsAdmin) {
+                 throw new IllegalArgumentException("Administrators cannot change the role of other administrators.");
+             }
+         }
 
          // Check new role
          Roles newRole =
@@ -312,6 +339,19 @@ public class StaffManagementService {
                                 )
                         );
 
+        // Security check: Admins cannot deactivate themselves or other administrators
+        StaffUsers currentStaff = getCurrentAuthenticatedStaff();
+        if (currentStaff != null && isAdministrator(currentStaff)) {
+            boolean targetIsAdmin = isAdministrator(staff);
+            boolean isSelf = currentStaff.getStaffId().equals(staff.getStaffId());
+
+            if (isSelf) {
+                throw new IllegalArgumentException("Administrators cannot deactivate their own account.");
+            }
+            if (targetIsAdmin) {
+                throw new IllegalArgumentException("Administrators cannot deactivate other administrators.");
+            }
+        }
 
         if (staff.getStatus() == StaffUserStatus.DEACTIVATED) {
 
@@ -352,6 +392,8 @@ public class StaffManagementService {
             UUID staffId,
             PasswordResetRequest request
     ) {
+
+        validateAdminCanResetPassword(staffId);
 
         StaffUsers staff =
                 staffUsersRepository.findById(staffId)
@@ -406,7 +448,29 @@ public class StaffManagementService {
 
 
     // =====================================================
-    // 8. GET ALL ROLES
+    // 8. SECURITY RBAC VALIDATION FOR PASSWORD RESET
+    // =====================================================
+
+    public void validateAdminCanResetPassword(UUID targetStaffId) {
+        StaffUsers currentStaff = getCurrentAuthenticatedStaff();
+        if (currentStaff == null) return;
+
+        StaffUsers targetStaff = staffUsersRepository.findById(targetStaffId)
+                .orElseThrow(() -> new IllegalArgumentException("Staff account not found"));
+
+        if (isAdministrator(currentStaff)) {
+            boolean targetIsAdmin = isAdministrator(targetStaff);
+            boolean isSelf = currentStaff.getStaffId().equals(targetStaff.getStaffId());
+
+            if (targetIsAdmin && !isSelf) {
+                throw new IllegalArgumentException("Administrators cannot reset the password of other administrators.");
+            }
+        }
+    }
+
+
+    // =====================================================
+    // 9. GET ALL ROLES
     // =====================================================
 
     public List<Roles> getAllRoles() {
@@ -417,6 +481,31 @@ public class StaffManagementService {
     // =====================================================
     // HELPER METHODS: ID GENERATION & FORMATTING
     // =====================================================
+
+    // Helper: Retrieve the currently authenticated staff entity
+    private StaffUsers getCurrentAuthenticatedStaff() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equalsIgnoreCase(auth.getName())) {
+            return null;
+        }
+        return staffUsersRepository.findByUsername(auth.getName()).orElse(null);
+    }
+
+    // Helper: Determine if a staff member has the ADMINISTRATOR role
+    private boolean isAdministrator(StaffUsers staff) {
+        if (staff == null) return false;
+        if (staff.getStaffNo() != null && staff.getStaffNo().toUpperCase().contains("ADM")) {
+            return true;
+        }
+        Optional<StaffUserRoles> roleOpt = staffUserRolesRepository.findByStaffId(staff.getStaffId());
+        if (roleOpt.isPresent()) {
+            Optional<Roles> role = rolesRepository.findById(roleOpt.get().getRoleId());
+            if (role.isPresent() && "ADMIN".equalsIgnoreCase(role.get().getRoleCode())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public String getRolePrefix(String roleCode) {
         if (roleCode == null) return "STF";

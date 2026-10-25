@@ -163,6 +163,7 @@ public class StaffManagementController {
     public ResponseEntity<String> resetPassword(
             @PathVariable UUID staffId) {
 
+        staffManagementService.validateAdminCanResetPassword(staffId);
         staffPasswordSetupService.createSetupLink(staffId);
 
         return ResponseEntity.ok(
