@@ -69,6 +69,8 @@ export default function AdminDashboardPage() {
   const [staffError, setStaffError] = useState<string | null>(null);
   const [announcementsError, setAnnouncementsError] = useState<string | null>(null);
 
+
+  
   useEffect(() => {
     // Staff list — ADMIN/AUDITOR only
     if (!isTeller) {
@@ -114,7 +116,19 @@ export default function AdminDashboardPage() {
   }, [isTeller]);
 
   const activeStaff = staff.filter((s) => s.status === 'ACTIVE').length;
-  const activeAnnouncements = announcements.filter((a) => a.isActive).length;
+  
+  // အသစ်ပြင်ဆင်ထားသော Active Announcement ရေတွက်ပုံ
+  const now = new Date().getTime();
+  const activeAnnouncements = announcements.filter((a) => {
+    // Active မဖြစ်ရင် (သို့) ဖျက်ထားရင် မရေတွက်ပါ
+    if (!a.active || a.isDeleted) return false; 
+    
+    const startTime = a.startsAt ? new Date(a.startsAt).getTime() : 0;
+    const endTime = a.endsAt ? new Date(a.endsAt).getTime() : Infinity;
+    
+    // လက်ရှိအချိန်က startsAt နဲ့ endsAt ကြားမှာ ရှိမှသာ ရေတွက်ပါ
+    return now >= startTime && now <= endTime;
+  }).length;
 
   return (
     <AdminLayout pageTitle="Dashboard">
@@ -308,12 +322,12 @@ export default function AdminDashboardPage() {
                     <span
                       className={[
                         'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
-                        a.isActive
+                        a.active
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-100 text-gray-500',
                       ].join(' ')}
                     >
-                      {a.isActive ? 'Active' : 'Inactive'}
+                      {a.active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-gray-400">

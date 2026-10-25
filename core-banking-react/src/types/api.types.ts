@@ -50,15 +50,25 @@ export interface StaffResponse {
   lastLoginAt: string | null;
   createdAt: string;
   updatedAt: string;
+  roleId?: number;
+  roleCode?: string;
+  roleName?: string;
 }
 
 export interface StaffCreateRequest {
-  staffNo: string;
+  staffNo?: string;
   username: string;
   fullName: string;
   email: string;
   phone: string;
   roleId: number;
+}
+
+export interface StaffRoleOption {
+  roleId: number;
+  roleCode: string;
+  roleName: string;
+  description?: string;
 }
 
 export interface StaffUpdateRequest {
@@ -159,7 +169,7 @@ export interface AnnouncementResponse {
   title: string;
   message: string;
   audience: AnnouncementAudience;
-  isActive: boolean;
+  active: boolean;
   isDeleted: boolean;
   startsAt: string | null;
   endsAt: string | null;
