@@ -74,44 +74,53 @@ export default function BankCardsSection({
 
   return (
     <section aria-label="Customer Cards" className="space-y-4">
-      {/* Header: Section Title (Cards) and Actions */}
+      {/* Header: Section Title (My Accounts) and Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#0A192F]">
-            Cards
+            My Accounts
           </h2>
           <span className="inline-flex items-center justify-center rounded-full bg-cyan-50 px-2.5 py-0.5 text-xs font-extrabold text-[#00A3C4] border border-cyan-200/60">
-            {accounts.length} {accounts.length === 1 ? "Account" : "Accounts"}
+            {accounts.length}
           </span>
         </div>
 
-        {/* Navigation Arrows (if more than 3 accounts) */}
-        {accounts.length > 3 && (
-          <div className="flex items-center gap-1.5 ml-1">
-            <button
-              type="button"
-              onClick={() => handleScroll("left")}
-              disabled={!canScrollLeft}
-              aria-label="Previous card"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs transition hover:bg-slate-50 hover:text-[#0A192F] hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft size={16} />
-            </button>
+        <div className="flex items-center gap-3">
+          {/* Navigation Arrows for Slider */}
+          {(canScrollLeft || canScrollRight || accounts.length > 2) && (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleScroll("left")}
+                disabled={!canScrollLeft}
+                aria-label="Previous card"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs transition hover:bg-slate-50 hover:text-[#0A192F] hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={16} />
+              </button>
 
-            <button
-              type="button"
-              onClick={() => handleScroll("right")}
-              disabled={!canScrollRight}
-              aria-label="Next card"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs transition hover:bg-slate-50 hover:text-[#0A192F] hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
+              <button
+                type="button"
+                onClick={() => handleScroll("right")}
+                disabled={!canScrollRight}
+                aria-label="Next card"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-xs transition hover:bg-slate-50 hover:text-[#0A192F] hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+
+          <Link
+            to="/accounts"
+            className="text-xs font-bold text-[#00A3C4] hover:text-[#0891B2] hover:underline"
+          >
+            See All
+          </Link>
+        </div>
       </div>
 
-      {/* Cards Row: Left-aligned horizontal row as requested */}
+      {/* Cards Slider Row: Smooth horizontal scrollable slider */}
       <div
         ref={scrollContainerRef}
         onScroll={checkScroll}

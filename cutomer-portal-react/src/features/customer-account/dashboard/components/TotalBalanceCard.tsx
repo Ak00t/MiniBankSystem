@@ -1,10 +1,14 @@
-import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import {
+  Bell,
   Eye,
   EyeOff,
-  Landmark,
-  WalletCards,
+  PlusCircle,
+  ArrowUpRight,
+  Receipt,
+  User,
 } from "lucide-react";
+import { CrownEmbossedWatermark } from "../../../../components/common/EkararjLogo";
 
 interface TotalBalanceCardProps {
   totalBalance: number;
@@ -12,6 +16,7 @@ interface TotalBalanceCardProps {
   showBalance: boolean;
   loading?: boolean;
   onToggleBalance: () => void;
+  customerName?: string;
 }
 
 function formatBalance(amount: number): string {
@@ -27,135 +32,130 @@ export default function TotalBalanceCard({
   showBalance,
   loading = false,
   onToggleBalance,
+  customerName,
 }: TotalBalanceCardProps) {
-  const { t } = useTranslation("dashboard");
-
-  const balanceVisibilityLabel = showBalance
-    ? t("hideBalance")
-    : t("showBalance");
+  const displayName = customerName?.trim() || "Customer";
 
   return (
     <section
-      aria-label={t("totalBalance")}
-      className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A192F] via-[#102A54] to-[#173B6F] p-6 shadow-md ring-1 ring-white/10 border border-cyan-500/20 sm:p-8"
+      aria-label="Total Available Balance"
+      className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0A192F] via-[#102A54] to-[#153564] p-6 sm:p-8 text-white shadow-xl border border-cyan-500/25"
     >
-      {/* Decorative Background */}
+      {/* 1. Ambient Lighting & Ekararj Watermark */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-blue-300/20 blur-3xl"
+        className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/15 blur-3xl"
       />
-
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-cyan-300/10 blur-2xl"
+        className="pointer-events-none absolute -bottom-24 -left-12 h-64 w-64 rounded-full bg-blue-600/15 blur-3xl"
       />
-
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute right-[-80px] top-1/2 h-64 w-64 -translate-y-1/2 rounded-full border-[28px] border-blue-300/10"
-      />
+        className="pointer-events-none absolute right-4 bottom-2 opacity-15 select-none"
+      >
+        <CrownEmbossedWatermark theme="navy" className="w-48 h-48" />
+      </div>
 
-      <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
-        {/* Balance Information */}
-        <div className="min-w-0 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <WalletCards
-              size={16}
-              aria-hidden="true"
-              className="text-blue-100/90"
-            />
+      <div className="relative z-10 space-y-6">
+        {/* ROW 1: Greeting & Notification Bell */}
+        <div className="flex items-center justify-between border-b border-white/10 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/40 shadow-xs">
+              <User size={22} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-300/80 uppercase tracking-wider">
+                Welcome back
+              </p>
+              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white">
+                Hi, {displayName}
+              </h2>
+            </div>
+          </div>
 
-            <span className="text-xs font-semibold uppercase tracking-wider text-blue-100/90">
-              {t("totalBalance")}
+          {/* Notification Bell Button */}
+          <Link
+            to="/announcements"
+            className="group relative flex h-10 w-10 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20 hover:border-cyan-400/40 active:scale-95 shadow-xs"
+            title="Notifications & Announcements"
+            aria-label="Notifications"
+          >
+            <Bell size={18} className="transition group-hover:rotate-12" />
+            <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-[#00A3C4] ring-2 ring-[#0A192F]" />
+          </Link>
+        </div>
+
+        {/* ROW 2: Total Available Balance */}
+        <div className="space-y-1.5 pt-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-cyan-300">
+              Total Available Balance
             </span>
-
-            <span
-              aria-hidden="true"
-              className="h-1 w-1 rounded-full bg-blue-100/60"
-            />
-
-            <span className="text-xs text-blue-50/80">
-              {t("acrossAllAccounts")}
-            </span>
-
             <button
               type="button"
               onClick={onToggleBalance}
               disabled={loading}
-              aria-label={balanceVisibilityLabel}
-              aria-pressed={showBalance}
-              title={balanceVisibilityLabel}
-              className="inline-flex items-center justify-center rounded-full p-1 text-blue-100/80 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg p-1 text-slate-300 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-300/30"
+              title={showBalance ? "Hide Balance" : "Show Balance"}
+              aria-label={showBalance ? "Hide Balance" : "Show Balance"}
             >
-              {showBalance ? (
-                <EyeOff size={15} aria-hidden="true" />
-              ) : (
-                <Eye size={15} aria-hidden="true" />
-              )}
+              {showBalance ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
+
+            {accountCount > 0 && (
+              <span className="hidden sm:inline-flex items-center rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300 border border-white/10">
+                Across {accountCount} {accountCount === 1 ? "Account" : "Accounts"}
+              </span>
+            )}
           </div>
 
-          {/* Balance */}
-          <div
-            className="flex flex-wrap items-baseline gap-x-2 gap-y-1 pt-1"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <span className="text-xl font-bold text-blue-100">
+          <div className="flex flex-wrap items-baseline gap-2 pt-1">
+            <span className="font-mono text-xl sm:text-2xl font-bold text-cyan-200">
               MMK
             </span>
-
-            <div className="break-words text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <div className="font-mono text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white drop-shadow-sm">
               {loading ? (
-                <span
-                  aria-label={t("loadingBalance")}
-                  className="inline-block h-10 w-52 animate-pulse rounded-lg bg-white/10 align-middle"
-                />
+                <span className="inline-block h-10 w-48 animate-pulse rounded-xl bg-white/15 align-middle" />
               ) : showBalance ? (
                 formatBalance(totalBalance)
               ) : (
-                <span
-                  aria-label={t("hideBalance")}
-                  className="tracking-widest text-blue-100/80"
-                >
-                  ********
+                <span className="tracking-widest text-slate-300/80">
+                  ••••••••
                 </span>
               )}
             </div>
           </div>
-
-          {/* Account Count */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-2">
-            {!loading && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-300/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-100 ring-1 ring-inset ring-emerald-200/20">
-                <span
-                  aria-hidden="true"
-                  className="h-1.5 w-1.5 rounded-full bg-emerald-300"
-                />
-                {t("overview")}
-              </span>
-            )}
-
-            <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-blue-50/90 ring-1 ring-inset ring-white/10">
-              {loading
-                ? t("loadingAccounts")
-                : t("linkedAccount", {
-                    count: accountCount,
-                  })}
-            </span>
-          </div>
         </div>
 
-        {/* Decorative Bank Icon */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-5 top-1/2 hidden -translate-y-1/2 sm:block"
-        >
-          <Landmark
-            size={165}
-            strokeWidth={1.2}
-            className="text-blue-100/30"
-          />
+        {/* ROW 3: Quick Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5 pt-2">
+          {/* Add Money */}
+          <Link
+            to="/accounts"
+            className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+          >
+            <PlusCircle size={16} className="text-cyan-300" />
+            <span>Add Money</span>
+          </Link>
+
+          {/* Transfer */}
+          <Link
+            to="/transfer"
+            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#00A3C4] via-[#0284C7] to-[#0369A1] px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-lg shadow-cyan-500/25 transition hover:from-[#0891B2] hover:via-[#0369A1] hover:to-[#075985] hover:shadow-cyan-500/35 active:scale-95"
+          >
+            <ArrowUpRight size={17} strokeWidth={2.4} />
+            <span>Transfer</span>
+          </Link>
+
+          {/* Pay */}
+          <Link
+            to="/checkout"
+            className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+          >
+            <Receipt size={16} className="text-cyan-300" />
+            <span>Pay</span>
+          </Link>
         </div>
       </div>
     </section>

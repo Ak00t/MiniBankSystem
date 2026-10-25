@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ShieldCheck } from "lucide-react";
 
 import DashboardSkeleton from "../components/DashboardSkeleton";
+import TotalBalanceCard from "../components/TotalBalanceCard";
 import BankCardsSection from "../components/BankCardsSection";
 import RecentTransactions from "../components/RecentTransactions";
 import StatisticCard from "../components/StatisticCard";
@@ -19,8 +20,12 @@ export default function DashboardPage() {
 
   const { t } = useTranslation("dashboard");
 
-  // Balance visible by default
-  const [showBalance] = useState(true);
+  // Balance visible by default, with toggle state shared across components
+  const [showBalance, setShowBalance] = useState(true);
+
+  const handleToggleBalance = () => {
+    setShowBalance((prev) => !prev);
+  };
 
   useEffect(() => {
     const request = dispatch(fetchDashboard());
@@ -95,16 +100,6 @@ export default function DashboardPage() {
 
         {dashboard && (
           <div className="space-y-6">
-            {/* Top Dashboard Header */}
-            <header>
-              <h1 className="text-2xl font-extrabold tracking-tight text-[#0A192F] sm:text-3xl">
-                Dashboard
-              </h1>
-              <p className="mt-1 text-xs sm:text-sm font-medium text-slate-400">
-                You can monitor your transactions
-              </p>
-            </header>
-
             {refreshing && (
               <p
                 role="status"
@@ -115,21 +110,31 @@ export default function DashboardPage() {
               </p>
             )}
 
-            {/* 1. Bank Cards Section (Cards horizontally aligned with balance displayed underneath) */}
+            {/* 1. TOP SECTION: Total Available Balance Hero Card (Greeting, Bell, Balance, Quick Actions) */}
+            <TotalBalanceCard
+              totalBalance={totalBalance}
+              accountCount={accounts.length}
+              showBalance={showBalance}
+              onToggleBalance={handleToggleBalance}
+              customerName={dashboard?.fullName}
+              loading={refreshing}
+            />
+
+            {/* 2. MIDDLE SECTION: My Accounts Cards Slider (Horizontal Scroll) */}
             <BankCardsSection
               accounts={accounts}
               customerName={dashboard?.fullName}
+              showBalance={showBalance}
+              onToggleBalance={handleToggleBalance}
             />
 
-            {/* 2. Bottom 2-Column Section: Reference Layout (Recent Transactions on left, Statistic on right) */}
+            {/* 3. BOTTOM SECTION: Recent Transactions & Statistic (Donut Chart) */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_0.8fr] pt-2">
-              {/* Left Column: Transaction history */}
               <RecentTransactions
                 accountNumber={primaryAccount?.accountNumber}
                 showBalance={showBalance}
               />
 
-              {/* Right Column: Statistic (Donut chart & legend) */}
               <StatisticCard
                 totalBalance={totalBalance}
                 accounts={accounts}

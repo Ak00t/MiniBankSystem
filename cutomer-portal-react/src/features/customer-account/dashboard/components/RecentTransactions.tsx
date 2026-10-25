@@ -96,15 +96,15 @@ export default function RecentTransactions({
   }, [accountNumber]);
 
   return (
-    <div className="flex h-full flex-col justify-between rounded-2xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm">
+    <div className="flex h-full flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-        <h3 className="text-base font-extrabold text-[#0A192F]">
-          Recent Transaction
+        <h3 className="text-base sm:text-lg font-extrabold text-[#0A192F]">
+          Recent Transactions
         </h3>
 
-        {/* Dropdown / Filter pill */}
-        <div className="relative">
+        <div className="flex items-center gap-3">
+          {/* Dropdown / Filter pill */}
           <button
             type="button"
             onClick={() => setPeriod(period === "month" ? "all" : "month")}
@@ -113,11 +113,18 @@ export default function RecentTransactions({
             <span>{period === "month" ? "This month" : "All time"}</span>
             <ChevronDown size={13} />
           </button>
+
+          <Link
+            to="/transaction"
+            className="text-xs font-bold text-[#00A3C4] transition hover:text-[#0891B2] hover:underline"
+          >
+            See All
+          </Link>
         </div>
       </div>
 
       {/* Transactions List */}
-      <div className="divide-y divide-slate-50 py-1">
+      <div className="divide-y divide-slate-100 py-1">
         {loading && (
           <div className="space-y-3 py-4">
             {[1, 2, 3].map((i) => (
@@ -144,46 +151,50 @@ export default function RecentTransactions({
         {!loading &&
           transactions.map((tx) => {
             const isCredit = tx.direction === "IN";
-            const title =
-              tx.counterpartyName ||
-              tx.displayTitle ||
-              tx.description ||
-              tx.transactionType ||
-              "Transaction";
-
-            const dateStr = formatDate(tx.transactionDate || tx.initiatedAt);
+            const isPending = tx.status?.toUpperCase() === "PENDING";
+            const isFailed = tx.status?.toUpperCase() === "FAILED";
 
             return (
               <div
                 key={tx.transactionRef}
-                className="flex items-center justify-between py-3 transition hover:bg-slate-50/60 rounded-xl px-2"
+                className="group flex items-center justify-between py-3 transition hover:bg-slate-50/60 rounded-xl px-2"
               >
-                {/* Left: Icon & Description */}
-                <div className="flex items-center gap-3 min-w-0 pr-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-100 shadow-xs">
+                {/* Left: Icon + Description + Date */}
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 border border-slate-200/60 group-hover:bg-white group-hover:shadow-xs transition">
                     {getTransactionIcon(tx.transactionType, isCredit)}
                   </div>
-
                   <div className="min-w-0">
-                    <p className="truncate text-xs sm:text-sm font-semibold text-[#0A192F]">
-                      {title}
+                    <p className="truncate text-sm font-bold text-[#0A192F]">
+                      {tx.displayTitle || tx.description || tx.transactionType || "Bank Transfer"}
                     </p>
-                    <p className="text-[11px] text-slate-400 font-medium">
-                      {dateStr}
+                    <p className="text-[11px] font-medium text-slate-400">
+                      {formatDate(tx.transactionDate || "")}
                     </p>
                   </div>
                 </div>
 
-                {/* Right: Amount */}
-                <div className="shrink-0 text-right">
+                {/* Right: Amount + Status */}
+                <div className="text-right shrink-0 pl-3">
                   <p
-                    className={`text-xs sm:text-sm font-bold ${
-                      isCredit ? "text-emerald-600" : "text-[#0A192F]"
+                    className={`text-sm font-extrabold font-mono ${
+                      isCredit
+                        ? "text-emerald-600"
+                        : "text-slate-900"
                     }`}
                   >
-                    {isCredit ? "+" : "-"}
-                    {formatAmount(tx.amount)} {tx.currency || "MMK"}
+                    {isCredit ? "+" : "-"} {formatAmount(tx.amount || 0)} {tx.currency || "MMK"}
                   </p>
+                  {isPending && (
+                    <span className="inline-block rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
+                      Pending
+                    </span>
+                  )}
+                  {isFailed && (
+                    <span className="inline-block rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-bold text-red-600">
+                      Failed
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -194,7 +205,7 @@ export default function RecentTransactions({
       <div className="border-t border-slate-100 pt-3 text-right">
         <Link
           to="/transaction"
-          className="text-xs font-semibold text-[#00A3C4] transition hover:text-[#0891B2] hover:underline"
+          className="text-xs font-bold text-[#00A3C4] transition hover:text-[#0891B2] hover:underline"
         >
           View all transactions &rarr;
         </Link>
