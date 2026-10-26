@@ -23,9 +23,11 @@ export const submitP2PTransfer = createAsyncThunk(
       const response = await executeP2PTransfer(data);
       return response;
     } catch (error: any) {
-      
       return rejectWithValue(
-        error.response?.data?.message || 'Transfer failed. Please try again later.'
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          'Transfer failed. Please try again later.'
       );
     }
   }

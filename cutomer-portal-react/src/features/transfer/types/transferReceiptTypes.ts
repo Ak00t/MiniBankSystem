@@ -62,7 +62,7 @@ export function mapP2PResponseToReceiptData(
     totalDebitedAmount: totalDebited,
     completedAt: result.completedAt || new Date().toISOString(),
     sourceAccountNumber: result.sourceAccountNumber,
-    sourceDisplayName: "Mini Bank Account",
+    sourceDisplayName: "My Account",
     destinationAccountNumber: result.destinationAccountNumber,
     destinationDisplayName: recipientName || "Verified Account",
     direction: "OUT",

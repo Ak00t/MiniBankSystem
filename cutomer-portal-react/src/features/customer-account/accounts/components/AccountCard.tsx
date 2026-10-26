@@ -52,10 +52,10 @@ export default function AccountCard({
   const statusLabel = statusLabels[account.status] ?? account.status;
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-200">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
+    <article className="overflow-hidden rounded-3xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0A192F] p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700">
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-center">
         {/* Bank Card Visual on Left */}
-        <div className="shrink-0 flex justify-center">
+        <div className="shrink-0 flex justify-center w-full xl:w-auto">
           <BankCard
             account={{
               accountNumber: account.accountNumber,
@@ -76,14 +76,14 @@ export default function AccountCard({
         </div>
 
         {/* Account Details & Management on Right */}
-        <div className="flex-1 space-y-4 min-w-0">
+        <div className="flex-1 space-y-4 min-w-0 w-full">
           {/* Header row: Account Type and Status badge */}
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 {account.accountCategory}
               </p>
-              <h2 className="text-lg font-extrabold text-[#0A192F]">
+              <h2 className="text-lg font-extrabold text-[#0A192F] dark:text-white">
                 {accountTypeLabel}
               </h2>
             </div>
@@ -96,14 +96,17 @@ export default function AccountCard({
             </span>
           </div>
 
-          {/* Account Metrics Grid (Real-World: Non-redundant operational metrics, never truncated) */}
-          <div className="flex flex-wrap gap-3">
+          {/* Account Metrics Grid (Responsive 3-col Grid, prevents number spill) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* 1. Current / Ledger Balance */}
-            <div className="flex-1 min-w-[140px] rounded-2xl bg-slate-50/80 p-3.5 border border-slate-100">
+            <div className="rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 p-3.5 border border-slate-100 dark:border-slate-700/60 min-w-0">
               <p className="text-[11px] font-semibold text-slate-400">
                 Current Balance
               </p>
-              <p className="mt-1 font-mono text-sm sm:text-base font-extrabold text-[#0A192F] whitespace-nowrap">
+              <p
+                className="mt-1 font-mono text-sm sm:text-base font-extrabold text-[#0A192F] dark:text-white truncate"
+                title={`${formatMoney(account.currentBalance)} ${account.currency}`}
+              >
                 {formatMoney(account.currentBalance)}{" "}
                 <span className="font-sans text-xs font-normal text-slate-500">
                   {account.currency}
@@ -112,11 +115,14 @@ export default function AccountCard({
             </div>
 
             {/* 2. Daily Transfer Limit */}
-            <div className="flex-1 min-w-[140px] rounded-2xl bg-slate-50/80 p-3.5 border border-slate-100">
+            <div className="rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 p-3.5 border border-slate-100 dark:border-slate-700/60 min-w-0">
               <p className="text-[11px] font-semibold text-slate-400">
                 Daily Limit
               </p>
-              <p className="mt-1 font-mono text-sm sm:text-base font-bold text-slate-700 whitespace-nowrap">
+              <p
+                className="mt-1 font-mono text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 truncate"
+                title={`${formatMoney(account.dailyTransferLimit)} ${account.currency}`}
+              >
                 {formatMoney(account.dailyTransferLimit)}{" "}
                 <span className="font-sans text-xs font-normal text-slate-500">
                   {account.currency}
@@ -125,11 +131,14 @@ export default function AccountCard({
             </div>
 
             {/* 3. Minimum Balance */}
-            <div className="flex-1 min-w-[140px] rounded-2xl bg-slate-50/80 p-3.5 border border-slate-100">
+            <div className="rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 p-3.5 border border-slate-100 dark:border-slate-700/60 min-w-0">
               <p className="text-[11px] font-semibold text-slate-400">
                 Minimum Balance
               </p>
-              <p className="mt-1 font-mono text-sm sm:text-base font-bold text-slate-700 whitespace-nowrap">
+              <p
+                className="mt-1 font-mono text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 truncate"
+                title={`${formatMoney(account.minimumBalance ?? 0)} ${account.currency}`}
+              >
                 {formatMoney(account.minimumBalance ?? 0)}{" "}
                 <span className="font-sans text-xs font-normal text-slate-500">
                   {account.currency}
@@ -139,10 +148,10 @@ export default function AccountCard({
           </div>
 
           {/* Action Shortcuts Bar */}
-          <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-slate-100">
+          <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
             <Link
               to="/transfer"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs transition-all duration-200 hover:border-[#00A3C4] hover:bg-[#00A3C4] hover:text-white hover:shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs transition-all duration-200 hover:border-[#00A3C4] hover:bg-[#00A3C4] hover:text-white hover:shadow-xs"
             >
               <Send size={14} />
               <span>Transfer</span>
@@ -150,7 +159,7 @@ export default function AccountCard({
 
             <Link
               to="/statements"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition-all duration-200 hover:border-[#00A3C4] hover:bg-[#00A3C4] hover:text-white hover:shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 shadow-2xs transition-all duration-200 hover:border-[#00A3C4] hover:bg-[#00A3C4] hover:text-white hover:shadow-xs"
             >
               <FileText size={14} />
               <span>Statement</span>
@@ -159,7 +168,7 @@ export default function AccountCard({
             <button
               type="button"
               onClick={() => onSelect?.(account.accountNumber)}
-              className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[#0A192F] transition hover:text-[#00A3C4] hover:underline"
+              className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[#0A192F] dark:text-white transition hover:text-[#00A3C4] dark:hover:text-[#00A3C4] hover:underline cursor-pointer"
             >
               <span>{t("viewDetails", { defaultValue: "View Details" })}</span>
               <ArrowRight size={14} />
