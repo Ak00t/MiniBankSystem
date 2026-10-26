@@ -213,14 +213,15 @@ for (const [page, button, destination] of [
   });
 }
 
-test('login retains the pre-redesign welcome and sign-in wording', async t => {
+test('login uses EKARAJ branding and preserves its sign-in wording', async t => {
   const h = await setup(t, 'LoginPage');
   for (const text of [
-    'WELCOME TO ACE BANK',
-    'Securely access your account, manage your banking services, and stay connected with ACE Bank.',
-    'Welcome!',
+    'EKARAJ BANK',
+    'ဧကရာဇ်ဘဏ်',
+    'Welcome Back',
     'Login securely using your Customer ID or Account Number.',
   ]) assert.ok(h.container.textContent.includes(text), text);
+  assert.equal(h.container.querySelectorAll('.lucide-crown').length, 0);
 });
 
 for (const page of ['OtpPage', 'PasswordResetOtpPage', 'PinResetOtpPage']) {
