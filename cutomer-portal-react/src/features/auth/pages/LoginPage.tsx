@@ -187,15 +187,15 @@ function LoginPage() {
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center px-3 py-3 sm:px-6">
-      <section aria-label="Individual login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#FAF9F7] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
-        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[linear-gradient(135deg,#25649B_0%,#1D4F7A_100%)] text-[#FAF9F7] md:flex">
+      <section aria-label="Individual login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
+        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
           <div className="relative px-7 pt-7 lg:px-8">
             <div aria-hidden="true" className="mb-5 h-px w-12 bg-[#D1B170]" />
             <h2 className="max-w-xs text-[28px] font-medium leading-tight tracking-tight lg:text-[30px]">
               Your Trust.<br />Our Commitment.
             </h2>
-            <p className="mt-4 flex items-center gap-2 text-sm text-[#FAF9F7]">
-              <ShieldCheck aria-hidden="true" size={17} className="shrink-0 text-[#56ABC0]" />
+            <p className="mt-4 flex items-center gap-2 text-sm text-[#1A365D]">
+              <ShieldCheck aria-hidden="true" size={17} className="shrink-0 text-[#D1B170]" />
               Secure Personal Banking
             </p>
           </div>
@@ -207,7 +207,7 @@ function LoginPage() {
             ].map(([Icon, text]) => {
               const Mark = Icon as typeof ShieldCheck;
               return (
-                <p key={String(text)} className="flex items-center gap-3 text-xs text-[#FAF9F7]">
+                <p key={String(text)} className="flex items-center gap-3 text-xs text-[#1A365D]">
                   <Mark aria-hidden="true" size={17} className="shrink-0 text-[#D1B170]" />
                   {String(text)}
                 </p>
