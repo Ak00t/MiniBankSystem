@@ -17,7 +17,7 @@ import {
 import { AuthField, AuthNotice } from "../components/IndividualAuthUI";
 
 const loginInputClass =
-  "block min-h-11 w-full rounded-xl border border-[#C5AF82] bg-white py-2.5 text-sm text-[#122E52] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#B89146] focus:border-[#122E52] focus:ring-4 focus:ring-[#56ABC0]/25 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
+  "block min-h-11 w-full rounded-xl border border-[#C5AF82] bg-white py-2.5 text-sm text-[#111418] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#B89146] focus:border-[#122E52] focus:ring-4 focus:ring-[#56ABC0]/25 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
 const loginLinkClass =
   "rounded-md font-semibold text-[#122E52] underline-offset-4 transition-colors hover:text-[#122E52] hover:underline decoration-[#B89146] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#56ABC0]/30 motion-reduce:transition-none";
 
@@ -172,20 +172,29 @@ function LoginPage() {
   // =====================================================
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#E5EAF0] px-3 py-3 text-[#122E52] antialiased sm:px-6">
+    <div className="flex min-h-dvh flex-col bg-[#E5EAF0] text-[#111418] antialiased">
       <title>EKARAJ BANK | Personal Banking</title>
-      <main className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#FAF9F7] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
-        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#122E52] text-white md:flex">
-          <img src="/images.jfif" alt="Bank building" className="absolute inset-0 h-full w-full object-cover object-center" />
-          <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,46,82,0.94)_0%,rgba(18,46,82,0.5)_43%,rgba(209,177,112,0.12)_63%,rgba(18,46,82,0.96)_100%)]" />
+      <header className="shrink-0 border-b border-[#C5AF82] bg-[#FAF9F7] text-[#1A365D]">
+        <div className="mx-auto flex min-h-[55px] max-w-[1200px] items-center justify-between gap-3 px-3 py-1.5 sm:px-6">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold tracking-[0.14em]">EKARAJ BANK</p>
+            <p className="text-xs leading-4" lang="my">ဧကရာဇ်ဘဏ်</p>
+          </div>
+          <p className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-medium leading-4 sm:gap-2 sm:text-xs">
+            <ShieldCheck aria-hidden="true" size={18} className="shrink-0" />
+            <span className="max-w-[104px] sm:max-w-none">Secure Personal Banking</span>
+          </p>
+        </div>
+      </header>
+      <main className="flex flex-1 items-center justify-center px-3 py-3 sm:px-6">
+      <section aria-label="Individual login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#FAF9F7] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
+        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[linear-gradient(135deg,#25649B_0%,#1D4F7A_100%)] text-[#FAF9F7] md:flex">
           <div className="relative px-7 pt-7 lg:px-8">
-            <p className="text-sm font-semibold tracking-[0.18em] text-[#E6D4B1]">EKARAJ BANK</p>
-            <p className="mt-2 text-base text-white/90" lang="my">ဧကရာဇ်ဘဏ်</p>
-            <div aria-hidden="true" className="my-5 h-px w-12 bg-[#D1B170]" />
+            <div aria-hidden="true" className="mb-5 h-px w-12 bg-[#D1B170]" />
             <h2 className="max-w-xs text-[28px] font-medium leading-tight tracking-tight lg:text-[30px]">
               Your Trust.<br />Our Commitment.
             </h2>
-            <p className="mt-4 flex items-center gap-2 text-sm text-white">
+            <p className="mt-4 flex items-center gap-2 text-sm text-[#FAF9F7]">
               <ShieldCheck aria-hidden="true" size={17} className="shrink-0 text-[#56ABC0]" />
               Secure Personal Banking
             </p>
@@ -198,7 +207,7 @@ function LoginPage() {
             ].map(([Icon, text]) => {
               const Mark = Icon as typeof ShieldCheck;
               return (
-                <p key={String(text)} className="flex items-center gap-3 text-xs text-white">
+                <p key={String(text)} className="flex items-center gap-3 text-xs text-[#FAF9F7]">
                   <Mark aria-hidden="true" size={17} className="shrink-0 text-[#D1B170]" />
                   {String(text)}
                 </p>
@@ -209,17 +218,12 @@ function LoginPage() {
         <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-5 sm:px-8 md:px-7 lg:px-9">
           <div className="mx-auto w-full max-w-[392px]">
             <div className="mb-3">
-              {/* A crown will be added only from an approved, clean transparent asset. */}
-              <div className="mb-3 text-center">
-                <p className="text-base font-semibold tracking-[0.16em]">EKARAJ BANK</p>
-                <p className="mt-0.5 text-sm text-[#6B6B6B]" lang="my">ဧကရာဇ်ဘဏ်</p>
-              </div>
               <h1 className="text-2xl font-semibold tracking-tight text-[#1A365D]">Welcome Back</h1>
-              <p className="mt-1 text-sm leading-5 text-[#6B6B6B]">
+              <p className="mt-1 text-sm leading-5 text-[#111418]">
                 Login securely using your Customer ID or Account Number.
               </p>
             </div>
-        <form onSubmit={handleLogin} autoComplete="off" className="space-y-2 [&_label]:text-[#122E52]">
+        <form onSubmit={handleLogin} autoComplete="off" className="space-y-2 [&_label]:text-[#111418]">
           <AuthField label="Customer ID / Account Number" htmlFor="individual-login-id">
             <UserRound aria-hidden="true" size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#757575]" />
             <input
@@ -291,7 +295,7 @@ function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-3 space-y-1 text-center text-xs leading-5 text-[#6B6B6B]">
+        <div className="mt-3 space-y-1 text-center text-xs leading-5 text-[#111418]">
           <p>
             Corporate Banking?{" "}
             <Link
@@ -303,7 +307,7 @@ function LoginPage() {
           </p>
           <p>
             Don't have an account?{" "}
-            <span className="font-semibold text-[#122E52]">Contact your bank</span>
+            <span className="font-semibold text-[#111418]">Contact your bank</span>
           </p>
         </div>
         <div className="mt-3 flex gap-3 rounded-xl border border-[#CDC0A8] bg-white p-2.5">
@@ -318,7 +322,16 @@ function LoginPage() {
 
           </div>
         </section>
+      </section>
       </main>
+      <footer className="shrink-0 border-t border-[#EBEAE6] bg-[#FAF9F7] text-[#1A365D]">
+        <div className="mx-auto flex min-h-[39px] max-w-[1200px] flex-wrap items-center justify-center gap-x-4 px-3 py-1 text-[10px] leading-4 sm:justify-between sm:px-6 sm:text-[11px]">
+          <p>© 2026 EKARAJ BANK. All rights reserved.</p>
+          <p>
+            Secure <span aria-hidden="true" className="mx-1 text-[#757575]">•</span> Simple <span aria-hidden="true" className="mx-1 text-[#757575]">•</span> Convenient
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
