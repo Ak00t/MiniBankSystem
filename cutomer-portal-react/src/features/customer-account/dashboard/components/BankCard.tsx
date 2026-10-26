@@ -124,15 +124,15 @@ export function formatHashedCardNumber(accountNumber: string): string {
   const cleaned = accountNumber.replace(/\D/g, "");
 
   if (cleaned.length === 10) {
-    return `••••  •••  ${cleaned.slice(7, 10)}`;
+    return `****  ***  ${cleaned.slice(7, 10)}`;
   }
 
   if (cleaned.length === 16) {
-    return `••••  ••••  ••••  ${cleaned.slice(12, 16)}`;
+    return `****  ****  ****  ${cleaned.slice(12, 16)}`;
   }
 
   const last4 = cleaned.length >= 4 ? cleaned.slice(-4) : cleaned;
-  return `•••••• ${last4}`;
+  return `**** ${last4}`;
 }
 
 export default function BankCard({
@@ -261,7 +261,7 @@ export default function BankCard({
                 {formatBalance(account.availableBalance ?? 0)}
               </>
             ) : (
-              <span className="tracking-widest">••••••••••</span>
+              <span className="tracking-widest">**********</span>
             )}
           </span>
         </div>

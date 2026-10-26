@@ -136,7 +136,7 @@ export default function TotalBalanceCard({
                 formatBalance(totalBalance)
               ) : (
                 <span className="tracking-widest text-slate-300/80">
-                  ••••••••
+                  ********
                 </span>
               )}
             </div>
