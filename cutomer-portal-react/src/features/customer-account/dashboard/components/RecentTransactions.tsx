@@ -1,17 +1,14 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  ShoppingBag,
-  Building2,
-  ChevronDown,
-  Check,
-  Smartphone,
-  Zap,
-} from "lucide-react";
+import { ChevronDown, Check, ChevronRight } from "lucide-react";
 import { getTransactions } from "../../transactions/services/transactionHistoryService";
 import type { CusTransactionHistoryItemDTO } from "../../transactions/types/transactionHistoryTypes";
+import {
+  formatTransactionDateTime,
+  formatTransactionAmount,
+  formatTypeLabel,
+} from "../../transactions/types/transactionHistoryTypes";
+import TransactionStatusBadge from "../../transactions/components/TransactionStatusBadge";
 
 interface RecentTransactionsProps {
   accountNumber?: string;
@@ -26,222 +23,6 @@ const PERIOD_LABELS: Record<PeriodFilter, string> = {
   month: "This Month",
   all: "All Time",
 };
-
-const AVATAR_PALETTES = [
-  { bg: "bg-emerald-100 dark:bg-emerald-950/60", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-200 dark:border-emerald-800" },
-  { bg: "bg-blue-100 dark:bg-blue-950/60", text: "text-blue-700 dark:text-blue-300", border: "border-blue-200 dark:border-blue-800" },
-  { bg: "bg-indigo-100 dark:bg-indigo-950/60", text: "text-indigo-700 dark:text-indigo-300", border: "border-indigo-200 dark:border-indigo-800" },
-  { bg: "bg-violet-100 dark:bg-violet-950/60", text: "text-violet-700 dark:text-violet-300", border: "border-violet-200 dark:border-violet-800" },
-  { bg: "bg-purple-100 dark:bg-purple-950/60", text: "text-purple-700 dark:text-purple-300", border: "border-purple-200 dark:border-purple-800" },
-  { bg: "bg-sky-100 dark:bg-sky-950/60", text: "text-sky-700 dark:text-sky-300", border: "border-sky-200 dark:border-sky-800" },
-  { bg: "bg-teal-100 dark:bg-teal-950/60", text: "text-teal-700 dark:text-teal-300", border: "border-teal-200 dark:border-teal-800" },
-  { bg: "bg-amber-100 dark:bg-amber-950/60", text: "text-amber-800 dark:text-amber-300", border: "border-amber-200 dark:border-amber-800" },
-  { bg: "bg-rose-100 dark:bg-rose-950/60", text: "text-rose-700 dark:text-rose-300", border: "border-rose-200 dark:border-rose-800" },
-];
-
-function getInitials(name: string): string {
-  if (!name) return "TX";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 1) {
-    return parts[0].substring(0, 2).toUpperCase();
-  }
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function getAvatarColor(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % AVATAR_PALETTES.length;
-  return AVATAR_PALETTES[index];
-}
-
-function formatDate(isoString: string): string {
-  try {
-    const d = new Date(isoString);
-    if (!isNaN(d.getTime())) {
-      const day = d.getDate();
-      const month = d.toLocaleDateString("en-US", { month: "short" });
-      const hours = String(d.getHours()).padStart(2, "0");
-      const minutes = String(d.getMinutes()).padStart(2, "0");
-      return `${day} ${month}, ${hours}:${minutes}`;
-    }
-  } catch {
-    // Fallback
-  }
-  return isoString;
-}
-
-function formatAmount(amount: number): string {
-  return amount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-interface ParsedTransactionInfo {
-  title: string;
-  subtitle: string;
-  isCredit: boolean;
-  isP2P: boolean;
-  avatarInitials: string;
-}
-
-function parseTransactionInfo(tx: CusTransactionHistoryItemDTO): ParsedTransactionInfo {
-  const isCredit = tx.direction === "IN";
-  const type = (tx.transactionType || "").toUpperCase();
-  const desc = tx.description || "";
-  const rawTitle = tx.displayTitle || "";
-
-  let counterparty = tx.counterpartyName?.trim() || "";
-
-  if (!counterparty) {
-    const match =
-      rawTitle.match(/^(?:Transfer\s+(?:to|from)|Receive\s+from|Payment\s+to|Sent\s+to)\s+(.+)$/i) ||
-      desc.match(/^(?:Transfer\s+(?:to|from)|Receive\s+from|Payment\s+to|Sent\s+to)\s+(.+)$/i);
-    if (match && match[1]) {
-      counterparty = match[1].trim();
-    }
-  }
-
-  const isP2P =
-    Boolean(counterparty) ||
-    type.includes("TRANSFER") ||
-    type.includes("P2P") ||
-    type.includes("BENEFICIARY");
-
-  let title = "";
-  let subtitle = "";
-
-  if (counterparty) {
-    title = counterparty;
-    subtitle = isCredit ? "Transfer In" : "Transfer Out";
-  } else if (type.includes("BILL") || desc.toUpperCase().includes("BILL")) {
-    title = rawTitle || desc || "Electricity Bill";
-    subtitle = "Bill Payment";
-  } else if (type.includes("MOBILE") || type.includes("TOPUP") || desc.toUpperCase().includes("TOPUP")) {
-    title = rawTitle || desc || "Mobile Top-up";
-    subtitle = "Phone Bill";
-  } else if (type.includes("MERCHANT") || type.includes("SHOP") || desc.toUpperCase().includes("MERCHANT")) {
-    title = rawTitle || desc || "Merchant Payment";
-    subtitle = "Purchase";
-  } else if (type.includes("SALARY") || type.includes("DEPOSIT") || type.includes("OTC")) {
-    title = rawTitle || desc || "Bank Deposit";
-    subtitle = "Account Credit";
-  } else {
-    title = rawTitle || desc || tx.transactionType || "Bank Transfer";
-    subtitle = isCredit ? "Transfer In" : "Transfer Out";
-  }
-
-  const avatarInitials = getInitials(counterparty || title);
-
-  return {
-    title,
-    subtitle,
-    isCredit,
-    isP2P,
-    avatarInitials,
-  };
-}
-
-function renderTransactionIconOrAvatar(tx: CusTransactionHistoryItemDTO, info: ParsedTransactionInfo) {
-  const type = (tx.transactionType || "").toUpperCase();
-  const desc = (tx.description || "").toUpperCase();
-  const title = (tx.displayTitle || "").toUpperCase();
-
-  // Electricity / Utility Bill
-  if (
-    type.includes("BILL") ||
-    type.includes("ELECTRIC") ||
-    desc.includes("ELECTRIC") ||
-    title.includes("ELECTRIC") ||
-    desc.includes("BILL")
-  ) {
-    return (
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200/70 dark:border-amber-800/60 shadow-xs">
-        <Zap size={18} />
-      </div>
-    );
-  }
-
-  // Mobile Topup / Phone Bill
-  if (
-    type.includes("MOBILE") ||
-    type.includes("TOPUP") ||
-    type.includes("PHONE") ||
-    desc.includes("TOPUP") ||
-    title.includes("TOPUP")
-  ) {
-    return (
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 border border-sky-200/70 dark:border-sky-800/60 shadow-xs">
-        <Smartphone size={18} />
-      </div>
-    );
-  }
-
-  // Merchant / Shopping POS
-  if (
-    type.includes("MERCHANT") ||
-    type.includes("SHOP") ||
-    type.includes("POS") ||
-    desc.includes("SHOP")
-  ) {
-    return (
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 border border-purple-200/70 dark:border-purple-800/60 shadow-xs">
-        <ShoppingBag size={18} />
-      </div>
-    );
-  }
-
-  // Salary / Bank Deposit / OTC
-  if (
-    type.includes("SALARY") ||
-    type.includes("INTEREST") ||
-    type.includes("DEPOSIT") ||
-    type.includes("OTC")
-  ) {
-    return (
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/60 shadow-xs">
-        <Building2 size={18} />
-      </div>
-    );
-  }
-
-  // Interbank / other bank
-  if (type.includes("INTERBANK")) {
-    return (
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-xs">
-        <Building2 size={18} />
-      </div>
-    );
-  }
-
-  // P2P Transfer / Person-to-Person: Initials Avatar
-  const color = getAvatarColor(info.title);
-
-  return (
-    <div className="relative shrink-0">
-      <div
-        className={`flex h-11 w-11 items-center justify-center rounded-2xl font-bold text-xs ${color.bg} ${color.text} shadow-xs border ${color.border}`}
-      >
-        {info.avatarInitials}
-      </div>
-      {/* Mini directional arrow indicator */}
-      <div
-        className={`absolute -bottom-1 -right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full border-2 border-white dark:border-[#0A192F] text-white shadow-xs ${
-          info.isCredit ? "bg-emerald-500" : "bg-rose-500"
-        }`}
-      >
-        {info.isCredit ? (
-          <ArrowDownLeft size={10} strokeWidth={3} />
-        ) : (
-          <ArrowUpRight size={10} strokeWidth={3} />
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function RecentTransactions({
   accountNumber,
@@ -332,13 +113,13 @@ export default function RecentTransactions({
   return (
     <div className="flex flex-col rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#0A192F] p-5 sm:p-6 shadow-xs transition-colors duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
         <h3 className="text-base sm:text-lg font-extrabold text-[#0A192F] dark:text-white">
           Recent Transactions
         </h3>
 
         <div className="flex items-center gap-3">
-          {/* Real-time Time Filter Dropdown */}
+          {/* Time Filter Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
@@ -393,25 +174,30 @@ export default function RecentTransactions({
         </div>
       </div>
 
-      {/* Transactions List */}
-      <div className="divide-y divide-slate-100 dark:divide-slate-800 py-1">
+      {/* Transactions List Matching Transaction History UI/UX */}
+      <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+        {/* Loading Skeletons */}
         {loading && (
-          <div className="space-y-3 py-4">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center justify-between py-2.5 animate-pulse">
-                <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-2xl bg-slate-100 dark:bg-slate-800" />
-                  <div className="space-y-1.5">
-                    <div className="h-3.5 w-32 rounded bg-slate-100 dark:bg-slate-800" />
-                    <div className="h-2.5 w-24 rounded bg-slate-100 dark:bg-slate-800" />
-                  </div>
+              <div
+                key={i}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 py-4 px-2 sm:px-3 animate-pulse"
+              >
+                <div className="space-y-2 flex-1">
+                  <div className="h-4 w-48 sm:w-60 rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-3 w-36 sm:w-48 rounded bg-slate-200 dark:bg-slate-800" />
                 </div>
-                <div className="h-4 w-24 rounded bg-slate-100 dark:bg-slate-800" />
+                <div className="flex flex-col items-start sm:items-end justify-center gap-1.5 shrink-0">
+                  <div className="h-5 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-5 w-20 rounded-full bg-slate-200 dark:bg-slate-800" />
+                </div>
               </div>
             ))}
           </div>
         )}
 
+        {/* Empty State */}
         {!loading && displayItems.length === 0 && (
           <div className="py-10 text-center">
             <p className="text-xs font-medium text-slate-400 dark:text-slate-500">
@@ -429,74 +215,67 @@ export default function RecentTransactions({
           </div>
         )}
 
+        {/* Populated Transaction Rows */}
         {!loading &&
           displayItems.map((tx) => {
-            const info = parseTransactionInfo(tx);
-            const isPending = tx.status?.toUpperCase() === "PENDING";
-            const isFailed = tx.status?.toUpperCase() === "FAILED";
+            const primaryTitle =
+              tx.displayTitle && tx.displayTitle.trim().length > 0
+                ? tx.displayTitle.trim()
+                : tx.description && tx.description.trim().length > 0
+                  ? tx.description.trim()
+                  : formatTypeLabel(tx.transactionType) || "Transaction";
+
+            const rawDate = tx.transactionDate || tx.initiatedAt;
+            const displayDate = formatTransactionDateTime(rawDate);
+            const displayType = formatTypeLabel(tx.transactionType);
 
             return (
               <Link
                 key={tx.transactionRef}
                 to="/transaction"
-                className="group flex items-center justify-between py-3 transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60 rounded-2xl px-2 -mx-2 cursor-pointer"
+                className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 py-4 px-2 sm:px-3 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer rounded-xl"
+                aria-label={`View transaction ${primaryTitle}`}
               >
-                {/* Left: Avatar/Icon + Primary Name + Subtitle (Direction + Date) */}
-                <div className="flex items-center gap-3.5 min-w-0">
-                  {renderTransactionIconOrAvatar(tx, info)}
-                  <div className="min-w-0">
-                    {/* Primary Title: Prominent Counterparty / Merchant Name */}
-                    <p className="truncate text-sm font-bold text-[#0A192F] dark:text-white group-hover:text-[#00A3C4] transition-colors">
-                      {info.title}
-                    </p>
+                {/* LEFT SECTION: Display Title + Date & Type */}
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white break-words group-hover:text-[#00A3C4] transition-colors">
+                    {primaryTitle}
+                  </p>
 
-                    {/* Subtitle: Direction + Date */}
-                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-400 mt-0.5">
-                      <span className="inline-flex items-center gap-0.5 font-semibold">
-                        {info.isCredit ? (
-                          <>
-                            <ArrowDownLeft size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <span className="text-emerald-600 dark:text-emerald-400">{info.subtitle}</span>
-                          </>
-                        ) : (
-                          <>
-                            <ArrowUpRight size={11} className="text-slate-400 dark:text-slate-400 shrink-0" />
-                            <span className="text-slate-500 dark:text-slate-400">{info.subtitle}</span>
-                          </>
-                        )}
-                      </span>
-                      <span className="text-slate-300 dark:text-slate-600">•</span>
-                      <span>{formatDate(tx.transactionDate || tx.initiatedAt)}</span>
-                    </div>
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                    <span>{displayDate}</span>
+                    <span className="text-slate-300 dark:text-slate-600" aria-hidden="true">
+                      •
+                    </span>
+                    <span>{displayType}</span>
                   </div>
                 </div>
 
-                {/* Right: Amount + Status */}
-                <div className="text-right shrink-0 pl-3">
-                  <p
-                    className={`text-sm font-extrabold font-mono tracking-tight ${
-                      info.isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-                    }`}
-                  >
-                    {!showBalance ? (
-                      <span className="text-slate-400 dark:text-slate-500 tracking-wider">••••••</span>
-                    ) : (
-                      <>
-                        {info.isCredit ? "+" : "-"} {formatAmount(tx.amount || 0)}{" "}
-                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{tx.currency || "MMK"}</span>
-                      </>
-                    )}
-                  </p>
-                  {isPending && (
-                    <span className="mt-0.5 inline-block rounded-md bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/50">
-                      Pending
-                    </span>
-                  )}
-                  {isFailed && (
-                    <span className="mt-0.5 inline-block rounded-md bg-rose-50 dark:bg-rose-950/60 px-1.5 py-0.5 text-[10px] font-bold text-rose-600 dark:text-rose-400 border border-rose-200/50 dark:border-rose-800/50">
-                      Failed
-                    </span>
-                  )}
+                {/* RIGHT SECTION: Signed Amount + Status Badge + Chevron Arrow */}
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0 justify-between sm:justify-end">
+                  <div className="flex flex-col items-start sm:items-end justify-center gap-1.5 shrink-0">
+                    {/* Primary Line: Signed Amount */}
+                    <div className="text-sm sm:text-base font-semibold tabular-nums text-slate-900 dark:text-white">
+                      {!showBalance ? (
+                        <span className="text-slate-400 dark:text-slate-500 tracking-wider">
+                          ••••••••••
+                        </span>
+                      ) : (
+                        formatTransactionAmount(tx.amount, tx.currency, tx.direction)
+                      )}
+                    </div>
+
+                    {/* Secondary Line: Status Badge */}
+                    <div>
+                      <TransactionStatusBadge status={tx.status} />
+                    </div>
+                  </div>
+
+                  {/* Chevron Right indicator */}
+                  <ChevronRight
+                    className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors shrink-0"
+                    aria-hidden="true"
+                  />
                 </div>
               </Link>
             );

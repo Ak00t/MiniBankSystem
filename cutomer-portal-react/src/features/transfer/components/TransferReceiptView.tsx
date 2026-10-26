@@ -1,19 +1,18 @@
 import { useState, useMemo } from "react";
 import {
-  Building2,
-  CheckCircle2,
   Copy,
   Check,
-  ExternalLink,
   QrCode,
   X,
+  ArrowRight,
 } from "lucide-react";
 import { QRCodeView } from "../../../components/common/QRCodeView";
+import { EkararjCrown } from "../../../components/common/EkararjLogo";
 import type { TransferReceiptViewProps } from "../types/transferReceiptTypes";
 
 const maskAccount = (accNo?: string | null): string => {
   if (!accNo || accNo.length < 4) return accNo || "-";
-  return `••••  ••••  ${accNo.slice(-4)}`;
+  return `**** ${accNo.slice(-4)}`;
 };
 
 export default function TransferReceiptView({
@@ -28,14 +27,17 @@ export default function TransferReceiptView({
 
   const completedDate = useMemo(() => {
     if (!data.completedAt) return "";
-    return new Date(data.completedAt).toLocaleString("en-GB", {
+    const d = new Date(data.completedAt);
+    const dateStr = d.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
+    });
+    const timeStr = d.toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
     });
+    return `${dateStr}, ${timeStr}`;
   }, [data.completedAt]);
 
   const handleCopy = async () => {
@@ -53,7 +55,7 @@ export default function TransferReceiptView({
   const qrPayload = useMemo(
     () =>
       [
-        `MINI BANK TRANSACTION RECEIPT`,
+        `EKARARJ BANK OFFICIAL RECEIPT`,
         `Ref ID: ${data.transactionRef}`,
         `Amount: ${Number(data.amount).toLocaleString()} ${data.currency || "MMK"}`,
         `Sender: ${maskAccount(data.sourceAccountNumber)}`,
@@ -63,21 +65,6 @@ export default function TransferReceiptView({
       ].join("\n"),
     [data, completedDate]
   );
-
-  const fromLabel = data.isOwnAccount
-    ? "From: Own Account"
-    : data.direction === "IN"
-      ? "From (Sender)"
-      : "From (Sender)";
-
-  const toLabel = data.isOwnAccount
-    ? "To: Own Account"
-    : data.direction === "IN"
-      ? "To (Your Account)"
-      : "To (Recipient)";
-
-  const amountSign =
-    data.direction === "IN" ? "+" : data.direction === "OUT" ? "-" : "";
 
   return (
     <>
@@ -96,7 +83,7 @@ export default function TransferReceiptView({
             >
               <X className="w-5 h-5" />
             </button>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-50 text-[#00A3C4] flex items-center justify-center mx-auto mb-3">
               <QrCode className="w-6 h-6" />
             </div>
             <h3 className="text-base font-black text-slate-900">
@@ -112,7 +99,7 @@ export default function TransferReceiptView({
 
             <div className="p-3 bg-slate-50 rounded-2xl text-[11px] font-mono text-left text-slate-600 space-y-1 border border-slate-100">
               <p>
-                <strong>Bank:</strong> Mini Bank
+                <strong>Bank:</strong> EKARARJ BANK
               </p>
               <p>
                 <strong>Ref ID:</strong> {data.transactionRef}
@@ -127,179 +114,217 @@ export default function TransferReceiptView({
 
       {/* Official Banking E-Receipt Card */}
       <div
-        className={`print-receipt-container max-w-xl mx-auto bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden ${className}`}
+        className={`print-receipt-container max-w-xl mx-auto bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden relative ${className}`}
       >
-        {/* Official Bank Header */}
-        <div className="bg-[#08295C] px-6 py-4 text-white flex items-center justify-between border-b border-blue-900/50">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20 text-blue-400 border border-blue-400/30">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-sm font-black tracking-wider uppercase text-white">
-                Mini Bank
-              </h2>
-              <p className="text-[10px] text-blue-200 font-medium">
-                Official Electronic Transfer Receipt
-              </p>
-            </div>
+        {/* Printable/Shareable Receipt Slip Body */}
+        <div id="receipt-capture-area" className="relative bg-white overflow-hidden">
+          {/* Background Security Watermark (Center of Slip, 7% opacity) */}
+          <div
+            className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden z-0 select-none"
+            aria-hidden="true"
+          >
+            <img
+              src="/ekararj-crown-transparent.png"
+              alt=""
+              className="w-56 h-56 sm:w-64 sm:h-64 object-contain opacity-[0.07] grayscale contrast-125 select-none"
+            />
           </div>
 
-          <div className="text-right">
-            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-800/60 text-blue-200 border border-blue-700/50">
-              {data.badgeLabel || "P2P TRANSFER"}
+        {/* Official Bank Header: EKARARJ BANK with Official Receipt directly below */}
+        <div className="bg-[#08295C] px-6 py-4 text-white flex items-center justify-between border-b border-blue-900/50 relative z-10">
+          <div>
+            <h2 className="text-base sm:text-lg font-black tracking-wide uppercase text-white leading-tight">
+              EKARARJ BANK
+            </h2>
+            <p className="text-[10px] text-blue-200 font-semibold tracking-wider uppercase mt-0.5">
+              Official Receipt
+            </p>
+          </div>
+
+          <div className="flex items-center shrink-0">
+            <EkararjCrown size={36} className="drop-shadow-md" />
+          </div>
+        </div>
+
+        {/* Hero Section: Status & Amount */}
+        <div className="bg-white/95 px-6 pt-5 pb-3 text-center relative z-10">
+          <div className="inline-flex items-center justify-center gap-2 mb-2">
+            <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs shadow-emerald-500/40 shrink-0">
+              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" />
+            </div>
+            <span className="text-emerald-600 font-black text-base sm:text-lg tracking-tight">
+              Payment Successful
             </span>
-            <p className="text-[10px] text-blue-300 mt-1">{completedDate}</p>
-          </div>
-        </div>
-
-        {/* Transfer Status Banner (White Background with Green Checkmark) */}
-        <div className="bg-white px-6 py-4 text-center border-b border-slate-100">
-          <div className="inline-flex items-center justify-center w-11 h-11 bg-emerald-50 border border-emerald-200/80 rounded-full mb-2 shadow-sm">
-            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
-          </div>
-          <h3 className="text-xl font-black text-slate-900 tracking-tight">Payment Successful</h3>
-
-          <div className="mt-2 inline-block bg-slate-50 border border-slate-200/70 px-5 py-1.5 rounded-2xl">
-            <p className="text-3xl font-black tracking-tight text-slate-900">
-              {amountSign ? `${amountSign} ` : ""}
-              {Number(data.amount).toLocaleString()}
-            </p>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5">
-              {data.currency || "MMK"}
-            </p>
-          </div>
-        </div>
-
-        {/* Two-Party Visual Transfer Path */}
-        <div className="p-3.5 bg-slate-50/70 border-b border-slate-100">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
-            {/* Sender Box */}
-            <div className="p-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
-              <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
-                {fromLabel}
-              </span>
-              <p className="text-xs font-mono font-bold text-slate-800 truncate">
-                {maskAccount(data.sourceAccountNumber)}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                {data.sourceDisplayName || "Mini Bank Account"}
-              </p>
-            </div>
-
-            {/* Recipient Box */}
-            <div className="p-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
-              <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
-                {toLabel}
-              </span>
-              <p className="text-xs font-bold text-slate-900 truncate">
-                {data.destinationDisplayName || "Verified Account"}
-              </p>
-              <p className="text-[11px] font-mono font-bold text-slate-800 mt-0.5 truncate">
-                {maskAccount(data.destinationAccountNumber)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Breakdown */}
-        <div className="px-6 py-3 divide-y divide-slate-100 text-xs">
-          <div className="flex justify-between items-center py-1.5">
-            <span className="text-slate-500 font-medium">Transaction Reference</span>
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md">
-                {data.transactionRef}
-              </span>
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="text-slate-400 hover:text-blue-600 transition p-1"
-                title="Copy Reference ID"
-                aria-label="Copy transaction reference"
-              >
-                {copied ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5 text-slate-500" />
-                )}
-              </button>
-            </div>
           </div>
 
-          <div className="flex justify-between items-center py-1.5">
-            <span className="text-slate-500 font-medium">Transfer Amount</span>
-            <span className="font-bold text-slate-800">
+          <div>
+            <p className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
               {Number(data.amount).toLocaleString()} {data.currency || "MMK"}
-            </span>
+            </p>
+          </div>
+        </div>
+
+        {/* FROM ➔ TO Transfer Pathway Card */}
+        <div className="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-100 relative z-10">
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs">
+            {/* Header: FROM  →  TO */}
+            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2 mb-3">
+              <span className="text-slate-500 font-extrabold">FROM</span>
+              <div className="w-6 h-6 rounded-full bg-cyan-50 border border-cyan-200/80 flex items-center justify-center">
+                <ArrowRight className="w-3.5 h-3.5 text-[#00A3C4]" />
+              </div>
+              <span className="text-slate-500 font-extrabold">TO</span>
+            </div>
+
+            {/* Accounts Row */}
+            <div className="grid grid-cols-2 gap-4 text-left items-start">
+              {/* Sender */}
+              <div className="space-y-0.5 min-w-0">
+                <p className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                  {data.sourceDisplayName || "My Account"}
+                </p>
+                <p className="text-xs font-bold text-slate-600 truncate">
+                  {maskAccount(data.sourceAccountNumber)}
+                </p>
+              </div>
+
+              {/* Recipient */}
+              <div className="text-right space-y-0.5 min-w-0">
+                <p className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                  {data.destinationDisplayName || "Recipient"}
+                </p>
+                <p className="text-xs font-bold text-slate-600 truncate">
+                  {maskAccount(data.destinationAccountNumber)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Transaction Details (8 Rows with Date & Time in "26 Oct 2026, 15:59" format) */}
+        <div className="px-6 pt-3.5 pb-2.5 bg-white/95 border-b border-slate-100 relative z-10">
+          <div className="border-b border-slate-200/80 pb-2 mb-2">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+              Transaction Details
+            </h4>
           </div>
 
-          <div className="flex justify-between items-center py-1.5">
-            <span className="text-slate-500 font-medium">Service Fee</span>
-            <span className="font-bold text-emerald-600">
-              {Number(data.serviceFee || 0).toLocaleString()} {data.currency || "MMK"}
-            </span>
-          </div>
+          <div className="divide-y divide-slate-100 text-xs sm:text-[13px]">
+            {/* 1. Transaction ID */}
+            <div className="flex items-center justify-between py-2.5 gap-3">
+              <span className="text-slate-600 font-semibold shrink-0">Transaction ID</span>
+              <div className="flex items-center justify-end gap-1.5 min-w-0 max-w-[65%]">
+                <span className="font-mono font-bold text-slate-900 bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded-md truncate">
+                  {data.transactionRef}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="text-slate-400 hover:text-cyan-600 transition p-1 shrink-0"
+                  title="Copy Transaction ID"
+                  aria-label="Copy Transaction ID"
+                >
+                  {copied ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 text-slate-400" />
+                  )}
+                </button>
+              </div>
+            </div>
 
-          {data.totalDebitedAmount != null && (
-            <div className="flex justify-between items-center py-1.5">
-              <span className="text-slate-500 font-medium">Total Debited</span>
-              <span className="font-black text-rose-600 text-sm">
-                - {Number(data.totalDebitedAmount).toLocaleString()}{" "}
+            {/* 2. Date & Time */}
+            <div className="flex items-center justify-between py-2.5 gap-3">
+              <span className="text-slate-600 font-semibold shrink-0">Date &amp; Time</span>
+              <span className="font-bold text-slate-900 text-right truncate">
+                {completedDate}
+              </span>
+            </div>
+
+            {/* 3. Transfer Type */}
+            <div className="flex items-center justify-between py-2.5 gap-3">
+              <span className="text-slate-600 font-semibold shrink-0">Transfer Type</span>
+              <span className="font-bold text-slate-900 text-right truncate">
+                Internal Fund Transfer
+              </span>
+            </div>
+
+            {/* 4. Transfer Amount */}
+            <div className="flex items-center justify-between py-2.5 gap-3">
+              <span className="text-slate-600 font-semibold shrink-0">Transfer Amount</span>
+              <span className="font-bold text-slate-900 text-right truncate">
+                {Number(data.amount).toLocaleString()} {data.currency || "MMK"}
+              </span>
+            </div>
+
+            {/* 5. Service Fee */}
+            <div className="flex items-center justify-between py-2.5 gap-3">
+              <span className="text-slate-600 font-semibold shrink-0">Service Fee</span>
+              <span className="font-bold text-emerald-600 text-right truncate">
+                {Number(data.serviceFee || 0) === 0
+                  ? "0.00 MMK"
+                  : `${Number(data.serviceFee).toLocaleString()} ${data.currency || "MMK"}`}
+              </span>
+            </div>
+
+            {/* 6. Total Debited */}
+            <div className="flex items-center justify-between py-2.5 gap-3 border-t border-slate-100">
+              <span className="text-slate-800 font-bold shrink-0">Total Debited</span>
+              <span className="font-black text-slate-900 text-sm sm:text-base text-right truncate">
+                {Number(
+                  data.totalDebitedAmount != null ? data.totalDebitedAmount : data.amount
+                ).toLocaleString()}{" "}
                 {data.currency || "MMK"}
               </span>
             </div>
-          )}
 
-          <div className="flex justify-between items-center py-1.5">
-            <span className="text-slate-500 font-medium">Status</span>
-            <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              {data.status || "COMPLETED"}
-            </span>
-          </div>
-
-          {data.description && (
-            <div className="flex justify-between items-center py-1.5">
-              <span className="text-slate-500 font-medium">Transfer Memo</span>
-              <span className="font-semibold text-slate-700 italic">"{data.description}"</span>
+            {/* 7. Status (Vibrant Emerald Badge) */}
+            <div className="flex items-center justify-between py-2.5 gap-3">
+              <span className="text-slate-600 font-semibold shrink-0">Status</span>
+              <span className="inline-flex items-center gap-1.5 font-black text-white bg-emerald-500 px-3 py-0.5 rounded-full shadow-xs shadow-emerald-500/30 text-xs shrink-0 tracking-wide">
+                <Check className="w-3 h-3 stroke-[3]" />
+                {data.status || "COMPLETED"}
+              </span>
             </div>
-          )}
+
+            {/* 8. Memo */}
+            <div className="flex items-center justify-between py-2.5 gap-3">
+              <span className="text-slate-600 font-semibold shrink-0">Memo</span>
+              <span className="font-semibold text-slate-900 italic text-right truncate max-w-[65%]">
+                {data.description ? `"${data.description}"` : "P2P Fund Transfer"}
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Transaction QR Code Section */}
+        {/* Compact Integrated Transaction QR Section */}
         {showQr && (
-          <div className="mx-5 mb-3.5 p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <QrCode className="w-4 h-4 text-blue-600" />
-                <span className="text-xs font-black text-slate-800">Transaction QR</span>
+          <div className="py-2.5 px-6 border-b border-slate-100 flex flex-col items-center justify-center text-center relative z-10 bg-slate-50/50">
+            <div className="flex flex-col items-center justify-center gap-1">
+              <div className="flex items-center justify-center gap-1 text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                <QrCode className="w-3 h-3 text-[#00A3C4]" />
+                <span>Transaction QR</span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
-                Scan to view encoded transaction details.
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowQrModal(true)}
-                className="no-print mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline"
-              >
-                <span>Inspect encoded details</span>
-                <ExternalLink className="w-3 h-3" />
-              </button>
-            </div>
 
-            <div
-              onClick={() => setShowQrModal(true)}
-              className="cursor-pointer transition transform hover:scale-105 shrink-0"
-              title="Click to enlarge QR"
-            >
-              <QRCodeView value={qrPayload} size={76} />
+              <div
+                onClick={() => setShowQrModal(true)}
+                className="cursor-pointer transition transform hover:scale-105 p-1 bg-white rounded-lg border border-slate-200/90 shadow-2xs my-0.5"
+                title="Click to enlarge QR"
+              >
+                <QRCodeView value={qrPayload} size={84} />
+              </div>
+
+              <p className="text-[10px] font-medium text-slate-400 leading-none">
+                Scan to verify transaction
+              </p>
             </div>
           </div>
         )}
+        </div>
 
-        {/* Action Toolbar (hidden on print) */}
+        {/* Action Toolbar */}
         {actions && (
-          <div className="no-print p-5 bg-white border-t border-slate-100 space-y-2.5">
+          <div className="no-print px-6 pt-3 pb-5 bg-white space-y-2 relative z-10">
             {actions}
           </div>
         )}

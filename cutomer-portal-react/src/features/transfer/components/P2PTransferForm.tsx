@@ -11,6 +11,7 @@ import { getAccountTransferLimits } from "../../customer-account/accounts/api/cu
 import type { TransferLimitInfo } from "../../customer-account/accounts/types/accountTypes";
 import TransferReceiptView from "./TransferReceiptView";
 import { mapP2PResponseToReceiptData } from "../types/transferReceiptTypes";
+import { toBlob } from "html-to-image";
 import {
   Loader2,
   AlertCircle,
@@ -23,7 +24,8 @@ import {
   Send,
   Wallet,
   X,
-  Printer,
+  Download,
+  Share2,
   Home,
   UserPlus,
   ShieldCheck,
@@ -39,7 +41,7 @@ import {
 
 const maskAccount = (accNo: string): string => {
   if (!accNo || accNo.length < 4) return accNo;
-  return `••••  ••••  ${accNo.slice(-4)}`;
+  return `****  ****  ${accNo.slice(-4)}`;
 };
 
 const formatMMK = (n: number) =>
@@ -85,9 +87,11 @@ function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModal
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (error && onClearError) onClearError();
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
+    if (e.key === "Backspace") {
+      if (error && onClearError) onClearError();
+      if (!digits[index] && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      }
     }
   };
 
@@ -121,12 +125,12 @@ function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModal
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7 animate-in zoom-in-95 duration-200">
+      <div className="relative bg-white dark:bg-[#0A192F] rounded-3xl shadow-2xl w-full max-w-sm p-7 animate-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
         <button
           type="button"
           onClick={onClose}
           disabled={loading}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition disabled:opacity-50"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition disabled:opacity-50"
           title="Close"
         >
           <X className="w-5 h-5" />
@@ -138,10 +142,10 @@ function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModal
           </div>
         </div>
 
-        <h3 className="text-lg font-black text-slate-900 text-center mb-1">
+        <h3 className="text-lg font-black text-slate-900 dark:text-white text-center mb-1">
           Authorize Transfer
         </h3>
-        <p className="text-xs text-slate-500 text-center mb-6">
+        <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-6">
           Enter your 6-digit transaction PIN to complete this payment
         </p>
 
@@ -162,16 +166,21 @@ function PinModal({ loading, error, onConfirm, onClose, onClearError }: PinModal
               onPaste={handlePaste}
               className={`w-11 h-12 text-center text-xl font-bold border-2 rounded-xl outline-none transition-all ${
                 d
-                  ? "border-[#00A3C4] bg-cyan-50/70 text-[#00A3C4] ring-2 ring-cyan-100"
-                  : "border-slate-200 bg-slate-50 text-slate-800"
-              } focus:border-[#00A3C4] focus:bg-cyan-50/70 focus:ring-2 focus:ring-cyan-200`}
+                  ? "border-[#00A3C4] bg-cyan-50/70 dark:bg-cyan-950/40 text-[#00A3C4] dark:text-cyan-300 ring-2 ring-cyan-100 dark:ring-cyan-900/50"
+                  : error
+                    ? "border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20 text-slate-800 dark:text-white"
+                    : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white"
+              } focus:border-[#00A3C4] focus:bg-cyan-50/70 dark:focus:bg-cyan-950/50 focus:ring-2 focus:ring-cyan-200 dark:focus:ring-cyan-900/50`}
             />
           ))}
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl flex items-center gap-2 text-xs border border-red-100">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div
+            role="alert"
+            className="mb-4 p-3.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-xl flex items-center gap-2 text-xs font-semibold border border-red-200 dark:border-red-800/60"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
             <span>{error}</span>
           </div>
         )}
@@ -698,62 +707,84 @@ function ReviewStep({
   return (
     <div className="space-y-6">
       {/* Hero Confirmation Card */}
-      <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-        <div className="bg-gradient-to-br from-[#0A192F] to-[#153564] p-6 text-white text-center">
-          <p className="text-xs uppercase font-extrabold text-cyan-200 tracking-wider mb-1">
+      <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0A192F] overflow-hidden shadow-sm">
+        {/* 1. Review Transfer Amount Header Banner */}
+        <div className="bg-gradient-to-b from-cyan-50/90 to-cyan-50/40 dark:from-[#0f2445] dark:to-[#0A192F] border-b border-cyan-100 dark:border-slate-800 py-6 px-6 sm:py-7 sm:px-7 text-center">
+          <p className="text-xs uppercase font-extrabold text-[#00A3C4] dark:text-cyan-400 tracking-wider mb-2">
             Review Transfer Amount
           </p>
-          <p className="text-4xl font-black tracking-tight">{amount.toLocaleString()}</p>
-          <p className="text-xs font-bold text-cyan-200 mt-1">Myanmar Kyat (MMK)</p>
-        </div>
-
-        {/* Transfer Pathway (Sender ➔ Recipient) */}
-        <div className="p-5 bg-slate-50 border-b border-slate-100 flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
-              From (Sender)
+          <div className="inline-flex items-baseline justify-center gap-2">
+            <span className="text-4xl sm:text-5xl font-black tracking-tight text-[#0A192F] dark:text-white">
+              {amount.toLocaleString()}
             </span>
-            <p className="text-xs font-mono font-bold text-slate-800 truncate">
-              {sourceAccount}
-            </p>
-          </div>
-
-          <div className="w-8 h-8 rounded-full bg-cyan-100 text-[#00A3C4] flex items-center justify-center shrink-0">
-            <ArrowRight className="w-4 h-4" />
-          </div>
-
-          <div className="flex-1 min-w-0 text-right">
-            <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
-              To (Recipient)
+            <span className="text-base sm:text-lg font-black text-[#00A3C4] dark:text-cyan-400">
+              MMK
             </span>
-            <p className="text-xs font-bold text-slate-900 truncate">
-              {recipientName || "Verified Account"}
-            </p>
-            <p className="text-[10px] font-mono text-slate-500 truncate">
-              {destinationAccount}
-            </p>
           </div>
         </div>
 
-        {/* Breakdown List */}
-        <div className="p-5 divide-y divide-slate-100 text-xs">
-          <div className="flex justify-between items-center py-1.5">
-            <span className="text-slate-500 font-medium">Payment Channel</span>
-            <span className="font-bold text-slate-800">Mini Bank Portal</span>
+        {/* 2. Transfer Pathway (Sender Box ➔ Recipient Box) */}
+        <div className="p-5 sm:p-6 bg-slate-50/70 dark:bg-[#0f2445]/40 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            {/* Sender Box Card */}
+            <div className="flex-1 bg-white dark:bg-[#0A192F] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
+              <span className="text-[10px] font-extrabold uppercase text-slate-600 dark:text-slate-400 tracking-wider block">
+                From (Sender)
+              </span>
+              <p className="text-sm font-mono font-black text-slate-900 dark:text-white truncate">
+                {sourceAccount}
+              </p>
+              <span className="inline-block text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                Primary Account
+              </span>
+            </div>
+
+            {/* Central Prominent Arrow Connector */}
+            <div className="flex items-center justify-center shrink-0 my-0.5 sm:my-0">
+              <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-950/80 text-[#00A3C4] dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 flex items-center justify-center shadow-xs">
+                <ArrowRight className="w-5 h-5" />
+              </div>
+            </div>
+
+            {/* Recipient Box Card */}
+            <div className="flex-1 bg-white dark:bg-[#0A192F] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-1">
+              <span className="text-[10px] font-extrabold uppercase text-slate-600 dark:text-slate-400 tracking-wider block">
+                To (Recipient)
+              </span>
+              <p className="text-sm font-black text-slate-900 dark:text-white truncate">
+                {recipientName || "Verified Account"}
+              </p>
+              <p className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 truncate">
+                {destinationAccount}
+              </p>
+            </div>
           </div>
-          <div className="flex justify-between items-center py-1.5">
-            <span className="text-slate-500 font-medium">Service Fee</span>
-            <span className="font-bold text-emerald-600">0.00 MMK (Free)</span>
+        </div>
+
+        {/* 3. Breakdown List with Enhanced Visual Hierarchy */}
+        <div className="p-5 sm:p-6 divide-y divide-slate-100 dark:divide-slate-800/80 text-xs sm:text-[13px]">
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-700 dark:text-slate-300 font-semibold">Payment Channel</span>
+            <span className="font-bold text-slate-900 dark:text-white tracking-wide">EKARARJ BANK</span>
           </div>
+
+          <div className="flex justify-between items-center py-2.5">
+            <span className="text-slate-700 dark:text-slate-300 font-semibold">Service Fee</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400">0.00 MMK (Free)</span>
+          </div>
+
           {description && (
-            <div className="flex justify-between items-center py-1.5">
-              <span className="text-slate-500 font-medium">Transfer Memo</span>
-              <span className="font-semibold text-slate-800 italic">"{description}"</span>
+            <div className="flex justify-between items-center py-2.5">
+              <span className="text-slate-700 dark:text-slate-300 font-semibold">Transfer Memo</span>
+              <span className="font-semibold text-slate-900 dark:text-white italic">"{description}"</span>
             </div>
           )}
-          <div className="flex justify-between items-center pt-3 text-sm">
-            <span className="font-bold text-slate-900">Total Debited Amount</span>
-            <span className="font-black text-[#00A3C4] text-base">
+
+          <div className="flex justify-between items-center pt-4 mt-1 border-t border-slate-200 dark:border-slate-800">
+            <span className="text-sm sm:text-base font-extrabold text-[#0A192F] dark:text-white">
+              Total Debited Amount
+            </span>
+            <span className="font-black text-[#00A3C4] dark:text-cyan-400 text-lg sm:text-xl tracking-tight">
               {amount.toLocaleString()} MMK
             </span>
           </div>
@@ -796,6 +827,65 @@ function ReviewStep({
 /* Step 3 — Real-World Official E-Receipt                                     */
 /* -------------------------------------------------------------------------- */
 
+/* -------------------------------------------------------------------------- */
+/* Social & Chat Icons for Receipt Sharing                                    */
+/* -------------------------------------------------------------------------- */
+
+const TelegramIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
+  </svg>
+);
+
+const ViberIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M19.78 14.54c-.5-.33-1.03-.61-1.58-.84-.53-.22-1.11-.27-1.63-.07-.36.14-.68.39-.96.68l-.57.57c-.23.23-.55.33-.86.23-.9-.29-2.27-1.1-3.26-2.09-.99-.99-1.8-2.36-2.09-3.26-.1-.31 0-.63.23-.86l.57-.57c.29-.28.54-.6.68-.96.2-.52.15-1.1-.07-1.63-.23-.55-.51-1.08-.84-1.58-.45-.67-1.14-1.07-1.94-1.11-.8-.04-1.57.28-2.11.87l-.46.5c-.75.82-1.12 1.91-1.02 3 .27 2.8 1.92 6.09 4.38 8.55 2.46 2.46 5.75 4.11 8.55 4.38 1.09.1 2.18-.27 3-1.02l.5-.46c.59-.54.91-1.31.87-2.11-.04-.8-.44-1.49-1.11-1.94m-5.08-10.7c3.48.33 6.22 3.07 6.55 6.55m-6.55-4.14c1.98.27 3.54 1.83 3.81 3.81" />
+  </svg>
+);
+
+const MessengerIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.91 1.455 5.518 3.735 7.185V22l3.415-1.874c.905.25 1.865.385 2.85.385 5.523 0 10-4.145 10-9.253C22 6.145 17.523 2 12 2zm1.06 12.38l-2.695-2.875-5.258 2.875 5.786-6.142 2.76 2.875 5.193-2.875-5.786 6.142z" />
+  </svg>
+);
+
+const WhatsAppIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.888 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+);
+
+const isMobileDevice = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const userAgent = navigator.userAgent || "";
+  // Strictly detect mobile OS (iOS or Android)
+  // NEVER treat Windows desktop or Mac desktop as mobile!
+  const isMobileOS = /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
+  const isDesktopOS = /Windows NT|Macintosh|Linux x86_64/i.test(userAgent);
+  return isMobileOS && !isDesktopOS;
+};
+
+const copyImageToClipboard = async (blob: Blob): Promise<boolean> => {
+  try {
+    if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      const item = new ClipboardItem({ "image/png": blob });
+      await navigator.clipboard.write([item]);
+      return true;
+    }
+  } catch (err) {
+    console.warn("Failed to copy image to clipboard:", err);
+  }
+  return false;
+};
+
 interface ReceiptStepProps {
   result: any;
   recipientName?: string;
@@ -818,6 +908,11 @@ function ReceiptStep({
   beneficiarySaved,
 }: ReceiptStepProps) {
   const [copied, setCopied] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [imageCopied, setImageCopied] = useState(false);
 
   const receiptData = React.useMemo(
     () => mapP2PResponseToReceiptData(result, recipientName),
@@ -843,94 +938,408 @@ function ReceiptStep({
     }
   };
 
-  return (
-    <TransferReceiptView
-      data={receiptData}
-      showQr={true}
-      actions={
-        <>
+  const getReceiptBlob = async (element: HTMLElement): Promise<Blob> => {
+    const blob = await toBlob(element, {
+      pixelRatio: 2,
+      backgroundColor: "#ffffff",
+      filter: (node: Node) => {
+        if (node instanceof HTMLElement && node.classList.contains("no-print")) {
+          return false;
+        }
+        return true;
+      },
+    });
+    if (!blob) throw new Error("Failed to generate image blob");
+    return blob;
+  };
 
-          {/* Quick Add to Beneficiary */}
-          {!isSavedBeneficiary && (
-            <button
-              type="button"
-              onClick={onSaveBeneficiary}
-              disabled={savingBeneficiary}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs font-bold text-amber-800 hover:bg-amber-100 transition disabled:opacity-60"
-            >
-              {savingBeneficiary ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
-                  <span>Saving to Beneficiaries...</span>
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4 text-amber-600" />
-                  <span>Add {recipientName || "Recipient"} to Saved Contacts</span>
-                </>
-              )}
-            </button>
-          )}
+  // =========================================================================
+  // Production URL Share Link (Preserved for future hosting deployment)
+  // When the production domain is live, you can re-enable the link sharing:
+  // const productionDomain = "https://ekararjbank.com";
+  // const shareReceiptUrl = `${productionDomain}/receipt/${result.transactionRef}`;
+  // const shareSummaryText = `EKARARJ BANK Official Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}\nVerify: ${shareReceiptUrl}`;
+  // =========================================================================
 
-          {beneficiarySaved && (
-            <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Added to Beneficiaries successfully!</span>
-            </div>
-          )}
+  const handleShareToTelegram = async () => {
+    if (shareImageBlob) {
+      const ok = await copyImageToClipboard(shareImageBlob);
+      if (ok) setImageCopied(true);
+    }
+    // Directly open Telegram Web to chats without intermediate link tab or forward dialog
+    window.open("https://web.telegram.org", "_blank", "noopener,noreferrer");
+  };
 
-          {/* Print & Copy Row */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-emerald-700">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Copy Reference</span>
-                </>
-              )}
-            </button>
+  const handleShareToViber = async () => {
+    if (shareImageBlob) {
+      const ok = await copyImageToClipboard(shareImageBlob);
+      if (ok) setImageCopied(true);
+    }
+    // Launch Viber Desktop directly without forward popup
+    try {
+      window.location.href = "viber://";
+    } catch {
+      window.open("https://www.viber.com", "_blank", "noopener,noreferrer");
+    }
+  };
 
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="flex items-center justify-center gap-1.5 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
-            >
-              <Printer className="w-3.5 h-3.5 text-slate-500" />
-              <span>Print Receipt</span>
-            </button>
-          </div>
+  const handleShareToMessenger = async () => {
+    if (shareImageBlob) {
+      const ok = await copyImageToClipboard(shareImageBlob);
+      if (ok) setImageCopied(true);
+    }
+    // Directly open Messenger to chats
+    window.open("https://www.messenger.com", "_blank", "noopener,noreferrer");
+  };
 
-          {/* New Transfer */}
-          <button
-            type="button"
-            onClick={onNewTransfer}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-md shadow-cyan-500/25 transition"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Make Another Transfer</span>
-          </button>
+  const handleShareToWhatsApp = async () => {
+    if (shareImageBlob) {
+      const ok = await copyImageToClipboard(shareImageBlob);
+      if (ok) setImageCopied(true);
+    }
+    // Directly open WhatsApp Web to chats
+    window.open("https://web.whatsapp.com", "_blank", "noopener,noreferrer");
+  };
 
-          {/* Return to Dashboard */}
-          <button
-            type="button"
-            onClick={onGoDashboard}
-            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
-          >
-            <Home className="w-3.5 h-3.5" />
-            <span>Return to Dashboard</span>
-          </button>
-        </>
+  const handleShare = async () => {
+    if (isSharing) return;
+    setIsSharing(true);
+
+    try {
+      const receiptElement =
+        (document.getElementById("receipt-capture-area") as HTMLElement) ||
+        (document.querySelector(".print-receipt-container") as HTMLElement);
+
+      if (!receiptElement) {
+        throw new Error("Receipt element not found");
       }
-    />
+
+      const blob = await getReceiptBlob(receiptElement);
+      const filename = `ekararj-receipt-${result.transactionRef || Date.now()}.png`;
+      const file = new File([blob], filename, { type: "image/png" });
+
+      // Mobile Flow: If on mobile, invoke native OS Share sheet with file
+      if (
+        isMobileDevice() &&
+        typeof navigator !== "undefined" &&
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "EKARARJ BANK Transfer Receipt",
+            text: `Official EKARARJ BANK Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}`,
+          });
+          return;
+        } catch (shareErr: unknown) {
+          if ((shareErr as Error)?.name === "AbortError") {
+            return;
+          }
+        }
+      }
+
+      // Desktop Flow: Automatically copy image to system clipboard
+      const copiedOk = await copyImageToClipboard(blob);
+      setImageCopied(copiedOk);
+
+      if (shareImageUrl) {
+        URL.revokeObjectURL(shareImageUrl);
+      }
+      setShareImageBlob(blob);
+      setShareImageUrl(URL.createObjectURL(blob));
+      setShowShareModal(true);
+    } catch (err) {
+      console.error("Failed to share receipt image:", err);
+      // Fallback text share if canvas completely failed
+      if (typeof navigator !== "undefined" && navigator.share) {
+        try {
+          await navigator.share({
+            title: "EKARARJ BANK Transfer Receipt",
+            text: `EKARARJ BANK Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}`,
+          });
+        } catch {
+          // User cancelled
+        }
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  return (
+    <>
+      <TransferReceiptView
+        data={receiptData}
+        showQr={true}
+        actions={
+          <>
+            {/* Quick Add to Beneficiary */}
+            {!isSavedBeneficiary && (
+              <button
+                type="button"
+                onClick={onSaveBeneficiary}
+                disabled={savingBeneficiary}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs font-bold text-amber-800 hover:bg-amber-100 transition disabled:opacity-60"
+              >
+                {savingBeneficiary ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                    <span>Saving to Beneficiaries...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 text-amber-600" />
+                    <span>Add {recipientName || "Recipient"} to Saved Contacts</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {beneficiarySaved && (
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Added to Beneficiaries successfully!</span>
+              </div>
+            )}
+
+            {/* Row of 3 Action Buttons: [ Share Receipt ] [ Download PDF ] [ Copy Ref ] */}
+            <div className="grid grid-cols-3 gap-2">
+              {/* 1. Share Receipt */}
+              <button
+                type="button"
+                onClick={handleShare}
+                disabled={isSharing}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-1.5 sm:px-2 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 font-bold text-xs text-slate-700 transition shadow-2xs disabled:opacity-75 disabled:cursor-wait cursor-pointer"
+              >
+                {isSharing ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#00A3C4] shrink-0" />
+                    <span className="truncate">Sharing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-3.5 h-3.5 text-[#00A3C4] shrink-0" />
+                    <span className="truncate">Share Receipt</span>
+                  </>
+                )}
+              </button>
+
+              {/* 2. Download PDF */}
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-1.5 sm:px-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-xs text-slate-700 transition shadow-2xs cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                <span className="truncate">Download PDF</span>
+              </button>
+
+              {/* 3. Copy Ref */}
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="flex items-center justify-center gap-1.5 py-2.5 px-1.5 sm:px-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-xs text-slate-700 transition shadow-2xs cursor-pointer"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="text-emerald-700 truncate">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <span className="truncate">Copy Ref</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Make Another Transfer */}
+            <button
+              type="button"
+              onClick={onNewTransfer}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-[#00A3C4] to-[#0284C7] hover:from-[#0891B2] hover:to-[#0369A1] shadow-md shadow-cyan-500/25 transition cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Make Another Transfer</span>
+            </button>
+
+            {/* Return to Dashboard */}
+            <button
+              type="button"
+              onClick={onGoDashboard}
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold text-xs text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
+            >
+              <Home className="w-3.5 h-3.5" />
+              <span>Return to Dashboard</span>
+            </button>
+          </>
+        }
+      />
+
+      {/* Interactive Desktop Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in"
+            onClick={() => setShowShareModal(false)}
+          />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-5 text-slate-800 animate-in zoom-in-95 border border-slate-100 max-h-[92vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-cyan-50 text-[#00A3C4] flex items-center justify-center">
+                  <Share2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 leading-tight">
+                    Share Transfer Receipt
+                  </h3>
+                  <p className="text-[10px] font-medium text-slate-400">
+                    EKARARJ BANK Official Slip
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShareModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Receipt Preview Thumbnail */}
+            {shareImageUrl && (
+              <div className="mb-3 p-1.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-center overflow-hidden">
+                <img
+                  src={shareImageUrl}
+                  alt="Receipt Preview"
+                  className="max-h-40 w-auto object-contain rounded-xl shadow-2xs"
+                />
+              </div>
+            )}
+
+            {/* Status / Feedback Banner */}
+            {imageCopied && (
+              <div className="mb-3 p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center gap-2 text-xs font-bold animate-in fade-in">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  Receipt image copied to clipboard! Press <strong>Ctrl + V</strong> in your chat to paste.
+                </span>
+              </div>
+            )}
+
+            {/* Quick Actions (Full-width Copy Image Button) */}
+            <div className="mb-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (shareImageBlob) {
+                    const ok = await copyImageToClipboard(shareImageBlob);
+                    setImageCopied(ok);
+                  }
+                }}
+                className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-xs transition duration-200 shadow-sm cursor-pointer ${
+                  imageCopied
+                    ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20"
+                    : "bg-[#00A3C4] hover:bg-[#0891B2] text-white shadow-cyan-500/20"
+                }`}
+              >
+                {imageCopied ? (
+                  <>
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span>Receipt Image Copied to Clipboard!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 shrink-0" />
+                    <span>Copy Receipt Image</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Social / Chat Share Apps */}
+            <div className="pt-3 border-t border-slate-100">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                Open Chat App to Paste
+              </p>
+
+              <div className="grid grid-cols-4 gap-2">
+                {/* Telegram */}
+                <button
+                  type="button"
+                  onClick={handleShareToTelegram}
+                  className="flex flex-col items-center justify-center p-2 rounded-2xl border border-slate-200 hover:border-[#229ED9] hover:bg-[#229ED9]/5 transition group cursor-pointer"
+                  title="Open Telegram Web (Receipt image copied — press Ctrl+V to paste)"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-[#229ED9]/10 text-[#229ED9] flex items-center justify-center group-hover:scale-110 transition">
+                    <TelegramIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700 mt-1">
+                    Telegram
+                  </span>
+                </button>
+
+                {/* Viber */}
+                <button
+                  type="button"
+                  onClick={handleShareToViber}
+                  className="flex flex-col items-center justify-center p-2 rounded-2xl border border-slate-200 hover:border-[#7360F2] hover:bg-[#7360F2]/5 transition group cursor-pointer"
+                  title="Open Viber App (Receipt image copied — press Ctrl+V to paste)"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-[#7360F2]/10 text-[#7360F2] flex items-center justify-center group-hover:scale-110 transition">
+                    <ViberIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700 mt-1">
+                    Viber
+                  </span>
+                </button>
+
+                {/* Messenger */}
+                <button
+                  type="button"
+                  onClick={handleShareToMessenger}
+                  className="flex flex-col items-center justify-center p-2 rounded-2xl border border-slate-200 hover:border-[#0084FF] hover:bg-[#0084FF]/5 transition group cursor-pointer"
+                  title="Open Messenger (Receipt image copied — press Ctrl+V to paste)"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-[#0084FF]/10 text-[#0084FF] flex items-center justify-center group-hover:scale-110 transition">
+                    <MessengerIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700 mt-1">
+                    Messenger
+                  </span>
+                </button>
+
+                {/* WhatsApp */}
+                <button
+                  type="button"
+                  onClick={handleShareToWhatsApp}
+                  className="flex flex-col items-center justify-center p-2 rounded-2xl border border-slate-200 hover:border-[#25D366] hover:bg-[#25D366]/5 transition group cursor-pointer"
+                  title="Open WhatsApp Web (Receipt image copied — press Ctrl+V to paste)"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-[#25D366]/10 text-[#25D366] flex items-center justify-center group-hover:scale-110 transition">
+                    <WhatsAppIcon className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-700 mt-1">
+                    WhatsApp
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Helpful Instruction Tip */}
+            <div className="mt-3 p-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] text-slate-500 leading-normal text-center">
+              💡 <strong>Tip:</strong> Receipt image is automatically copied. Open any chat app above, then press <kbd className="px-1 py-0.5 bg-white border border-slate-200 rounded font-mono font-bold text-slate-700">Ctrl + V</kbd> to paste.
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1013,10 +1422,7 @@ export const P2PTransferForm = () => {
     if (validationError) {
       setValidationError("");
     }
-    if (error) {
-      dispatch(clearTransferError());
-    }
-  }, [amount, destinationAccount, sourceAccount, error, dispatch]);
+  }, [amount, destinationAccount, sourceAccount]);
 
   const isSavedBeneficiary = Boolean(
     beneficiarySaved ||
@@ -1279,18 +1685,18 @@ export const P2PTransferForm = () => {
         /* 2-Column Responsive Layout for Step 1 & Step 2 */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Main Left Column (Step Wizard Form) */}
-          <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200">
+          <div className="lg:col-span-8 xl:col-span-8 bg-white dark:bg-[#0A192F] rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200 dark:border-slate-800">
             {/* Header with Visual Stepper */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 mb-6 border-b border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#00A3C4] to-[#0284C7] flex items-center justify-center text-white shadow-md shadow-cyan-500/25 shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 mb-6 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#00A3C4] to-[#0284C7] flex items-center justify-center text-white shadow-md shadow-cyan-500/25 shrink-0">
                   <Send className="w-5 h-5" />
                 </div>
-                <div>
-                  <h2 className="text-base font-black text-slate-900">
-                    {step === "review" ? "Review Transfer Details" : "Internal P2P Fund Transfer"}
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-lg font-black text-[#0A192F] dark:text-white leading-tight sm:whitespace-nowrap">
+                    {step === "review" ? "Review Transfer Details" : "Internal Fund Transfer"}
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-normal">
                     {step === "form"
                       ? "Instant, secure transfer to any account"
                       : "Confirm transfer details before PIN authorization"}
@@ -1299,12 +1705,12 @@ export const P2PTransferForm = () => {
               </div>
 
               {/* Stepper Pills */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
                     step === "form"
                       ? "bg-[#00A3C4] text-white shadow-sm"
-                      : "bg-slate-100 text-slate-600"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                   }`}
                 >
                   <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
@@ -1312,12 +1718,12 @@ export const P2PTransferForm = () => {
                   </span>
                   <span>Setup</span>
                 </span>
-                <span className="text-slate-300 font-bold">➔</span>
+                <span className="text-slate-300 dark:text-slate-600 font-bold">➔</span>
                 <span
-                  className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
                     step === "review"
                       ? "bg-[#00A3C4] text-white shadow-sm"
-                      : "bg-slate-100 text-slate-400"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
                   }`}
                 >
                   <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
@@ -1362,14 +1768,17 @@ export const P2PTransferForm = () => {
                 recipientName={recipientName}
                 amount={Number(amount)}
                 description={description}
-                onConfirm={() => setShowPinModal(true)}
+                onConfirm={() => {
+                  dispatch(clearTransferError());
+                  setShowPinModal(true);
+                }}
                 onBack={() => setStep("form")}
               />
             )}
           </div>
 
           {/* Right Column: Live Summary & Safety Monitor */}
-          <div className="lg:col-span-5 xl:col-span-4 space-y-4 lg:sticky lg:top-24">
+          <div className="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-24">
             {/* Live Calculation Preview Card */}
             <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
               <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
@@ -1482,7 +1891,7 @@ export const P2PTransferForm = () => {
                 <span>Instant Settlement Guarantee</span>
               </div>
               <p className="text-[11px] leading-relaxed">
-                Internal P2P transactions are executed in real time 24/7 with zero waiting time and encrypted end-to-end.
+                Internal fund transfers are executed in real time 24/7 with zero waiting time and encrypted end-to-end.
               </p>
             </div>
           </div>
