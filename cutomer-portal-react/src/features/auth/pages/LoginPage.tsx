@@ -185,7 +185,7 @@ function LoginPage() {
               height={340}
               className="h-10 w-auto shrink-0 object-contain"
             />
-            <p className="min-w-0 text-sm font-semibold leading-4 tracking-[0.1em] text-[#113E65] sm:text-base">EKARAJ BANK</p>
+            <p className="min-w-0 text-xs font-semibold leading-4 tracking-[0.02em] text-[#113E65] sm:text-sm sm:tracking-[0.06em]">EKARAJ Customer Portal</p>
           </div>
           <p className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-medium leading-4 sm:gap-2 sm:text-xs">
             <ShieldCheck aria-hidden="true" size={18} className="shrink-0" />
@@ -193,21 +193,21 @@ function LoginPage() {
           </p>
         </div>
       </header>
-      <main className="flex flex-1 items-center justify-center px-3 py-3 sm:px-6">
+      <main className="flex flex-1 items-center justify-center px-3 py-2 sm:px-6">
       <section aria-label="Individual login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
         <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
-          <img src="/images.jfif" alt="" aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 h-full w-3/5 object-cover object-[70%_center] opacity-[0.07]" />
+          <img src="/assets/ekaraj-building-reference.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 h-[85%] w-[85%] object-cover object-[60%_70%] opacity-[0.1] [mask-image:radial-gradient(ellipse_at_75%_65%,#000_10%,transparent_80%)]" />
           <svg aria-hidden="true" focusable="false" viewBox="0 0 450 470" preserveAspectRatio="none" fill="none" className="pointer-events-none absolute inset-0 h-full w-full">
             <path d="M-70 85C95 35 120 300 330 285S500 215 520 150" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.35" />
             <path d="M-80 105C80 55 135 325 340 305S510 235 530 175" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.2" />
           </svg>
-          <h2 className="relative px-6 pt-5 font-serif text-[28px] font-medium leading-8 tracking-tight lg:px-7 lg:text-[30px]">
+          <h2 className="relative px-6 pt-4 font-serif text-[28px] font-medium leading-8 tracking-tight lg:px-7 lg:text-[30px]">
             Your Trust.<br />Our Commitment.
           </h2>
           <div aria-hidden="true" className="relative flex min-h-0 flex-1 items-center justify-center px-6 py-2">
             <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-auto w-40 max-w-full object-contain" />
           </div>
-          <div className="relative space-y-2.5 px-6 pb-5 pt-2 lg:px-7">
+          <div className="relative space-y-2.5 px-6 pb-4 pt-2 lg:px-7">
             {[
               [ShieldCheck, "Secure Verification", "Your safety is our priority"],
               [WalletCards, "Safe Transactions", "Bank with confidence"],
@@ -226,10 +226,10 @@ function LoginPage() {
             })}
           </div>
         </aside>
-        <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-5 sm:px-8 md:px-7 lg:px-9">
+        <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-4 sm:px-8 md:px-7 lg:px-9">
           <div className="mx-auto w-full max-w-[392px]">
-            <div className="mb-3">
-              <h1 className="font-serif text-[28px] font-medium leading-9 tracking-tight text-[#1A365D] sm:text-[30px]">Welcome Back</h1>
+            <div className="mb-2.5">
+              <h1 className="font-serif text-[28px] font-medium leading-9 tracking-tight text-[#1A365D] sm:text-[30px]">Welcome !</h1>
               <p className="mt-1 text-sm leading-5 text-[#111418]">Login securely using your Customer ID or Account Number.</p>
               <div aria-hidden="true" className="mt-2 h-px w-10 bg-[#C6A15B]" />
             </div>
@@ -305,7 +305,7 @@ function LoginPage() {
           </button>
         </form>
 
-        <div className="mb-2 mt-3 flex items-center gap-3 text-[11px] leading-4 text-[#627084]">
+        <div className="mb-2 mt-2.5 flex items-center gap-3 text-[11px] leading-4 text-[#627084]">
           <span aria-hidden="true" className="h-px flex-1 bg-[#CDC0A8]/60" />
           <span>or</span>
           <span aria-hidden="true" className="h-px flex-1 bg-[#CDC0A8]/60" />
@@ -325,7 +325,7 @@ function LoginPage() {
             <span className="font-semibold text-[#111418]">Contact your bank</span>
           </p>
         </div>
-        <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-[#C6D5E3] bg-[#EAF2FA] p-2.5">
+        <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border border-[#C6D5E3] bg-[#EAF2FA] p-2.5">
           <ShieldCheck aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#113E65]" />
           <div>
             <p className="text-xs font-semibold leading-4 text-[#1A365D]">Your security comes first.</p>
