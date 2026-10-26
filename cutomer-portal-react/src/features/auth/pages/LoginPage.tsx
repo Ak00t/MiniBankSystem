@@ -17,7 +17,7 @@ import {
 import { AuthField, AuthNotice } from "../components/IndividualAuthUI";
 
 const loginInputClass =
-  "block min-h-12 w-full rounded-xl border border-[#C5AF82] bg-white py-3 text-sm text-[#122E52] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#B89146] focus:border-[#122E52] focus:ring-4 focus:ring-[#56ABC0]/25 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
+  "block min-h-11 w-full rounded-xl border border-[#C5AF82] bg-white py-2.5 text-sm text-[#122E52] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#B89146] focus:border-[#122E52] focus:ring-4 focus:ring-[#56ABC0]/25 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
 const loginLinkClass =
   "rounded-md font-semibold text-[#122E52] underline-offset-4 transition-colors hover:text-[#122E52] hover:underline decoration-[#B89146] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#56ABC0]/30 motion-reduce:transition-none";
 
@@ -172,17 +172,17 @@ function LoginPage() {
   // =====================================================
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#E5EAF0] px-3 py-4 text-[#122E52] antialiased sm:px-6">
+    <div className="flex min-h-dvh items-center justify-center bg-[#E5EAF0] px-3 py-3 text-[#122E52] antialiased sm:px-6">
       <title>EKARAJ BANK | Personal Banking</title>
-      <main className="grid w-full max-w-[1080px] overflow-hidden rounded-3xl border border-[#CDC0A8] bg-[#FAF9F7] shadow-[0_20px_65px_-28px_rgba(18,46,82,0.3)] md:grid-cols-[0.95fr_1.05fr]">
-        <aside className="relative hidden flex-col justify-between overflow-hidden bg-[#122E52] text-white md:flex">
+      <main className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#FAF9F7] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
+        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#122E52] text-white md:flex">
           <img src="/images.jfif" alt="Bank building" className="absolute inset-0 h-full w-full object-cover object-center" />
           <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(18,46,82,0.94)_0%,rgba(18,46,82,0.5)_43%,rgba(209,177,112,0.12)_63%,rgba(18,46,82,0.96)_100%)]" />
-          <div className="relative px-8 pt-9 lg:px-10">
+          <div className="relative px-7 pt-7 lg:px-8">
             <p className="text-sm font-semibold tracking-[0.18em] text-[#E6D4B1]">EKARAJ BANK</p>
             <p className="mt-2 text-base text-white/90" lang="my">ဧကရာဇ်ဘဏ်</p>
-            <div aria-hidden="true" className="my-7 h-px w-12 bg-[#D1B170]" />
-            <h2 className="max-w-xs text-[32px] font-medium leading-tight tracking-tight lg:text-4xl">
+            <div aria-hidden="true" className="my-5 h-px w-12 bg-[#D1B170]" />
+            <h2 className="max-w-xs text-[28px] font-medium leading-tight tracking-tight lg:text-[30px]">
               Your Trust.<br />Our Commitment.
             </h2>
             <p className="mt-4 flex items-center gap-2 text-sm text-white">
@@ -190,7 +190,7 @@ function LoginPage() {
               Secure Personal Banking
             </p>
           </div>
-          <div className="relative space-y-3 px-8 pb-8 pt-32 lg:px-10">
+          <div className="relative space-y-3 px-7 pb-7 pt-20 lg:px-8">
             {[
               [ShieldCheck, "Secure verification"],
               [WalletCards, "Safe transactions"],
@@ -206,27 +206,16 @@ function LoginPage() {
             })}
           </div>
         </aside>
-        <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-6 sm:px-9 md:px-8 lg:px-12">
-          <div className="mx-auto w-full max-w-[420px]">
-            <div className="mb-4">
-              {/* Original supplied PNG, including its metallic background. */}
-              <img
-                src="/assets/ekaraj-bank-logo.png"
-                alt="EKARAJ BANK logo"
-                width={1280}
-                height={714}
-                className="mx-auto mb-2 h-auto w-56 max-w-full object-contain"
-                onError={(event) => { event.currentTarget.style.display = "none"; }}
-              />
-              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                <p className="text-sm font-semibold tracking-[0.14em]">EKARAJ BANK</p>
-                <p className="text-sm text-[#6B6B6B]" lang="my">ဧကရာဇ်ဘဏ်</p>
+        <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-5 sm:px-8 md:px-7 lg:px-9">
+          <div className="mx-auto w-full max-w-[392px]">
+            <div className="mb-3">
+              {/* A crown will be added only from an approved, clean transparent asset. */}
+              <div className="mb-3 text-center">
+                <p className="text-base font-semibold tracking-[0.16em]">EKARAJ BANK</p>
+                <p className="mt-0.5 text-sm text-[#6B6B6B]" lang="my">ဧကရာဇ်ဘဏ်</p>
               </div>
-              <p className="mb-2 mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#122E52]">
-                EKARAJ Personal Banking
-              </p>
-              <h1 className="text-[28px] font-semibold tracking-tight text-[#1A365D] sm:text-3xl">Welcome Back</h1>
-              <p className="mt-2 text-sm leading-5 text-[#6B6B6B]">
+              <h1 className="text-2xl font-semibold tracking-tight text-[#1A365D]">Welcome Back</h1>
+              <p className="mt-1 text-sm leading-5 text-[#6B6B6B]">
                 Login securely using your Customer ID or Account Number.
               </p>
             </div>
@@ -280,7 +269,7 @@ function LoginPage() {
             <button
               type="button"
               onClick={() => navigate("/forgot-password")}
-              className={`${loginLinkClass} min-h-11 px-1 text-sm`}
+              className={`${loginLinkClass} min-h-9 px-1 text-sm`}
             >
               Forgot password?
             </button>
@@ -289,7 +278,7 @@ function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#D1B170] px-5 py-3 text-sm font-semibold text-[#122E52] shadow-sm transition-colors hover:bg-[#B89146] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#122E52]/30 disabled:cursor-not-allowed disabled:border disabled:border-[#CDC0A8] disabled:bg-[#E5EAF0] disabled:text-[#122E52] motion-reduce:transition-none"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#B89146]/40 bg-[linear-gradient(90deg,#B89146_0%,#F3D78D_35%,#F3D78D_60%,#25649B_84%,#122E52_100%)] px-5 py-2.5 text-sm font-semibold text-[#122E52] shadow-sm transition-[filter,box-shadow] hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#122E52]/30 disabled:cursor-not-allowed disabled:saturate-50 disabled:opacity-70 motion-reduce:transition-none"
             aria-busy={loading}
           >
             {loading && (
@@ -302,7 +291,7 @@ function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-4 space-y-2 text-center text-xs leading-5 text-[#6B6B6B]">
+        <div className="mt-3 space-y-1 text-center text-xs leading-5 text-[#6B6B6B]">
           <p>
             Corporate Banking?{" "}
             <Link
@@ -317,7 +306,7 @@ function LoginPage() {
             <span className="font-semibold text-[#122E52]">Contact your bank</span>
           </p>
         </div>
-        <div className="mt-4 flex gap-3 rounded-xl border border-[#CDC0A8] bg-white p-3">
+        <div className="mt-3 flex gap-3 rounded-xl border border-[#CDC0A8] bg-white p-2.5">
           <ShieldCheck aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#122E52]" />
           <div>
             <p className="text-xs font-semibold">Your security comes first</p>
