@@ -17,7 +17,7 @@ import {
 import { AuthField, AuthNotice } from "../components/IndividualAuthUI";
 
 const loginInputClass =
-  "block min-h-12 w-full rounded-xl border border-[#CDD5DF] bg-white py-3 text-sm text-[#111418] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#C6A15B] focus:border-[#113E65] focus:ring-4 focus:ring-[#113E65]/15 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
+  "block min-h-11 w-full rounded-xl border border-[#CDD5DF] bg-white py-2.5 text-sm text-[#111418] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#C6A15B] focus:border-[#113E65] focus:ring-4 focus:ring-[#113E65]/15 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
 const loginLinkClass =
   "rounded-md font-semibold text-[#122E52] underline-offset-4 transition-colors hover:text-[#122E52] hover:underline decoration-[#B89146] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#56ABC0]/30 motion-reduce:transition-none";
 
@@ -193,7 +193,7 @@ function LoginPage() {
           </p>
         </div>
       </header>
-      <main className="flex flex-1 items-center justify-center px-3 py-2 sm:px-6">
+      <main className="flex flex-1 items-center justify-center px-3 py-1.5 sm:px-6">
       <section aria-label="Individual login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
         <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
           <img src="/assets/ekaraj-building-reference.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 h-[85%] w-[85%] object-cover object-[60%_70%] opacity-[0.1] [mask-image:radial-gradient(ellipse_at_75%_65%,#000_10%,transparent_80%)]" />
@@ -226,14 +226,14 @@ function LoginPage() {
             })}
           </div>
         </aside>
-        <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-4 sm:px-8 md:px-7 lg:px-9">
+        <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-3 sm:px-8 md:px-7 lg:px-9">
           <div className="mx-auto w-full max-w-[392px]">
-            <div className="mb-2.5">
-              <h1 className="font-serif text-[28px] font-medium leading-9 tracking-tight text-[#1A365D] sm:text-[30px]">Welcome !</h1>
-              <p className="mt-1 text-sm leading-5 text-[#111418]">Login securely using your Customer ID or Account Number.</p>
-              <div aria-hidden="true" className="mt-2 h-px w-10 bg-[#C6A15B]" />
+            <div className="mb-2">
+              <h1 className="font-serif text-[28px] font-medium leading-9 tracking-tight text-[#1A365D] sm:text-[30px]">Welcome Back</h1>
+              <p className="mt-0.5 text-sm leading-5 text-[#111418]">Login securely using your Customer ID or Account Number.</p>
+              <div aria-hidden="true" className="mt-1.5 h-px w-10 bg-[#C6A15B]" />
             </div>
-        <form onSubmit={handleLogin} autoComplete="off" className="space-y-2.5 [&_label]:text-[#111418]">
+        <form onSubmit={handleLogin} autoComplete="off" className="space-y-2 [&_label]:text-[#111418]">
           <AuthField label="Customer ID / Account Number" htmlFor="individual-login-id">
             <UserRound aria-hidden="true" size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#757575]" />
             <input
@@ -305,12 +305,7 @@ function LoginPage() {
           </button>
         </form>
 
-        <div className="mb-2 mt-2.5 flex items-center gap-3 text-[11px] leading-4 text-[#627084]">
-          <span aria-hidden="true" className="h-px flex-1 bg-[#CDC0A8]/60" />
-          <span>or</span>
-          <span aria-hidden="true" className="h-px flex-1 bg-[#CDC0A8]/60" />
-        </div>
-        <div className="space-y-1 text-center text-xs leading-5 text-[#111418]">
+        <div className="mt-2 space-y-1 text-center text-xs leading-5 text-[#111418]">
           <p>
             Corporate Banking?{" "}
             <Link
@@ -325,7 +320,7 @@ function LoginPage() {
             <span className="font-semibold text-[#111418]">Contact your bank</span>
           </p>
         </div>
-        <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border border-[#C6D5E3] bg-[#EAF2FA] p-2.5">
+        <div className="mt-2 flex items-start gap-2.5 rounded-xl border border-[#C6D5E3] bg-[#EAF2FA] p-2">
           <ShieldCheck aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#113E65]" />
           <div>
             <p className="text-xs font-semibold leading-4 text-[#1A365D]">Your security comes first.</p>
