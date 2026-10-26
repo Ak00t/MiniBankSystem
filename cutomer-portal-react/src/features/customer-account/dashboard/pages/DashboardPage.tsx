@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const { t } = useTranslation("dashboard");
 
   // Balance visible by default, with toggle state shared across components
-  const [showBalance, setShowBalance] = useState(true);
+  const [showBalance, setShowBalance] = useState(false);
 
   const handleToggleBalance = () => {
     setShowBalance((prev) => !prev);
