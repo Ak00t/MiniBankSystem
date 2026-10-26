@@ -1,60 +1,50 @@
 import axios from 'axios';
-import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_URL, STORAGE_KEYS } from '../config/api.config';
 
-const API_BASE_URL = 'http://localhost:8080';
+// ============================================================
+// Axios instance configured for the Core Banking backend
+// ============================================================
 
-export const apiClient = axios.create({
+const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    Accept: 'application/json',
   },
   timeout: 30000,
 });
 
-// Request Interceptor: Attach Bearer Token & Staff Identifier
-apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
+// ============================================================++++
+// Request interceptor — attach JWT access token from localStorage
+// ============================================================++++
+
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
-
-    // Default Staff ID header required by some backend endpoints
-    if (!config.headers['X-Staff-Id']) {
-      const storedUser = localStorage.getItem('staff_user');
-      if (storedUser) {
-        try {
-          const userObj = JSON.parse(storedUser);
-          if (userObj.id || userObj.staffId) {
-            config.headers['X-Staff-Id'] = String(userObj.id || userObj.staffId);
-          }
-        } catch {
-          config.headers['X-Staff-Id'] = '1';
-        }
-      } else {
-        config.headers['X-Staff-Id'] = '1';
-      }
-    }
-
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error),
 );
 
-// Response Interceptor: Handle unauthenticated responses or structured backend errors
-apiClient.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error: AxiosError<{ message?: string; error?: string; status?: string }>) => {
+// ============================================================
+// Response interceptor — normalize errors
+// ============================================================
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
     if (error.response?.status === 401) {
-      console.warn('Authentication expired or unauthorized access.');
+      // Clear stale auth data and force re-login
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.USERNAME);
+      localStorage.removeItem(STORAGE_KEYS.ROLES);
+      window.location.href = '/login';
     }
     return Promise.reject(error);
-  }
+  },
 );
 
-export default apiClient;
+export default axiosInstance;
