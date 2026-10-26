@@ -217,10 +217,29 @@ test('login uses EKARAJ branding and preserves its sign-in wording', async t => 
   const h = await setup(t, 'LoginPage');
   for (const text of [
     'EKARAJ BANK',
-    'ဧကရာဇ်ဘဏ်',
     'Welcome Back',
     'Login securely using your Customer ID or Account Number.',
+    'Your security comes first.',
+    'For your security, never share your password or OTP with anyone.',
   ]) assert.ok(h.container.textContent.includes(text), text);
+  const header = h.container.querySelector('header');
+  assert.equal(header.querySelector('img').getAttribute('src'), '/assets/ekaraj-crown-transparent.png');
+  assert.equal(header.querySelectorAll('img').length, 1);
+  assert.equal(header.textContent.match(/EKARAJ BANK/g).length, 1);
+  assert.equal(h.container.querySelector('header').textContent.includes('ဧကရာဇ်ဘဏ်'), false);
+  assert.equal(h.container.querySelectorAll('img[src="/assets/ekaraj-crown-transparent.png"]').length, 2);
+  assert.deepEqual([...h.container.querySelectorAll('h1')].map(e => e.textContent), ['Welcome Back']);
+  assert.equal(h.container.querySelector('h2').textContent.trim(), 'Your Trust.Our Commitment.');
+  assert.equal(h.container.textContent.match(/Secure Personal Banking/g).length, 1);
+  assert.deepEqual([...h.container.querySelectorAll('aside p')].map(e => e.textContent.trim()), [
+    'Secure Verification', 'Your safety is our priority',
+    'Safe Transactions', 'Bank with confidence',
+    'Your Trusted Banking Partner', 'Always by your side',
+  ]);
+  assert.ok([...h.container.querySelectorAll('span')].some(e => e.textContent === 'or'));
+  for (const removed of ['EKARAJ Customer Portal', 'Welcome to Ekaraj Personal Banking', '24/7 Access', 'Real Time Monitoring']) {
+    assert.equal(h.container.textContent.includes(removed), false, removed);
+  }
   assert.equal(h.container.querySelectorAll('.lucide-crown').length, 0);
 });
 

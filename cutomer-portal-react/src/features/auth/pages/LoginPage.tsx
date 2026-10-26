@@ -8,7 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { CheckCircle2, Eye, EyeOff, LockKeyhole, ShieldCheck, UserRound, WalletCards } from "lucide-react";
+import { Clock3, Eye, EyeOff, LockKeyhole, ShieldCheck, UserRound, WalletCards } from "lucide-react";
 
 import {
   loginCustomer,
@@ -17,7 +17,7 @@ import {
 import { AuthField, AuthNotice } from "../components/IndividualAuthUI";
 
 const loginInputClass =
-  "block min-h-11 w-full rounded-xl border border-[#C5AF82] bg-white py-2.5 text-sm text-[#111418] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#B89146] focus:border-[#122E52] focus:ring-4 focus:ring-[#56ABC0]/25 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
+  "block min-h-12 w-full rounded-xl border border-[#CDD5DF] bg-white py-3 text-sm text-[#111418] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#C6A15B] focus:border-[#113E65] focus:ring-4 focus:ring-[#113E65]/15 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
 const loginLinkClass =
   "rounded-md font-semibold text-[#122E52] underline-offset-4 transition-colors hover:text-[#122E52] hover:underline decoration-[#B89146] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#56ABC0]/30 motion-reduce:transition-none";
 
@@ -176,41 +176,52 @@ function LoginPage() {
       <title>EKARAJ BANK | Personal Banking</title>
       <header className="shrink-0 border-b border-[#C5AF82] bg-[#FAF9F7] text-[#1A365D]">
         <div className="mx-auto flex min-h-[55px] max-w-[1200px] items-center justify-between gap-3 px-3 py-1.5 sm:px-6">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold tracking-[0.14em]">EKARAJ BANK</p>
-            <p className="text-xs leading-4" lang="my">ဧကရာဇ်ဘဏ်</p>
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <img
+              src="/assets/ekaraj-crown-transparent.png"
+              alt=""
+              aria-hidden="true"
+              width={375}
+              height={340}
+              className="h-10 w-auto shrink-0 object-contain"
+            />
+            <p className="min-w-0 text-sm font-semibold leading-4 tracking-[0.1em] text-[#113E65] sm:text-base">EKARAJ BANK</p>
           </div>
           <p className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-medium leading-4 sm:gap-2 sm:text-xs">
             <ShieldCheck aria-hidden="true" size={18} className="shrink-0" />
-            <span className="max-w-[104px] sm:max-w-none">Secure Personal Banking</span>
+            <span className="max-w-[88px] sm:max-w-none">Secure Personal Banking</span>
           </p>
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center px-3 py-3 sm:px-6">
       <section aria-label="Individual login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
         <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
-          <div className="relative px-7 pt-7 lg:px-8">
-            <div aria-hidden="true" className="mb-5 h-px w-12 bg-[#D1B170]" />
-            <h2 className="max-w-xs text-[28px] font-medium leading-tight tracking-tight lg:text-[30px]">
-              Your Trust.<br />Our Commitment.
-            </h2>
-            <p className="mt-4 flex items-center gap-2 text-sm text-[#1A365D]">
-              <ShieldCheck aria-hidden="true" size={17} className="shrink-0 text-[#D1B170]" />
-              Secure Personal Banking
-            </p>
+          <img src="/images.jfif" alt="" aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 h-full w-3/5 object-cover object-[70%_center] opacity-[0.07]" />
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 450 470" preserveAspectRatio="none" fill="none" className="pointer-events-none absolute inset-0 h-full w-full">
+            <path d="M-70 85C95 35 120 300 330 285S500 215 520 150" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.35" />
+            <path d="M-80 105C80 55 135 325 340 305S510 235 530 175" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.2" />
+          </svg>
+          <h2 className="relative px-6 pt-5 font-serif text-[28px] font-medium leading-8 tracking-tight lg:px-7 lg:text-[30px]">
+            Your Trust.<br />Our Commitment.
+          </h2>
+          <div aria-hidden="true" className="relative flex min-h-0 flex-1 items-center justify-center px-6 py-2">
+            <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-auto w-40 max-w-full object-contain" />
           </div>
-          <div className="relative space-y-3 px-7 pb-7 pt-20 lg:px-8">
+          <div className="relative space-y-2.5 px-6 pb-5 pt-2 lg:px-7">
             {[
-              [ShieldCheck, "Secure verification"],
-              [WalletCards, "Safe transactions"],
-              [CheckCircle2, "Your trusted banking partner"],
-            ].map(([Icon, text]) => {
+              [ShieldCheck, "Secure Verification", "Your safety is our priority"],
+              [WalletCards, "Safe Transactions", "Bank with confidence"],
+              [Clock3, "Your Trusted Banking Partner", "Always by your side"],
+            ].map(([Icon, title, description]) => {
               const Mark = Icon as typeof ShieldCheck;
               return (
-                <p key={String(text)} className="flex items-center gap-3 text-xs text-[#1A365D]">
-                  <Mark aria-hidden="true" size={17} className="shrink-0 text-[#D1B170]" />
-                  {String(text)}
-                </p>
+                <div key={String(title)} className="flex items-start gap-3">
+                  <Mark aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#C6A15B]" />
+                  <div>
+                    <p className="text-xs font-semibold leading-4 text-[#1A365D]">{String(title)}</p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-[#627084]">{String(description)}</p>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -218,12 +229,11 @@ function LoginPage() {
         <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-5 sm:px-8 md:px-7 lg:px-9">
           <div className="mx-auto w-full max-w-[392px]">
             <div className="mb-3">
-              <h1 className="text-2xl font-semibold tracking-tight text-[#1A365D]">Welcome Back</h1>
-              <p className="mt-1 text-sm leading-5 text-[#111418]">
-                Login securely using your Customer ID or Account Number.
-              </p>
+              <h1 className="font-serif text-[28px] font-medium leading-9 tracking-tight text-[#1A365D] sm:text-[30px]">Welcome Back</h1>
+              <p className="mt-1 text-sm leading-5 text-[#111418]">Login securely using your Customer ID or Account Number.</p>
+              <div aria-hidden="true" className="mt-2 h-px w-10 bg-[#C6A15B]" />
             </div>
-        <form onSubmit={handleLogin} autoComplete="off" className="space-y-2 [&_label]:text-[#111418]">
+        <form onSubmit={handleLogin} autoComplete="off" className="space-y-2.5 [&_label]:text-[#111418]">
           <AuthField label="Customer ID / Account Number" htmlFor="individual-login-id">
             <UserRound aria-hidden="true" size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#757575]" />
             <input
@@ -282,20 +292,25 @@ function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#B89146]/40 bg-[linear-gradient(90deg,#B89146_0%,#F3D78D_35%,#F3D78D_60%,#25649B_84%,#122E52_100%)] px-5 py-2.5 text-sm font-semibold text-[#122E52] shadow-sm transition-[filter,box-shadow] hover:brightness-105 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#122E52]/30 disabled:cursor-not-allowed disabled:saturate-50 disabled:opacity-70 motion-reduce:transition-none"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#113E65] bg-[#113E65] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-[background-color,box-shadow] hover:bg-[#092C4C] hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#113E65]/30 disabled:cursor-not-allowed disabled:saturate-50 disabled:opacity-70 disabled:hover:bg-[#113E65] motion-reduce:transition-none"
             aria-busy={loading}
           >
             {loading && (
               <span
                 aria-hidden="true"
-                className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#122E52]/25 border-t-[#122E52] motion-reduce:animate-none"
+                className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/25 border-t-white motion-reduce:animate-none"
               />
             )}{" "}
             {loading ? "Sending OTP..." : "Login"}
           </button>
         </form>
 
-        <div className="mt-3 space-y-1 text-center text-xs leading-5 text-[#111418]">
+        <div className="mb-2 mt-3 flex items-center gap-3 text-[11px] leading-4 text-[#627084]">
+          <span aria-hidden="true" className="h-px flex-1 bg-[#CDC0A8]/60" />
+          <span>or</span>
+          <span aria-hidden="true" className="h-px flex-1 bg-[#CDC0A8]/60" />
+        </div>
+        <div className="space-y-1 text-center text-xs leading-5 text-[#111418]">
           <p>
             Corporate Banking?{" "}
             <Link
@@ -310,13 +325,11 @@ function LoginPage() {
             <span className="font-semibold text-[#111418]">Contact your bank</span>
           </p>
         </div>
-        <div className="mt-3 flex gap-3 rounded-xl border border-[#CDC0A8] bg-white p-2.5">
-          <ShieldCheck aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#122E52]" />
+        <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-[#C6D5E3] bg-[#EAF2FA] p-2.5">
+          <ShieldCheck aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#113E65]" />
           <div>
-            <p className="text-xs font-semibold">Your security comes first</p>
-            <p className="mt-1 text-xs leading-4 text-[#757575]">
-              For your security, never share your password or OTP with anyone.
-            </p>
+            <p className="text-xs font-semibold leading-4 text-[#1A365D]">Your security comes first.</p>
+            <p className="mt-0.5 text-xs leading-4 text-[#627084]">For your security, never share your password or OTP with anyone.</p>
           </div>
         </div>
 
