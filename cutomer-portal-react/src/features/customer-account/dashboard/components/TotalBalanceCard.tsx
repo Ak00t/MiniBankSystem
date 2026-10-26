@@ -36,7 +36,7 @@ function getTimeGreetingDetails(): {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12) {
     return {
-      greeting: "Good morning",
+      greeting: "Good Morning",
       Icon: Sunrise,
       iconClass: "text-amber-300",
       bgGlow: "bg-amber-400/20 ring-amber-400/30",
@@ -44,14 +44,14 @@ function getTimeGreetingDetails(): {
   }
   if (hour >= 12 && hour < 17) {
     return {
-      greeting: "Good afternoon",
+      greeting: "Good Afternoon",
       Icon: Sun,
       iconClass: "text-amber-400",
       bgGlow: "bg-amber-400/20 ring-amber-400/30",
     };
   }
   return {
-    greeting: "Good evening",
+    greeting: "Good Evening",
     Icon: Moon,
     iconClass: "text-cyan-300",
     bgGlow: "bg-cyan-400/20 ring-cyan-400/30",

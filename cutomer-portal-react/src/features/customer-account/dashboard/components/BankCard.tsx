@@ -18,6 +18,7 @@ interface BankCardProps {
   className?: string;
   isLink?: boolean;
   onClick?: () => void;
+  compact?: boolean;
 }
 
 export interface EkararjCardTheme {
@@ -144,6 +145,7 @@ export default function BankCard({
   className = "",
   isLink = true,
   onClick,
+  compact = false,
 }: BankCardProps) {
   const [copied, setCopied] = useState(false);
   const [isBalanceVisible, setIsBalanceVisible] = useState(showBalance);
@@ -181,6 +183,18 @@ export default function BankCard({
       : "CURRENT ACCOUNT";
 
   const hashedCardNumber = formatHashedCardNumber(account.accountNumber);
+
+  // Business Logic: Available Balance (usable money) = Current Balance - Minimum Reserve
+  const effectiveAvailableBalance = (() => {
+    const minReserve = (account as { minimumBalance?: number }).minimumBalance ?? 10000;
+    if (account.currentBalance !== undefined && account.currentBalance !== null) {
+      if (account.availableBalance !== undefined && account.availableBalance < account.currentBalance) {
+        return account.availableBalance;
+      }
+      return Math.max(0, account.currentBalance - minReserve);
+    }
+    return account.availableBalance ?? 0;
+  })();
 
   const handleToggleEye = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -258,7 +272,7 @@ export default function BankCard({
                 >
                   {account.currency || "MMK"}
                 </span>
-                {formatBalance(account.availableBalance ?? 0)}
+                {formatBalance(effectiveAvailableBalance)}
               </>
             ) : (
               <span className="tracking-widest">**********</span>
@@ -312,6 +326,94 @@ export default function BankCard({
       </div>
     </>
   );
+
+  if (compact) {
+    const compactClasses = `group relative flex h-[122px] sm:h-[130px] w-[196px] sm:w-[210px] shrink-0 flex-col justify-between overflow-hidden rounded-2xl p-3 select-none transition-all duration-300 shadow-md ${
+      isLink ? "hover:-translate-y-1 hover:shadow-xl cursor-pointer" : ""
+    } ${theme.cardClass} ${className}`;
+
+    const compactContent = (
+      <>
+        {/* Crown Watermark */}
+        <div className="pointer-events-none absolute -right-6 -bottom-6 opacity-15 select-none">
+          <CrownEmbossedWatermark theme={theme.themeType} className="w-24 h-24" />
+        </div>
+
+        {/* TOP ROW: EB Monogram + Bank Title + 3D Crown */}
+        <div className="relative z-10 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <EbMonogram size={18} />
+            <span
+              className={`text-[10px] font-black tracking-wide leading-none ${theme.bankTitleClass}`}
+            >
+              EKARARJ BANK
+            </span>
+          </div>
+          <EkararjCrown size={20} />
+        </div>
+
+        {/* MIDDLE: Balance & Card Masked Number */}
+        <div className="relative z-10 my-auto py-0.5 space-y-0.5">
+          <div className="flex items-baseline gap-1">
+            <span className={`text-[9px] font-bold ${theme.currencyClass}`}>
+              {account.currency || "MMK"}
+            </span>
+            <span className={`font-mono text-xs sm:text-[13px] font-black tracking-tight ${theme.balanceNumberClass}`}>
+              {isBalanceVisible ? formatBalance(effectiveAvailableBalance) : "••••••"}
+            </span>
+          </div>
+          <p
+            className={`font-mono text-[11px] sm:text-xs font-black tracking-[0.14em] ${theme.embossedClass}`}
+          >
+            {hashedCardNumber}
+          </p>
+        </div>
+
+        {/* BOTTOM ROW: Holder Name + Account Type Badge */}
+        <div className={`relative z-10 flex items-center justify-between border-t pt-1 ${theme.dividerClass}`}>
+          <p
+            className={`truncate font-mono text-[9px] font-bold uppercase tracking-wider ${theme.cardholderNameClass} max-w-[105px]`}
+          >
+            {customerDisplayName}
+          </p>
+          <span
+            className={`rounded-full px-1.5 py-0.5 text-[8px] font-black tracking-wider uppercase ${theme.badgeClass}`}
+          >
+            {accountTypeLabel}
+          </span>
+        </div>
+      </>
+    );
+
+    if (!isLink) {
+      return (
+        <div
+          data-bank-card="true"
+          data-keep-light="true"
+          className={compactClasses}
+          onClick={onClick}
+          role={onClick ? "button" : undefined}
+          tabIndex={onClick ? 0 : undefined}
+        >
+          {compactContent}
+        </div>
+      );
+    }
+
+    return (
+      <Link
+        to="/accounts"
+        state={{ accountNumber: account.accountNumber }}
+        title="Click to view full account details"
+        data-bank-card="true"
+        data-keep-light="true"
+        className={compactClasses}
+        onClick={onClick}
+      >
+        {compactContent}
+      </Link>
+    );
+  }
 
   const cardClasses = `group relative flex h-[225px] sm:h-[235px] w-full min-w-[320px] max-w-[400px] shrink-0 flex-col justify-between overflow-hidden rounded-[26px] p-5 sm:p-6 select-none transition-all duration-300 ${
     isLink ? "hover:-translate-y-1.5 hover:shadow-2xl cursor-pointer" : ""

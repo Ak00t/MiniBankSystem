@@ -147,8 +147,10 @@ export default function MyAccountsPage() {
   useEffect(() => {
     if (locationState?.accountNumber) {
       setSelectedAccountNumber(locationState.accountNumber);
+    } else {
+      setSelectedAccountNumber(null);
     }
-  }, [locationState?.accountNumber]);
+  }, [location.key, locationState?.accountNumber]);
 
   function handleRetry() {
     setRetryKey((key) => key + 1);
@@ -157,7 +159,7 @@ export default function MyAccountsPage() {
   // 1. Loading state with no accounts yet
   if (loading && accounts.length === 0) {
     return (
-      <main className="mx-auto max-w-7xl space-y-4 px-4 py-3 sm:px-6 sm:py-4 md:px-8">
+      <main className="mx-auto max-w-7xl space-y-3.5 px-4 py-2.5 sm:px-6 sm:py-3.5 md:px-8">
         <AccountsSkeleton />
       </main>
     );
@@ -166,7 +168,7 @@ export default function MyAccountsPage() {
   // 2. Error state
   if (error && accounts.length === 0) {
     return (
-      <main className="mx-auto max-w-7xl space-y-4 px-4 py-3 sm:px-6 sm:py-4 md:px-8">
+      <main className="mx-auto max-w-7xl space-y-3.5 px-4 py-2.5 sm:px-6 sm:py-3.5 md:px-8">
         <AccountsError onRetry={handleRetry} />
       </main>
     );
@@ -175,77 +177,77 @@ export default function MyAccountsPage() {
   // 3. Empty accounts state
   if (!loading && accounts.length === 0) {
     return (
-      <main className="mx-auto max-w-7xl space-y-4 px-4 py-3 sm:px-6 sm:py-4 md:px-8">
+      <main className="mx-auto max-w-7xl space-y-3.5 px-4 py-2.5 sm:px-6 sm:py-3.5 md:px-8">
         <AccountsEmptyState />
       </main>
     );
   }
 
   // 4. Single Account Case: Customer has only 1 account!
-  // In real-world banking, if a user has only 1 account, clicking "My Accounts" displays
-  // their Account Details directly (BankCard, Balances, Specs, Limits) without requiring
-  // them to click "View Details" on a 1-item list!
-  // The URL stays clean as '/accounts'!
+  // Directly show detail view (no overview list, no view details button needed).
   if (accounts.length === 1) {
     return (
       <AccountDetailPage
         accountNumber={accounts[0].accountNumber}
+        allAccounts={accounts}
+        onSelectAccount={(accNo) => setSelectedAccountNumber(accNo)}
         onBack={() => navigate(-1)}
       />
     );
   }
 
-  // 5. Multiple Accounts Case (2 accounts, 3 accounts, etc.):
-  // If the user selected an account to inspect details, show AccountDetailPage
-  // with an Account Switcher tab and a Back button to return to the list.
+  // 5. Multiple Accounts: If user selected an account (from Dashboard or View Details), show detail
   if (selectedAccountNumber) {
     return (
       <AccountDetailPage
         accountNumber={selectedAccountNumber}
         allAccounts={accounts}
         onSelectAccount={(accNo) => setSelectedAccountNumber(accNo)}
-        onBack={() => setSelectedAccountNumber(null)}
+        onBack={() => {
+          setSelectedAccountNumber(null);
+          navigate(location.pathname, { replace: true, state: null });
+        }}
       />
     );
   }
 
-  // Otherwise, show the full Accounts overview list with count pill and AccountCards!
+  // 6. Multiple Accounts Overview: Show the full Accounts list with AccountCards!
   return (
     <main
-      className="mx-auto max-w-7xl space-y-4 px-4 py-3 sm:px-6 sm:py-4 md:px-8"
+      className="mx-auto max-w-7xl space-y-3.5 px-4 py-2.5 sm:px-6 sm:py-3.5 md:px-8"
       aria-busy={loading}
     >
       {/* Header with Step-Back Arrow */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-1">
-        <div className="flex items-center gap-3.5">
+      <header className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between pb-0.5">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-[#00A3C4] hover:bg-cyan-50/50 hover:text-[#00A3C4]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-[#00A3C4] hover:bg-cyan-50/50 hover:text-[#00A3C4]"
             title="Go back"
             aria-label="Go back"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={16} />
           </button>
 
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-[#0A192F] sm:text-3xl">
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#0A192F]">
               {t("title", { defaultValue: "My Accounts" })}
             </h1>
-            <p className="mt-0.5 text-xs sm:text-sm font-medium text-slate-400">
+            <p className="mt-0.5 text-xs font-medium text-slate-400">
               Manage your linked bank accounts and view details
             </p>
           </div>
         </div>
 
         {/* Account count pill */}
-        <div className="self-start sm:self-auto rounded-full bg-white px-3.5 py-1.5 shadow-xs border border-slate-100 text-xs font-bold text-slate-700">
-          {accounts.length} {accounts.length === 1 ? "Account" : "Accounts"}
+        <div className="self-start sm:self-auto rounded-full bg-white px-3 py-1 shadow-xs border border-slate-100 text-xs font-bold text-slate-700">
+          {accounts.length} Accounts
         </div>
       </header>
 
       <section
-        className="space-y-5"
+        className="space-y-3.5"
         aria-label={t("title", { defaultValue: "My Accounts" })}
       >
         {accounts.map((account, index) => (

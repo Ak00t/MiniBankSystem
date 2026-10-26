@@ -92,11 +92,15 @@ function formatDate(value: string | null): string {
 }
 
 function maskAccountNumber(accountNumber: string): string {
-  if (accountNumber.length <= 4) {
-    return "•".repeat(accountNumber.length);
+  if (!accountNumber) return "**** *** ***";
+  const cleaned = accountNumber.replace(/\D/g, "");
+
+  if (cleaned.length === 10) {
+    return `**** *** ${cleaned.slice(7, 10)}`;
   }
 
-  return `**** **** ${accountNumber.slice(-4)}`;
+  const last3 = cleaned.length >= 3 ? cleaned.slice(-3) : cleaned;
+  return `**** *** ${last3}`;
 }
 
 function InfoItem({
@@ -295,18 +299,18 @@ export default function AccountDetailPage({
     "bg-slate-100 text-slate-700 border-slate-200";
 
   return (
-    <main className="mx-auto max-w-6xl space-y-4 px-4 py-3 sm:px-6 sm:py-4 md:px-8">
+    <main className="mx-auto max-w-6xl space-y-3.5 px-4 py-2.5 sm:px-6 sm:py-3.5 md:px-8">
       {/* Top Header: Step-Back Arrow, Account Switcher & Status Badge */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-1">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between pb-0.5">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={handleBack}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-[#00A3C4] hover:bg-cyan-50/50 hover:text-[#00A3C4]"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition-all hover:border-[#00A3C4] hover:bg-cyan-50/50 hover:text-[#00A3C4]"
             title="Go back"
             aria-label="Go back"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={16} />
           </button>
 
           {/* Account Switcher Tabs (when customer has 2 or more accounts) */}
@@ -329,7 +333,7 @@ export default function AccountDetailPage({
                     }`}
                   >
                     <span>
-                      {typeShort} (•••{acc.accountNumber.slice(-4)})
+                      {typeShort} (•••{acc.accountNumber.slice(-3)})
                     </span>
                   </button>
                 );
@@ -340,7 +344,7 @@ export default function AccountDetailPage({
 
         {/* Status Badge */}
         <div
-          className={`self-start sm:self-auto inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1 text-xs font-bold ${statusStyle}`}
+          className={`self-start sm:self-auto inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-bold ${statusStyle}`}
         >
           <span className="h-2 w-2 rounded-full bg-current opacity-80" />
           <span>{statusLabel}</span>
@@ -348,8 +352,8 @@ export default function AccountDetailPage({
       </div>
 
       {/* Hero Section: Bank Card on Left, Balance & Quick Actions on Right */}
-      <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+      <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white p-4 sm:p-5 shadow-sm">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           {/* Bank Card Component */}
           <div className="shrink-0 flex justify-center">
             <BankCard
@@ -359,7 +363,11 @@ export default function AccountDetailPage({
                 accountType: account.accountType,
                 currency: account.currency,
                 currentBalance: account.currentBalance,
-                availableBalance: account.availableBalance,
+                availableBalance: Math.max(
+                  0,
+                  account.currentBalance - (account.minimumBalance || 10000),
+                ),
+                minimumBalance: account.minimumBalance,
                 status: account.status,
                 jointAccount: account.jointAccount,
                 openedAt: account.openedAt,
@@ -380,7 +388,7 @@ export default function AccountDetailPage({
           </div>
 
           {/* Account Balances & Quick Actions Panel */}
-          <div className="flex-1 space-y-6 min-w-0">
+          <div className="flex-1 space-y-4 min-w-0">
             {/* Account Number Copy Row */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -415,7 +423,7 @@ export default function AccountDetailPage({
               </button>
             </div>
 
-            {/* Balances Grid: Current Balance & Minimum Reserve without duplicate Available Balance */}
+            {/* Balances Grid: Current Balance (Total Ledger) & Minimum Reserve (Locked Reserve) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-2xl bg-slate-50/80 p-4 border border-slate-100">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
