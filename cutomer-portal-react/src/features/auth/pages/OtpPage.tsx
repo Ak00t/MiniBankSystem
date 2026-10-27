@@ -29,9 +29,9 @@ import { AuthField, AuthNotice } from "../components/IndividualAuthUI";
 import { authCodeInputClass } from "../components/IndividualAuthStyles";
 
 const otpPrimaryButtonClass =
-  "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#56ABC0] bg-[#56ABC0] px-5 py-3 text-sm font-semibold text-[#122E52] shadow-sm transition-[background-color,box-shadow] hover:bg-[#4DA0B5] hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#113E65]/30 disabled:cursor-not-allowed disabled:saturate-50 disabled:opacity-70 disabled:hover:bg-[#56ABC0] motion-reduce:transition-none";
+  "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#56ABC0] bg-[#56ABC0] px-5 py-3 text-sm font-semibold text-[#122E52] shadow-sm transition-[background-color,box-shadow] hover:bg-[#4DA0B5] hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#113E65] disabled:cursor-not-allowed disabled:saturate-50 disabled:opacity-70 disabled:hover:bg-[#56ABC0] motion-reduce:transition-none";
 const otpSecondaryButtonClass =
-  "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#C5AF82] bg-white px-4 py-2.5 text-sm font-semibold text-[#1A365D] shadow-sm transition-colors hover:bg-[#FAF9F7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#113E65]/20 disabled:cursor-not-allowed disabled:opacity-70 motion-reduce:transition-none";
+  "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#C5AF82] bg-white px-4 py-2.5 text-sm font-semibold text-[#1A365D] shadow-sm transition-colors hover:bg-[#FAF9F7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#113E65] disabled:cursor-not-allowed disabled:opacity-70 motion-reduce:transition-none";
 
 function IndividualOtpCodeField({ value, children }: { value: string; children: ReactNode }) {
   return (
@@ -42,7 +42,7 @@ function IndividualOtpCodeField({ value, children }: { value: string; children: 
             key={index}
             className={[
               "inline-flex h-13 min-w-0 items-center justify-center rounded-xl border border-[#CDD5DF] bg-white font-mono text-xl font-medium text-[#122E52] shadow-sm transition-colors motion-reduce:transition-none",
-              index === Math.min(value.length, 5) ? "group-focus-within:border-[#56ABC0] group-focus-within:ring-2 group-focus-within:ring-[#56ABC0]/35" : "",
+              index === Math.min(value.length, 5) ? "group-focus-within:border-[#113E65] group-focus-within:ring-2 group-focus-within:ring-[#113E65]" : "",
             ].join(" ")}
           >
             {value[index] || ""}
@@ -519,7 +519,7 @@ function OtpPage() {
           <section aria-label="Email verification" className="flex min-w-0 items-center px-5 py-3 sm:px-8 md:px-7 lg:px-9">
             <div className="mx-auto w-full max-w-[392px]">
               <div className="mb-4">
-                <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">Verify your email</h1>
+                <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">OTP Verification</h1>
                 <p className="mt-0.5 text-sm leading-5 text-[#111418]">
               We've sent a 6-digit verification code to{" "}
               <strong className="font-semibold text-[#122E52]">
@@ -591,7 +591,7 @@ function OtpPage() {
           <ShieldCheck aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#113E65]" />
           <div>
             <p className="text-xs font-semibold leading-4 text-[#1A365D]">Your security comes first.</p>
-            <p className="mt-0.5 text-xs leading-4 text-[#627084]">Never share your OTP with anyone.</p>
+            <p className="mt-0.5 text-xs leading-4 text-[#59697D]">Never share your OTP with anyone.</p>
           </div>
         </div>
         {completed && (
