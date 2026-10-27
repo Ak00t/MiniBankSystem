@@ -201,7 +201,7 @@ function LoginPage() {
             <path d="M-70 85C95 35 120 300 330 285S500 215 520 150" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.35" />
             <path d="M-80 105C80 55 135 325 340 305S510 235 530 175" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.2" />
           </svg>
-          <h2 className="relative px-6 pt-4 font-serif text-[28px] font-medium leading-8 tracking-tight lg:px-7 lg:text-[30px]">
+          <h2 className="relative px-6 pt-4 font-serif text-2xl font-medium leading-8 tracking-tight lg:px-7">
             Your Trust.<br />Our Commitment.
           </h2>
           <div aria-hidden="true" className="relative flex min-h-0 flex-1 items-center justify-center px-6 py-2">
@@ -229,7 +229,7 @@ function LoginPage() {
         <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-3 sm:px-8 md:px-7 lg:px-9">
           <div className="mx-auto w-full max-w-[392px]">
             <div className="mb-2">
-              <h1 className="font-serif text-[28px] font-medium leading-9 tracking-tight text-[#1A365D] sm:text-[30px]">Welcome Back</h1>
+              <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">Welcome Ekaraj Banking</h1>
               <p className="mt-0.5 text-sm leading-5 text-[#111418]">Login securely using your Customer ID or Account Number.</p>
               <div aria-hidden="true" className="mt-1.5 h-px w-10 bg-[#C6A15B]" />
             </div>

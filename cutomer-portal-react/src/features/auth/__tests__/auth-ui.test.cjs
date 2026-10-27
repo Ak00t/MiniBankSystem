@@ -217,7 +217,7 @@ test('login uses EKARAJ branding and preserves its sign-in wording', async t => 
   const h = await setup(t, 'LoginPage');
   for (const text of [
     'EKARAJ Customer Portal',
-    'Welcome Back',
+    'Welcome Ekaraj Banking',
     'Login securely using your Customer ID or Account Number.',
     'Your security comes first.',
     'For your security, never share your password or OTP with anyone.',
@@ -228,7 +228,7 @@ test('login uses EKARAJ branding and preserves its sign-in wording', async t => 
   assert.equal(header.textContent.match(/EKARAJ Customer Portal/g).length, 1);
   assert.equal(h.container.querySelector('header').textContent.includes('ဧကရာဇ်ဘဏ်'), false);
   assert.equal(h.container.querySelectorAll('img[src="/assets/ekaraj-crown-transparent.png"]').length, 2);
-  assert.deepEqual([...h.container.querySelectorAll('h1')].map(e => e.textContent), ['Welcome Back']);
+  assert.deepEqual([...h.container.querySelectorAll('h1')].map(e => e.textContent), ['Welcome Ekaraj Banking']);
   assert.equal(h.container.querySelector('h2').textContent.trim(), 'Your Trust.Our Commitment.');
   assert.equal(h.container.textContent.match(/Secure Personal Banking/g).length, 1);
   assert.deepEqual([...h.container.querySelectorAll('aside p')].map(e => e.textContent.trim()), [
