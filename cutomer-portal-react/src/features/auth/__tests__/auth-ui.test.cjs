@@ -244,7 +244,7 @@ test('login uses EKARAJ branding and preserves its sign-in wording', async t => 
 });
 
 for (const page of ['OtpPage', 'PasswordResetOtpPage', 'PinResetOtpPage']) {
-  test(page + ' uses six distinct pill cells with one native OTP input', async t => {
+  test(page + (page === 'OtpPage' ? ' uses six distinct rounded-square cells with one native OTP input' : ' uses six distinct pill cells with one native OTP input'), async t => {
     const h = await setup(t, page);
     assert.equal(h.container.querySelectorAll('input').length, 1);
     const input = h.container.querySelector('input');
@@ -252,7 +252,7 @@ for (const page of ['OtpPage', 'PasswordResetOtpPage', 'PinResetOtpPage']) {
     assert.equal(input.getAttribute('autocomplete'), 'one-time-code');
     assert.equal(input.maxLength, 6);
     const cells = [...input.parentElement.querySelectorAll('[aria-hidden="true"] > span')];
-    assert.equal(cells.length, 6); assert.ok(cells.every(cell => cell.classList.contains('rounded-full')));
+    assert.equal(cells.length, 6); assert.ok(cells.every(cell => cell.classList.contains(page === 'OtpPage' ? 'rounded-xl' : 'rounded-full')));
     await h.fill(input.id, '12x34-56');
     assert.equal(input.value, '123456'); assert.equal(cells.map(c => c.textContent).join(''), '123456');
     assert.equal(input.getAttribute('aria-hidden'), null);
