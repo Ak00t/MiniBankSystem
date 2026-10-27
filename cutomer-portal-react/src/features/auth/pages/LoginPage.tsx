@@ -185,7 +185,7 @@ function LoginPage() {
               height={340}
               className="h-10 w-auto shrink-0 object-contain"
             />
-            <p className="min-w-0 text-xs font-semibold leading-4 tracking-[0.02em] text-[#113E65] sm:text-sm sm:tracking-[0.06em]">EKARAJ Customer Portal</p>
+            <p className="min-w-0 text-xs font-semibold leading-4 tracking-[0.02em] text-[#113E65] sm:text-sm sm:tracking-[0.06em]">Ekaraj Bank Customer Portal</p>
           </div>
           <p className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-medium leading-4 sm:gap-2 sm:text-xs">
             <ShieldCheck aria-hidden="true" size={18} className="shrink-0" />
@@ -228,12 +228,12 @@ function LoginPage() {
         </aside>
         <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-3 sm:px-8 md:px-7 lg:px-9">
           <div className="mx-auto w-full max-w-[392px]">
-            <div className="mb-2">
+            <div className="mb-4">
               <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">Welcome Ekaraj Banking</h1>
               <p className="mt-0.5 text-sm leading-5 text-[#111418]">Login securely using your Customer ID or Account Number.</p>
-              <div aria-hidden="true" className="mt-1.5 h-px w-10 bg-[#C6A15B]" />
+              <div aria-hidden="true" className="mt-1 h-px w-10 bg-[#C6A15B]" />
             </div>
-        <form onSubmit={handleLogin} autoComplete="off" className="space-y-2 [&_label]:text-[#111418]">
+        <form onSubmit={handleLogin} autoComplete="off" className="space-y-2 [&_label]:text-[#111418] [&>div:first-child]:mb-4 [&>div:nth-child(2)]:mb-0.5 [&>div:nth-child(3)]:mb-0 [&>[role=alert]]:mt-1">
           <AuthField label="Customer ID / Account Number" htmlFor="individual-login-id">
             <UserRound aria-hidden="true" size={18} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#757575]" />
             <input
@@ -279,11 +279,11 @@ function LoginPage() {
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}{" "}
             </button>
           </AuthField>
-          <div className="text-right">
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={() => navigate("/forgot-password")}
-              className={`${loginLinkClass} min-h-9 px-1 text-sm`}
+              className={`${loginLinkClass} inline-flex min-h-9 items-start px-1 pt-1 text-sm`}
             >
               Forgot password?
             </button>

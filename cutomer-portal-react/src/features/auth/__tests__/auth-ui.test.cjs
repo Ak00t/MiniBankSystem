@@ -216,7 +216,7 @@ for (const [page, button, destination] of [
 test('login uses EKARAJ branding and preserves its sign-in wording', async t => {
   const h = await setup(t, 'LoginPage');
   for (const text of [
-    'EKARAJ Customer Portal',
+    'Ekaraj Bank Customer Portal',
     'Welcome Ekaraj Banking',
     'Login securely using your Customer ID or Account Number.',
     'Your security comes first.',
@@ -225,7 +225,7 @@ test('login uses EKARAJ branding and preserves its sign-in wording', async t => 
   const header = h.container.querySelector('header');
   assert.equal(header.querySelector('img').getAttribute('src'), '/assets/ekaraj-crown-transparent.png');
   assert.equal(header.querySelectorAll('img').length, 1);
-  assert.equal(header.textContent.match(/EKARAJ Customer Portal/g).length, 1);
+  assert.equal(header.textContent.match(/Ekaraj Bank Customer Portal/g).length, 1);
   assert.equal(h.container.querySelector('header').textContent.includes('ဧကရာဇ်ဘဏ်'), false);
   assert.equal(h.container.querySelectorAll('img[src="/assets/ekaraj-crown-transparent.png"]').length, 2);
   assert.deepEqual([...h.container.querySelectorAll('h1')].map(e => e.textContent), ['Welcome Ekaraj Banking']);
