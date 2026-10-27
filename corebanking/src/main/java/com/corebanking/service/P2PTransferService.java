@@ -6,6 +6,8 @@ import com.corebanking.dto.P2PTransferResponseDto;
 import com.corebanking.entity.*;
 import com.corebanking.entity.enums.*;
 import com.corebanking.exception.*;
+import com.corebanking.queue.TransferQueueProducer;
+import com.corebanking.queue.TransferQueueMessage;
 import com.corebanking.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,7 @@ public class P2PTransferService {
     private final AsyncNotificationService asyncNotificationService;
     private final TransferLimitService transferLimitService;
     private final MerchantSecurityValidationService merchantSecurityValidationService;
+    private final TransferQueueProducer transferQueueProducer;
 
     /**
      * Executes internal P2P fund transfer with authentication ownership verification,
@@ -325,5 +328,257 @@ public class P2PTransferService {
                 .accountType(account.getAccountType() != null ? account.getAccountType().name() : null)
                 .status(account.getStatus() != null ? account.getStatus().name() : null)
                 .build();
+    }
+
+    /**
+     * Enqueues a P2P transfer request to the In-Memory Message Queue.
+     * Pre-validates ownership, PIN, and balance, then pre-persists the transaction in INITIATED state.
+     * Returns immediately to the caller for asynchronous non-blocking processing.
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
+    public P2PTransferResponseDto enqueueP2PTransfer(String authenticatedUsername, P2PTransferRequestDto request, String idempotencyKey) {
+        String effectiveKey = (idempotencyKey != null && !idempotencyKey.trim().isEmpty())
+                ? idempotencyKey.trim()
+                : (request.getIdempotencyKey() != null ? request.getIdempotencyKey().trim() : null);
+
+        // STEP 1: Idempotency Check
+        if (effectiveKey != null) {
+            Optional<BankTransactions> existingTxn = bankTransactionRepository.findByIdempotencyKey(effectiveKey);
+            if (existingTxn.isPresent()) {
+                log.info("Duplicate transaction request detected in enqueue with idempotencyKey: {}. Returning existing record.", effectiveKey);
+                return mapToResponseDto(existingTxn.get());
+            }
+        }
+
+        // STEP 2: Self-transfer check
+        if (request.getSourceAccountNumber().equalsIgnoreCase(request.getDestinationAccountNumber())) {
+            throw new TransactionException("Source and destination accounts cannot be identical.");
+        }
+
+        // STEP 3: Minimum Transfer Amount Check
+        if (request.getAmount() == null || request.getAmount().compareTo(MIN_TRANSFER_AMOUNT) < 0) {
+            throw new TransactionException(String.format("Transfer amount must be at least %s MMK.", MIN_TRANSFER_AMOUNT));
+        }
+
+        // STEP 4: Transaction PIN Validation
+        if (request.getTransactionPin() == null || request.getTransactionPin().trim().isEmpty()) {
+            throw new InvalidPinException("Transaction PIN is required.");
+        }
+        UUID customerUuid;
+        try {
+            customerUuid = UUID.fromString(authenticatedUsername);
+        } catch (IllegalArgumentException e) {
+            throw new SecurityException("Invalid customer authentication principal");
+        }
+        merchantSecurityValidationService.validateTransactionPin(customerUuid, request.getTransactionPin().trim());
+
+        // STEP 5: Account Lookups & Pre-Checks
+        Accounts sourceAccount = accountRepository.findByAccountNumber(request.getSourceAccountNumber())
+                .orElseThrow(() -> new AccountNotFoundException("Source account not found: " + request.getSourceAccountNumber()));
+        Accounts destAccount = accountRepository.findByAccountNumber(request.getDestinationAccountNumber())
+                .orElseThrow(() -> new AccountNotFoundException("Destination account not found: " + request.getDestinationAccountNumber()));
+
+        if (!sourceAccount.getCustomer().getCustomerId().toString().equalsIgnoreCase(authenticatedUsername)) {
+            throw new TransactionException("Authenticated user does not own the source account.");
+        }
+        if (sourceAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new TransactionException("Source account is not active. Status: " + sourceAccount.getStatus());
+        }
+        if (destAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new TransactionException("Destination account is not active. Status: " + destAccount.getStatus());
+        }
+
+        String reqCurrency = request.getCurrency() != null ? request.getCurrency() : "MMK";
+        if (!sourceAccount.getCurrency().equalsIgnoreCase(destAccount.getCurrency()) || 
+            !sourceAccount.getCurrency().equalsIgnoreCase(reqCurrency)) {
+            throw new TransactionException(String.format("Currency mismatch. Source: %s, Destination: %s",
+                    sourceAccount.getCurrency(), destAccount.getCurrency()));
+        }
+
+        BigDecimal serviceFee = calculateTransferFee(request.getAmount());
+        BigDecimal totalDebitedAmount = request.getAmount().add(serviceFee);
+        BigDecimal minBalance = transferLimitService.getEffectiveMinimumBalance(sourceAccount);
+        BigDecimal netAvailable = sourceAccount.getAvailableBalance().subtract(minBalance);
+        if (netAvailable.compareTo(totalDebitedAmount) < 0) {
+            throw new InsufficientFundsException(String.format(
+                    "Insufficient available funds. Required: %,.2f %s, Net available: %,.2f %s",
+                    totalDebitedAmount, reqCurrency, netAvailable.max(BigDecimal.ZERO), reqCurrency));
+        }
+
+        transferLimitService.validateTransferLimits(sourceAccount, destAccount, request.getAmount());
+
+        // STEP 6: Pre-persist BankTransactions in INITIATED state
+        String transactionRef = generateTransactionRef();
+        LocalDateTime now = LocalDateTime.now();
+
+        BankTransactions bankTransaction = BankTransactions.builder()
+                .transactionRef(transactionRef)
+                .transactionType(TransactionType.INTERNAL_TRANSFER)
+                .status(TransactionStatus.INITIATED)
+                .sourceAccount(sourceAccount)
+                .destinationAccount(destAccount)
+                .amount(request.getAmount())
+                .serviceFee(serviceFee)
+                .currency(reqCurrency)
+                .initiatedByType(InitiatedByType.CUSTOMER)
+                .initiatedByCustomer(sourceAccount.getCustomer())
+                .channel(TransactionChannel.CUSTOMER_PORTAL)
+                .idempotencyKey(effectiveKey)
+                .description(request.getDescription() != null ? request.getDescription() : "P2P Fund Transfer (Queued)")
+                .auditNote("Enqueued for asynchronous message queue processing")
+                .authorizedAt(now)
+                .completedAt(null)
+                .build();
+
+        bankTransactionRepository.save(bankTransaction);
+
+        // STEP 7: Publish message to Queue
+        TransferQueueMessage message = TransferQueueMessage.builder()
+                .transactionRef(transactionRef)
+                .customerId(authenticatedUsername)
+                .request(request)
+                .idempotencyKey(effectiveKey)
+                .enqueuedAt(now)
+                .retryCount(0)
+                .build();
+
+        try {
+            transferQueueProducer.publish(message);
+        } catch (Exception e) {
+            bankTransaction.setStatus(TransactionStatus.FAILED);
+            bankTransaction.setFailureCode("QUEUE_DISPATCH_FAILED");
+            bankTransaction.setFailureMessage(e.getMessage());
+            bankTransactionRepository.save(bankTransaction);
+            throw e;
+        }
+
+        log.info("Enqueued P2P Transfer [{}] successfully for customer: {}", transactionRef, authenticatedUsername);
+        return mapToResponseDto(bankTransaction);
+    }
+
+    /**
+     * Executes queued P2P transfer invoked by background consumer workers.
+     * Applies deterministic pessimistic locking, atomic balance updates, double-entry ledgering,
+     * and triggers asynchronous customer notifications.
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
+    public void executeQueuedTransfer(TransferQueueMessage message) {
+        log.info("Processing queued transfer ref: {}", message.getTransactionRef());
+
+        BankTransactions bankTransaction = bankTransactionRepository.findByTransactionRef(message.getTransactionRef())
+                .orElseThrow(() -> new TransactionException("Transaction record not found for ref: " + message.getTransactionRef()));
+
+        if (bankTransaction.getStatus() == TransactionStatus.COMPLETED) {
+            log.warn("Transfer ref: {} is already COMPLETED. Skipping duplicate execution.", message.getTransactionRef());
+            return;
+        }
+
+        P2PTransferRequestDto request = message.getRequest();
+        BigDecimal serviceFee = bankTransaction.getServiceFee();
+        BigDecimal totalDebitedAmount = request.getAmount().add(serviceFee);
+
+        // Deterministic account ordering to prevent deadlocks
+        String firstAccNo = request.getSourceAccountNumber().compareTo(request.getDestinationAccountNumber()) < 0
+                ? request.getSourceAccountNumber()
+                : request.getDestinationAccountNumber();
+
+        String secondAccNo = request.getSourceAccountNumber().compareTo(request.getDestinationAccountNumber()) < 0
+                ? request.getDestinationAccountNumber()
+                : request.getSourceAccountNumber();
+
+        Accounts firstLocked = accountRepository.findByAccountNumberForUpdate(firstAccNo)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + firstAccNo));
+
+        Accounts secondLocked = accountRepository.findByAccountNumberForUpdate(secondAccNo)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + secondAccNo));
+
+        Accounts sourceAccount = firstLocked.getAccountNumber().equalsIgnoreCase(request.getSourceAccountNumber()) ? firstLocked : secondLocked;
+        Accounts destAccount = firstLocked.getAccountNumber().equalsIgnoreCase(request.getSourceAccountNumber()) ? secondLocked : firstLocked;
+
+        if (sourceAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new TransactionException("Source account is not active. Status: " + sourceAccount.getStatus());
+        }
+        if (destAccount.getStatus() != AccountStatus.ACTIVE) {
+            throw new TransactionException("Destination account is not active. Status: " + destAccount.getStatus());
+        }
+
+        String reqCurrency = request.getCurrency() != null ? request.getCurrency() : "MMK";
+        if (!sourceAccount.getCurrency().equalsIgnoreCase(destAccount.getCurrency()) || 
+            !sourceAccount.getCurrency().equalsIgnoreCase(reqCurrency)) {
+            throw new TransactionException(String.format("Currency mismatch. Source: %s, Destination: %s",
+                    sourceAccount.getCurrency(), destAccount.getCurrency()));
+        }
+
+        BigDecimal minBalance = transferLimitService.getEffectiveMinimumBalance(sourceAccount);
+        BigDecimal netAvailable = sourceAccount.getAvailableBalance().subtract(minBalance);
+        if (netAvailable.compareTo(totalDebitedAmount) < 0) {
+            throw new InsufficientFundsException(String.format(
+                    "Insufficient available funds. Required: %,.2f %s, Net available: %,.2f %s",
+                    totalDebitedAmount, reqCurrency, netAvailable.max(BigDecimal.ZERO), reqCurrency));
+        }
+
+        transferLimitService.validateTransferLimits(sourceAccount, destAccount, request.getAmount());
+
+        BigDecimal sourceBalanceBefore = sourceAccount.getCurrentBalance();
+        BigDecimal destBalanceBefore = destAccount.getCurrentBalance();
+
+        sourceAccount.setAvailableBalance(sourceAccount.getAvailableBalance().subtract(totalDebitedAmount));
+        sourceAccount.setCurrentBalance(sourceAccount.getCurrentBalance().subtract(totalDebitedAmount));
+
+        destAccount.setAvailableBalance(destAccount.getAvailableBalance().add(request.getAmount()));
+        destAccount.setCurrentBalance(destAccount.getCurrentBalance().add(request.getAmount()));
+
+        accountRepository.save(sourceAccount);
+        accountRepository.save(destAccount);
+
+        LocalDateTime now = LocalDateTime.now();
+        bankTransaction.setStatus(TransactionStatus.COMPLETED);
+        bankTransaction.setCompletedAt(now);
+        bankTransaction.setAuditNote("Completed asynchronously via In-Memory Queue Worker");
+        bankTransactionRepository.save(bankTransaction);
+
+        createLedgerEntries(bankTransaction, sourceAccount, destAccount, request.getAmount(), serviceFee, sourceBalanceBefore, destBalanceBefore);
+
+        asyncNotificationService.sendTransferNotificationsAsync(
+                sourceAccount.getCustomer(),
+                destAccount.getCustomer(),
+                bankTransaction
+        );
+
+        log.info("Queued P2P Transfer [{}] completed successfully.", message.getTransactionRef());
+    }
+
+    /**
+     * Marks a queued transfer as FAILED if processing in worker pool fails.
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void markQueuedTransferFailed(String transactionRef, String failureReason) {
+        try {
+            Optional<BankTransactions> txnOpt = bankTransactionRepository.findByTransactionRef(transactionRef);
+            if (txnOpt.isPresent()) {
+                BankTransactions txn = txnOpt.get();
+                if (txn.getStatus() != TransactionStatus.COMPLETED) {
+                    txn.setStatus(TransactionStatus.FAILED);
+                    txn.setFailureCode("EXECUTION_ERROR");
+                    txn.setFailureMessage(failureReason != null && failureReason.length() > 250 
+                            ? failureReason.substring(0, 250) 
+                            : failureReason);
+                    bankTransactionRepository.save(txn);
+
+                    if (txn.getInitiatedByCustomer() != null && txn.getDestinationAccount() != null) {
+                        asyncNotificationService.sendFailedTransferNotificationAsync(
+                                txn.getInitiatedByCustomer(),
+                                txn.getDestinationAccount().getAccountNumber(),
+                                txn.getAmount(),
+                                txn.getCurrency(),
+                                failureReason
+                        );
+                    }
+                    log.info("Marked queued transfer [{}] as FAILED: {}", transactionRef, failureReason);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to mark queued transfer ref {} as FAILED:", transactionRef, e);
+        }
     }
 }

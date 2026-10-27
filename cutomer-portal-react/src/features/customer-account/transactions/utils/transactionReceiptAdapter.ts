@@ -6,8 +6,8 @@ import type { TransferReceiptData } from "../../../transfer/types/transferReceip
  * 
  * Rules:
  * - Own-account transfers: "Own Source Account" / "Own Destination Account"
- * - Outgoing transfers: source = "Your Account", destination = counterpartyName || "Recipient"
- * - Incoming transfers: source = counterpartyName || "Sender", destination = "Your Account"
+ * - Outgoing transfers: source = "My Account", destination = counterpartyName || "Recipient"
+ * - Incoming transfers: source = counterpartyName || "Sender", destination = "My Account"
  * - Total debited: calculated for OUT (amount + fee), null for IN
  */
 export function mapHistoryItemToTransferReceiptData(
@@ -29,10 +29,10 @@ export function mapHistoryItemToTransferReceiptData(
     destinationDisplayName = "Own Destination Account";
   } else if (isIncoming) {
     sourceDisplayName = transaction.counterpartyName?.trim() || "Sender";
-    destinationDisplayName = "Your Account";
+    destinationDisplayName = "My Account";
   } else {
     // Outgoing transfer
-    sourceDisplayName = "Your Account";
+    sourceDisplayName = "My Account";
     destinationDisplayName = transaction.counterpartyName?.trim() || "Recipient";
   }
 
@@ -58,5 +58,6 @@ export function mapHistoryItemToTransferReceiptData(
     description: transaction.description || null,
     status: transaction.status,
     badgeLabel: "INTERNAL TRANSFER",
+    transactionType: transaction.transactionType,
   };
 }

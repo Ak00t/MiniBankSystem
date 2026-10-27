@@ -10,6 +10,7 @@ import type { P2PTransferRequest } from "../types/transferTypes";
 import { getAccountTransferLimits } from "../../customer-account/accounts/api/customerAccountApi";
 import type { TransferLimitInfo } from "../../customer-account/accounts/types/accountTypes";
 import TransferReceiptView from "./TransferReceiptView";
+import TransferFailedSlip from "./TransferFailedSlip";
 import { mapP2PResponseToReceiptData } from "../types/transferReceiptTypes";
 import { toBlob } from "html-to-image";
 import {
@@ -284,9 +285,14 @@ function FormStep({
       : transferLimits.effectiveOneTimeLimitStranger
     : null;
   const amountNum = Number(amount) || 0;
-  const availBalance = selectedAcc ? Number(selectedAcc.availableBalance) : 0;
-  const minBalance = transferLimits?.minimumBalance ?? 10000;
-  const netAvailable = Math.max(0, availBalance - minBalance);
+  const totalCurrentBalance = selectedAcc ? Number(selectedAcc.currentBalance ?? selectedAcc.availableBalance) : 0;
+  const minBalance = transferLimits?.minimumBalance ?? (selectedAcc ? Number(selectedAcc.minimumBalance || 10000) : 10000);
+  // Net available to transfer: Current Balance - Minimum Reserve (or availableBalance if already adjusted)
+  const netAvailable = selectedAcc
+    ? (selectedAcc.availableBalance !== undefined && selectedAcc.availableBalance < totalCurrentBalance
+        ? Number(selectedAcc.availableBalance)
+        : Math.max(0, totalCurrentBalance - minBalance))
+    : 0;
 
   const isOverOneTimeLimit = Boolean(
     transferLimits && effectiveOneTimeLimit && amountNum > effectiveOneTimeLimit
@@ -356,7 +362,7 @@ function FormStep({
                       {netAvailable.toLocaleString()} MMK
                     </p>
                     <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium mt-0.5">
-                      Total Balance: <span className="font-bold text-slate-800 dark:text-white">{availBalance.toLocaleString()} MMK</span> • Min reserve: {minBalance.toLocaleString()} MMK
+                      Total Balance: <span className="font-bold text-slate-800 dark:text-white">{totalCurrentBalance.toLocaleString()} MMK</span> • Min reserve: {minBalance.toLocaleString()} MMK
                     </p>
                   </div>
                 </div>
@@ -619,7 +625,7 @@ function FormStep({
                     Insufficient balance. You must maintain a minimum reserve balance of {minBalance.toLocaleString()} MMK.
                   </p>
                   <p className="text-[11px] font-normal text-slate-600 mt-0.5">
-                    Net available to transfer: {netAvailable.toLocaleString()} MMK (Total Balance: {availBalance.toLocaleString()} MMK)
+                    Net available to transfer: {netAvailable.toLocaleString()} MMK (Total Balance: {totalCurrentBalance.toLocaleString()} MMK)
                   </p>
                 </div>
               </div>
@@ -1347,7 +1353,7 @@ function ReceiptStep({
 /* Main P2P Transfer Component with 2-Column Responsive Layout                */
 /* -------------------------------------------------------------------------- */
 
-type Step = "form" | "review" | "receipt";
+type Step = "form" | "review" | "receipt" | "failed";
 
 export const P2PTransferForm = () => {
   const dispatch = useAppDispatch();
@@ -1356,6 +1362,11 @@ export const P2PTransferForm = () => {
 
   const [step, setStep] = useState<Step>("form");
   const [showPinModal, setShowPinModal] = useState(false);
+  const [failureData, setFailureData] = useState<{
+    reason: string;
+    code?: string;
+    referenceId?: string;
+  } | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -1551,8 +1562,13 @@ export const P2PTransferForm = () => {
 
     const transferNum = Number(amount);
     const selected = accounts.find((a) => a.accountNumber === sourceAccount);
-    const minReserve = transferLimits?.minimumBalance ?? 10000;
-    const maxTransferable = selected ? Math.max(0, Number(selected.availableBalance) - minReserve) : 0;
+    const currentBal = selected ? Number(selected.currentBalance ?? selected.availableBalance) : 0;
+    const minReserve = transferLimits?.minimumBalance ?? (selected ? Number(selected.minimumBalance || 10000) : 10000);
+    const maxTransferable = selected
+      ? (selected.availableBalance !== undefined && selected.availableBalance < currentBal
+          ? Number(selected.availableBalance)
+          : Math.max(0, currentBal - minReserve))
+      : 0;
     if (selected && transferNum > maxTransferable) {
       return setValidationError(
         `Insufficient available funds. You must maintain a minimum balance of ${minReserve.toLocaleString()} MMK. Net available for transfer is ${maxTransferable.toLocaleString()} MMK.`
@@ -1588,8 +1604,8 @@ export const P2PTransferForm = () => {
     setStep("review");
   };
 
-  /* PIN Confirmation */
-  const handlePinConfirm = (pin: string) => {
+  /* Real-world Automated API Transfer Submission Handler */
+  const handleTransferSubmit = async (pin: string) => {
     const payload: P2PTransferRequest = {
       sourceAccountNumber: sourceAccount,
       destinationAccountNumber: destinationAccount,
@@ -1600,13 +1616,86 @@ export const P2PTransferForm = () => {
       idempotencyKey: crypto.randomUUID(),
     };
 
-    dispatch(submitP2PTransfer(payload)).then((res: any) => {
-      if (res.meta.requestStatus === "fulfilled") {
+    try {
+      // 1. Submit to Real Banking API
+      const resultAction = await dispatch(submitP2PTransfer(payload));
+
+      // 2. HTTP Status 200 / 201: Success Flow
+      if (submitP2PTransfer.fulfilled.match(resultAction)) {
         saveDestination(destinationAccount);
         dispatch(fetchMyAccounts());
+        window.dispatchEvent(new Event("new-notification-event"));
+        setShowPinModal(false);
+        setStep("receipt");
+        return;
       }
-      window.dispatchEvent(new Event("new-notification-event"));
-    });
+
+      // 3. HTTP Error Evaluation (Status 400, 401, 503, 504, 500)
+      const errorPayload = resultAction.payload as any;
+      const statusCode = Number(errorPayload?.status) || 500;
+      const errorMsg =
+        (typeof errorPayload === "string" ? errorPayload : errorPayload?.message) ||
+        resultAction.error?.message ||
+        "Transfer could not be processed. Please try again.";
+      const errorCode = errorPayload?.code;
+
+      // Status 401 or Invalid PIN error: Keep PIN modal open so user can re-try entering the PIN
+      const isPinError =
+        statusCode === 401 ||
+        errorMsg.toLowerCase().includes("invalid pin") ||
+        errorMsg.toLowerCase().includes("incorrect pin") ||
+        errorCode === "INVALID_PIN";
+
+      if (isPinError) {
+        return;
+      }
+
+      // Status 400: Client Error (Insufficient Funds, Limit Exceeded, Invalid Account)
+      if (statusCode === 400) {
+        setShowPinModal(false);
+        setFailureData({
+          reason: errorMsg,
+          code: errorCode || "ERR_CLIENT_VALIDATION",
+          referenceId: `FAIL-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+        });
+        setStep("failed");
+        return;
+      }
+
+      // Status 503 / 504: Server Offline or Network Timeout
+      if (statusCode === 503 || statusCode === 504) {
+        setShowPinModal(false);
+        setFailureData({
+          reason:
+            statusCode === 503
+              ? "System Offline: Core banking services are undergoing maintenance. Please try again later."
+              : "Network Timeout: The banking payment gateway timed out. No funds were debited.",
+          code: statusCode === 503 ? "ERR_SYSTEM_OFFLINE" : "ERR_NETWORK_TIMEOUT",
+          referenceId: `FAIL-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+        });
+        setStep("failed");
+        return;
+      }
+
+      // Other Server Errors (500 or fallback)
+      setShowPinModal(false);
+      setFailureData({
+        reason: errorMsg,
+        code: errorCode || `ERR_HTTP_${statusCode}`,
+        referenceId: `FAIL-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      });
+      setStep("failed");
+
+    } catch (err: any) {
+      // Network Disconnection or unhandled exception
+      setShowPinModal(false);
+      setFailureData({
+        reason: "Network Timeout: Unable to connect to bank servers. Please check your internet connection.",
+        code: "ERR_NETWORK_DISCONNECTED",
+        referenceId: `FAIL-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      });
+      setStep("failed");
+    }
   };
 
   /* Reset */
@@ -1620,6 +1709,7 @@ export const P2PTransferForm = () => {
     setValidationError("");
     setShowPinModal(false);
     setBeneficiarySaved(false);
+    setFailureData(null);
     dispatch(resetTransferState());
     dispatch(fetchMyAccounts());
   };
@@ -1640,7 +1730,13 @@ export const P2PTransferForm = () => {
   };
 
   const selectedAcc = accounts.find((a) => a.accountNumber === sourceAccount);
-  const availBalance = selectedAcc ? Number(selectedAcc.availableBalance) : 0;
+  const currentBalance = selectedAcc ? Number(selectedAcc.currentBalance ?? selectedAcc.availableBalance) : 0;
+  const minBalance = transferLimits?.minimumBalance ?? (selectedAcc ? Number(selectedAcc.minimumBalance || 10000) : 10000);
+  const availBalance = selectedAcc
+    ? (selectedAcc.availableBalance !== undefined && selectedAcc.availableBalance < currentBalance
+        ? Number(selectedAcc.availableBalance)
+        : Math.max(0, currentBalance - minBalance))
+    : 0;
   const transferAmountNum = Number(amount) || 0;
   const newBalancePreview = Math.max(0, availBalance - transferAmountNum);
 
@@ -1658,7 +1754,7 @@ export const P2PTransferForm = () => {
         <PinModal
           loading={loading}
           error={error}
-          onConfirm={handlePinConfirm}
+          onConfirm={handleTransferSubmit}
           onClearError={() => dispatch(clearTransferError())}
           onClose={() => {
             if (!loading) {
@@ -1669,10 +1765,42 @@ export const P2PTransferForm = () => {
         />
       )}
 
-      {/* When in Receipt Step: Render Standalone Official E-Receipt */}
-      {step === "receipt" && transactionResult ? (
+      {/* When in Failure Step: Render TransferFailedSlip */}
+      {step === "failed" ? (
+        <TransferFailedSlip
+          amount={Number(amount)}
+          currency="MMK"
+          sourceAccountNumber={sourceAccount}
+          sourceDisplayName={
+            accounts.find((a) => a.accountNumber === sourceAccount)?.accountType || "My Account"
+          }
+          destinationAccountNumber={destinationAccount}
+          destinationDisplayName={recipientName || "Recipient"}
+          errorReason={failureData?.reason || error || "Transaction could not be completed"}
+          errorCode={failureData?.code}
+          referenceId={failureData?.referenceId}
+          description={description}
+          onTryAgain={() => {
+            setStep("form");
+            setFailureData(null);
+            dispatch(resetTransferState());
+          }}
+          onGoDashboard={() => {
+            handleReset();
+            navigate("/dashboard");
+          }}
+          onClose={() => {
+            handleReset();
+            navigate("/dashboard");
+          }}
+        />
+      ) : step === "receipt" && transactionResult ? (
         <ReceiptStep
-          result={transactionResult}
+          result={{
+            ...transactionResult,
+            sourceAccountNumber: transactionResult.sourceAccountNumber || sourceAccount,
+            destinationAccountNumber: transactionResult.destinationAccountNumber || destinationAccount,
+          }}
           recipientName={recipientName}
           onNewTransfer={handleReset}
           onGoDashboard={() => navigate("/dashboard")}
@@ -1798,7 +1926,11 @@ export const P2PTransferForm = () => {
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-500 font-medium">Current Balance</span>
-                  <span className="font-bold text-slate-800">{formatMMK(availBalance)}</span>
+                  <span className="font-bold text-slate-800">{formatMMK(currentBalance)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 font-medium">Available to Transfer</span>
+                  <span className="font-bold text-[#00A3C4]">{formatMMK(availBalance)}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs border-t border-slate-200/60 pt-2">
                   <span className="text-slate-500 font-medium">Transfer Amount</span>
@@ -1807,7 +1939,7 @@ export const P2PTransferForm = () => {
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs border-t border-slate-200/60 pt-2">
-                  <span className="text-slate-700 font-bold">Balance After Transfer</span>
+                  <span className="text-slate-700 font-bold">Available After Transfer</span>
                   <span className="font-black text-slate-900">
                     {formatMMK(newBalancePreview)}
                   </span>

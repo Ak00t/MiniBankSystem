@@ -22,6 +22,7 @@ export interface TransferReceiptData {
   status: string;
 
   badgeLabel?: string;
+  transactionType?: string;
 }
 
 export interface TransferReceiptViewProps {
@@ -30,6 +31,7 @@ export interface TransferReceiptViewProps {
   actions?: React.ReactNode;
   onCopyReference?: () => void;
   className?: string;
+  onClose?: () => void;
 }
 
 export function mapP2PResponseToReceiptData(
@@ -70,5 +72,6 @@ export function mapP2PResponseToReceiptData(
     description: result.description || null,
     status: result.status || "COMPLETED",
     badgeLabel: "P2P TRANSFER",
+    transactionType: "TRANSFER",
   };
 }

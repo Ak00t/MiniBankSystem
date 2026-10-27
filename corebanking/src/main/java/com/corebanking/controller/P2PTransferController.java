@@ -34,17 +34,17 @@ public class P2PTransferController {
 
     @PostMapping("/p2p")
     public ResponseEntity<P2PTransferResponseDto> executeP2PTransfer(
-    		@AuthenticationPrincipal String customerId,
+            @AuthenticationPrincipal String customerId,
             @RequestHeader(value = "Idempotency-Key", required = false) String headerIdempotencyKey,
             @Valid @RequestBody P2PTransferRequestDto request) {
-    	
+        
         String idempotencyKey = (headerIdempotencyKey != null && !headerIdempotencyKey.isBlank()) 
                 ? headerIdempotencyKey 
                 : request.getIdempotencyKey();
 
         try {
             P2PTransferResponseDto response = p2pTransferService.processP2PTransfer(
-            		customerId,
+                    customerId,
                     request, 
                     idempotencyKey
             );
@@ -67,5 +67,23 @@ public class P2PTransferController {
             }
             throw e;
         }
+    }
+
+    @PostMapping("/p2p/queued")
+    public ResponseEntity<P2PTransferResponseDto> executeP2PTransferQueued(
+            @AuthenticationPrincipal String customerId,
+            @RequestHeader(value = "Idempotency-Key", required = false) String headerIdempotencyKey,
+            @Valid @RequestBody P2PTransferRequestDto request) {
+
+        String idempotencyKey = (headerIdempotencyKey != null && !headerIdempotencyKey.isBlank()) 
+                ? headerIdempotencyKey 
+                : request.getIdempotencyKey();
+
+        P2PTransferResponseDto response = p2pTransferService.enqueueP2PTransfer(
+                customerId,
+                request,
+                idempotencyKey
+        );
+        return ResponseEntity.accepted().body(response);
     }
 }

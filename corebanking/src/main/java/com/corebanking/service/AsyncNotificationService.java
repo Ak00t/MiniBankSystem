@@ -133,6 +133,8 @@ public class AsyncNotificationService {
                             .counterpartyName(receiverName)
                             .counterpartyAccountNumber(destAccNo)
                             .transferDirection("SENT")
+                            .sourceAccountNumber(sourceAccNo)
+                            .destinationAccountNumber(destAccNo)
                             .build();
 
                     notificationWebSocketHandler.sendNotification(senderManaged.getCustomerId().toString(), senderDto);
@@ -176,6 +178,8 @@ public class AsyncNotificationService {
                             .counterpartyName(senderName)
                             .counterpartyAccountNumber(sourceAccNo)
                             .transferDirection("RECEIVED")
+                            .sourceAccountNumber(sourceAccNo)
+                            .destinationAccountNumber(destAccNo)
                             .build();
 
                     notificationWebSocketHandler.sendNotification(receiverManaged.getCustomerId().toString(), receiverDto);
@@ -309,6 +313,8 @@ public class AsyncNotificationService {
                             .counterpartyName(mName)
                             .counterpartyAccountNumber(merchantAccountNumber)
                             .transferDirection("SENT")
+                            .sourceAccountNumber(srcAcc)
+                            .destinationAccountNumber(merchantAccountNumber)
                             .build();
 
                     notificationWebSocketHandler.sendNotification(payerManaged.getCustomerId().toString(), payerDto);
@@ -351,6 +357,8 @@ public class AsyncNotificationService {
                             .counterpartyName(payerName)
                             .counterpartyAccountNumber(srcAcc)
                             .transferDirection("RECEIVED")
+                            .sourceAccountNumber(srcAcc)
+                            .destinationAccountNumber(merchantAccountNumber)
                             .build();
 
                     notificationWebSocketHandler.sendNotification(merchantManaged.getCustomerId().toString(), merchantDto);

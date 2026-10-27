@@ -53,9 +53,16 @@ function getViewMode(status?: string): DetailViewMode {
 }
 
 function maskAccount(accNo?: string | null): string {
-  if (!accNo || accNo.trim().length < 4) return "-";
+  if (!accNo || accNo.trim().length === 0) return "-";
   const clean = accNo.trim();
-  return `•••• •••• ${clean.slice(-4)}`;
+  const digits = clean.replace(/\D/g, "");
+  if (digits.length >= 4) {
+    return `•••• •••• ${digits.slice(-4)}`;
+  }
+  if (digits.length > 0) {
+    return `•••• •••• ${digits}`;
+  }
+  return clean;
 }
 
 export default function TransactionDetailModal({
@@ -212,19 +219,10 @@ export default function TransactionDetailModal({
           onClick={(e) => e.stopPropagation()}
           className="relative w-full max-w-xl print:static print:w-full print:max-w-none print:m-0"
         >
-          {/* Screen-only dismiss button */}
-          <button
-            type="button"
-            onClick={onClose}
-            className="no-print absolute -top-3 -right-3 z-10 p-1.5 rounded-full bg-slate-900/80 text-white shadow-md hover:bg-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
-            aria-label="Close transaction details"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
           <TransferReceiptView
             data={receiptData}
             showQr={true}
+            onClose={onClose}
             className="transaction-history-receipt-print max-h-[90vh] overflow-y-auto"
             actions={
               <div className="flex items-center justify-end gap-3">
@@ -386,14 +384,14 @@ export default function TransactionDetailModal({
                       ? "From: Own Account"
                       : transaction.direction === "IN"
                         ? "From (Sender)"
-                        : "From (Your Account)"}
+                        : "From (My Account)"}
                   </span>
                   <p className="text-xs font-semibold text-slate-900 truncate">
                     {transaction.isOwnAccount
                       ? "Own Source Account"
                       : transaction.direction === "IN"
                         ? transaction.counterpartyName || "External Sender"
-                        : "Your Account"}
+                        : "My Account"}
                   </p>
                   <p className="text-[11px] font-mono font-medium text-slate-600 mt-0.5">
                     {maskAccount(transaction.sourceAccountNumber)}
@@ -406,14 +404,14 @@ export default function TransactionDetailModal({
                     {transaction.isOwnAccount
                       ? "To: Own Account"
                       : transaction.direction === "IN"
-                        ? "To (Your Account)"
+                        ? "To (My Account)"
                         : "To (Recipient)"}
                   </span>
                   <p className="text-xs font-semibold text-slate-900 truncate">
                     {transaction.isOwnAccount
                       ? "Own Destination Account"
                       : transaction.direction === "IN"
-                        ? "Your Account"
+                        ? "My Account"
                         : transaction.counterpartyName || "Recipient"}
                   </p>
                   <p className="text-[11px] font-mono font-medium text-slate-600 mt-0.5">
@@ -431,7 +429,7 @@ export default function TransactionDetailModal({
                   <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
                     Paid From (Account)
                   </span>
-                  <p className="text-xs font-semibold text-slate-900">Your Account</p>
+                  <p className="text-xs font-semibold text-slate-900">My Account</p>
                   <p className="text-[11px] font-mono font-medium text-slate-600 mt-0.5">
                     {maskAccount(transaction.sourceAccountNumber)}
                   </p>
@@ -456,7 +454,7 @@ export default function TransactionDetailModal({
                 <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
                   Credited To Account
                 </span>
-                <p className="text-xs font-semibold text-slate-900">Your Account</p>
+                <p className="text-xs font-semibold text-slate-900">My Account</p>
                 <p className="text-[11px] font-mono font-medium text-slate-600 mt-0.5">
                   {maskAccount(transaction.destinationAccountNumber)}
                 </p>
@@ -470,7 +468,7 @@ export default function TransactionDetailModal({
                 <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">
                   {isDeposit ? "Credited Account" : "Debited Account"}
                 </span>
-                <p className="text-xs font-semibold text-slate-900">Your Account</p>
+                <p className="text-xs font-semibold text-slate-900">My Account</p>
                 <p className="text-[11px] font-mono font-medium text-slate-600 mt-0.5">
                   {maskAccount(transaction.sourceAccountNumber || transaction.destinationAccountNumber)}
                 </p>

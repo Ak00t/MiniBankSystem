@@ -262,17 +262,27 @@ html.dark .border-red-200:not([data-bank-card] *) {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 0; /* Strips browser URL, date, and page 1/1 header/footer */
   }
   html, body {
+    width: 100% !important;
     height: 100% !important;
     min-height: 100% !important;
     background: #ffffff !important;
     color: #0f172a !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: hidden !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+  body {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   header,
   aside,
@@ -299,14 +309,19 @@ html.dark .border-red-200:not([data-bank-card] *) {
   }
   .print-receipt-container {
     box-shadow: none !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1.5px solid #cbd5e1 !important;
     border-radius: 16px !important;
-    max-width: 530px !important;
+    max-width: 700px !important;
     width: 100% !important;
     margin: auto !important;
     overflow: hidden !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 
@@ -382,14 +397,16 @@ html.dark .border-red-200:not([data-bank-card] *) {
     right: 0 !important;
     margin: 0 auto !important;
     width: 100% !important;
-    max-width: 530px !important;
-    border: 1px solid #cbd5e1 !important;
+    max-width: 700px !important;
+    border: 1.5px solid #cbd5e1 !important;
     border-radius: 16px !important;
     box-shadow: none !important;
     max-height: none !important;
     overflow: hidden !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
   /* 6. Enforce that screen-only controls remain hidden */

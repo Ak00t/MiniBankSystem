@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { mapHistoryItemToTransferReceiptData } from "../../transactions/utils/transactionReceiptAdapter";
+import type { TransferReceiptData } from "../../../transfer/types/transferReceiptTypes";
 import { ChevronDown, Check, ChevronRight } from "lucide-react";
 import { getTransactions } from "../../transactions/services/transactionHistoryService";
 import type { CusTransactionHistoryItemDTO } from "../../transactions/types/transactionHistoryTypes";
@@ -28,7 +30,45 @@ export default function RecentTransactions({
   accountNumber,
   showBalance = true,
 }: RecentTransactionsProps) {
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState<CusTransactionHistoryItemDTO[]>([]);
+
+  const isTransfer = (tx: CusTransactionHistoryItemDTO): boolean => {
+    const normType = (tx.transactionType || "").toUpperCase();
+    const ref = (tx.transactionRef || "").toUpperCase();
+    return (
+      normType === "INTERNAL_TRANSFER" ||
+      normType.includes("TRANSFER") ||
+      ref.startsWith("TXN-P2P") ||
+      ref.startsWith("TXN-TRANSFER")
+    );
+  };
+
+  const handleRowClick = (tx: CusTransactionHistoryItemDTO) => {
+    if (isTransfer(tx)) {
+      const rawReceipt = mapHistoryItemToTransferReceiptData(tx);
+      const receiptData: TransferReceiptData = {
+        ...rawReceipt,
+        sourceAccountNumber:
+          tx.direction === "OUT"
+            ? (tx.sourceAccountNumber || accountNumber || rawReceipt.sourceAccountNumber)
+            : (tx.sourceAccountNumber || rawReceipt.sourceAccountNumber),
+        destinationAccountNumber:
+          tx.direction === "IN"
+            ? (tx.destinationAccountNumber || accountNumber || rawReceipt.destinationAccountNumber)
+            : (tx.destinationAccountNumber || rawReceipt.destinationAccountNumber),
+      };
+
+      navigate(`/receipt/${encodeURIComponent(tx.transactionRef)}`, {
+        state: {
+          receiptData,
+          from: "/dashboard",
+        },
+      });
+    } else {
+      navigate("/transaction");
+    }
+  };
   const [loading, setLoading] = useState(false);
   const [period, setPeriod] = useState<PeriodFilter>("month");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -230,10 +270,18 @@ export default function RecentTransactions({
             const displayType = formatTypeLabel(tx.transactionType);
 
             return (
-              <Link
+              <div
                 key={tx.transactionRef}
-                to="/transaction"
-                className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 py-4 px-2 sm:px-3 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer rounded-xl"
+                onClick={() => handleRowClick(tx)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleRowClick(tx);
+                  }
+                }}
+                className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6 py-4 px-2 sm:px-3 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 cursor-pointer rounded-xl select-none"
                 aria-label={`View transaction ${primaryTitle}`}
               >
                 {/* LEFT SECTION: Display Title + Date & Type */}
@@ -277,7 +325,7 @@ export default function RecentTransactions({
                     aria-hidden="true"
                   />
                 </div>
-              </Link>
+              </div>
             );
           })}
       </div>

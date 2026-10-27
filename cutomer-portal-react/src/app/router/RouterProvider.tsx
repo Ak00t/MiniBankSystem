@@ -45,6 +45,7 @@ import AnnouncementsPage from "../../features/customer-account/announcements/pag
 import BeneficiariesPage from "../../features/beneficiaries/pages/BeneficiariesPage";
 import AccountStatementPage from "../../features/customer-account/statements/pages/AccountStatementPage";
 import TransactionHistoryPage from "../../features/customer-account/transactions/pages/TransactionHistoryPage";
+import TransactionReceiptPage from "../../features/transfer/pages/TransactionReceiptPage";
 
 // ======================================================
 // ROUTER
@@ -243,6 +244,16 @@ const router = createBrowserRouter([
           {
             path: "/beneficiaries",
             element: <BeneficiariesPage />,
+          },
+
+          {
+            path: "/receipt",
+            element: <TransactionReceiptPage />,
+          },
+
+          {
+            path: "/receipt/:transactionRef",
+            element: <TransactionReceiptPage />,
           },
 
         ],
