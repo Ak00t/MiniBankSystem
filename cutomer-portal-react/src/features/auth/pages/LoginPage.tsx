@@ -292,13 +292,13 @@ function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#113E65] bg-[#113E65] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-[background-color,box-shadow] hover:bg-[#092C4C] hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#113E65]/30 disabled:cursor-not-allowed disabled:saturate-50 disabled:opacity-70 disabled:hover:bg-[#113E65] motion-reduce:transition-none"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#56ABC0] bg-[#56ABC0] px-5 py-3 text-sm font-semibold text-[#122E52] shadow-sm transition-[background-color,box-shadow] hover:bg-[#4DA0B5] hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#56ABC0]/30 disabled:cursor-not-allowed disabled:saturate-50 disabled:opacity-70 disabled:hover:bg-[#56ABC0] motion-reduce:transition-none"
             aria-busy={loading}
           >
             {loading && (
               <span
                 aria-hidden="true"
-                className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/25 border-t-white motion-reduce:animate-none"
+                className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#122E52]/25 border-t-[#122E52] motion-reduce:animate-none"
               />
             )}{" "}
             {loading ? "Sending OTP..." : "Login"}
