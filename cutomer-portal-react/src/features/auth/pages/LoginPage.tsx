@@ -8,13 +8,16 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import { Clock3, Eye, EyeOff, LockKeyhole, ShieldCheck, UserRound, WalletCards } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, ShieldCheck, UserRound } from "lucide-react";
 
 import {
   loginCustomer,
 } from "../../../services/authService";
 
 import { AuthField, AuthNotice } from "../components/IndividualAuthUI";
+
+import { EkarajAuthLayout } from "../components/EkarajAuthLayout";
+import { EkarajAuthCard } from "../components/EkarajAuthCard";
 
 const loginInputClass =
   "block min-h-11 w-full rounded-xl border border-[#CDD5DF] bg-white py-2.5 text-sm text-[#111418] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#C6A15B] focus:border-[#113E65] focus:ring-4 focus:ring-[#113E65]/15 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
@@ -172,62 +175,13 @@ function LoginPage() {
   // =====================================================
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[#E5EAF0] text-[#111418] antialiased">
-      <title>EKARAJ BANK | Personal Banking</title>
-      <header className="shrink-0 border-b border-[#C5AF82] bg-[#FAF9F7] text-[#1A365D]">
-        <div className="mx-auto flex min-h-[55px] max-w-[1200px] items-center justify-between gap-3 px-3 py-1.5 sm:px-6">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <img
-              src="/assets/ekaraj-crown-transparent.png"
-              alt=""
-              aria-hidden="true"
-              width={375}
-              height={340}
-              className="h-10 w-auto shrink-0 object-contain"
-            />
-            <p className="min-w-0 text-xs font-semibold leading-4 tracking-[0.02em] text-[#113E65] sm:text-sm sm:tracking-[0.06em]">Ekaraj Bank Customer Portal</p>
-          </div>
-          <p className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-medium leading-4 sm:gap-2 sm:text-xs">
-            <ShieldCheck aria-hidden="true" size={18} className="shrink-0" />
-            <span className="max-w-[88px] sm:max-w-none">Secure Personal Banking</span>
-          </p>
-        </div>
-      </header>
-      <main className="flex flex-1 items-center justify-center px-3 py-1.5 sm:px-6">
-      <section aria-label="Individual login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
-        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
-          <img src="/assets/ekaraj-building-reference.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 h-[85%] w-[85%] object-cover object-[60%_70%] opacity-[0.1] [mask-image:radial-gradient(ellipse_at_75%_65%,#000_10%,transparent_80%)]" />
-          <svg aria-hidden="true" focusable="false" viewBox="0 0 450 470" preserveAspectRatio="none" fill="none" className="pointer-events-none absolute inset-0 h-full w-full">
-            <path d="M-70 85C95 35 120 300 330 285S500 215 520 150" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.35" />
-            <path d="M-80 105C80 55 135 325 340 305S510 235 530 175" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.2" />
-          </svg>
-          <h2 className="relative px-6 pt-4 font-serif text-2xl font-medium leading-8 tracking-tight lg:px-7">
-            Your Trust.<br />Our Commitment.
-          </h2>
-          <div aria-hidden="true" className="relative flex min-h-0 flex-1 items-center justify-center px-6 py-2">
-            <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-auto w-40 max-w-full object-contain" />
-          </div>
-          <div className="relative space-y-2.5 px-6 pb-4 pt-2 lg:px-7">
-            {[
-              [ShieldCheck, "Secure Verification", "Your safety is our priority"],
-              [WalletCards, "Safe Transactions", "Bank with confidence"],
-              [Clock3, "Your Trusted Banking Partner", "Always by your side"],
-            ].map(([Icon, title, description]) => {
-              const Mark = Icon as typeof ShieldCheck;
-              return (
-                <div key={String(title)} className="flex items-start gap-3">
-                  <Mark aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#C6A15B]" />
-                  <div>
-                    <p className="text-xs font-semibold leading-4 text-[#1A365D]">{String(title)}</p>
-                    <p className="mt-0.5 text-[11px] leading-4 text-[#627084]">{String(description)}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </aside>
-        <section aria-label="Individual banking login" className="flex min-w-0 items-center px-5 py-3 sm:px-8 md:px-7 lg:px-9">
-          <div className="mx-auto w-full max-w-[392px]">
+    <EkarajAuthLayout title="EKARAJ BANK | Personal Banking">
+      <EkarajAuthCard
+        ariaLabel="Individual login card"
+        formLabel="Individual banking login"
+        variant="login"
+        leftHeading={<>Your Trust.<br />Our Commitment.</>}
+      >
             <div className="mb-4">
               <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">Welcome Ekaraj Banking</h1>
               <p className="mt-0.5 text-sm leading-5 text-[#111418]">Login securely using your Customer ID or Account Number.</p>
@@ -327,20 +281,8 @@ function LoginPage() {
             <p className="mt-0.5 text-xs leading-4 text-[#627084]">For your security, never share your password or OTP with anyone.</p>
           </div>
         </div>
-
-          </div>
-        </section>
-      </section>
-      </main>
-      <footer className="shrink-0 border-t border-[#EBEAE6] bg-[#FAF9F7] text-[#1A365D]">
-        <div className="mx-auto flex min-h-[39px] max-w-[1200px] flex-wrap items-center justify-center gap-x-4 px-3 py-1 text-[10px] leading-4 sm:justify-between sm:px-6 sm:text-[11px]">
-          <p>© 2026 EKARAJ BANK. All rights reserved.</p>
-          <p>
-            Secure <span aria-hidden="true" className="mx-1 text-[#757575]">•</span> Simple <span aria-hidden="true" className="mx-1 text-[#757575]">•</span> Convenient
-          </p>
-        </div>
-      </footer>
-    </div>
+      </EkarajAuthCard>
+    </EkarajAuthLayout>
   );
 }
 

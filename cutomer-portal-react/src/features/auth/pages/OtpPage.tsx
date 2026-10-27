@@ -28,10 +28,11 @@ import { Clock3, ShieldCheck } from "lucide-react";
 import { AuthField, AuthNotice } from "../components/IndividualAuthUI";
 import { authCodeInputClass } from "../components/IndividualAuthStyles";
 
-const otpPrimaryButtonClass =
-  "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#56ABC0] bg-[#56ABC0] px-5 py-3 text-sm font-semibold text-[#122E52] shadow-sm transition-[background-color,box-shadow] hover:bg-[#4DA0B5] hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#113E65] disabled:cursor-not-allowed disabled:saturate-50 disabled:opacity-70 disabled:hover:bg-[#56ABC0] motion-reduce:transition-none";
-const otpSecondaryButtonClass =
-  "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#C5AF82] bg-white px-4 py-2.5 text-sm font-semibold text-[#1A365D] shadow-sm transition-colors hover:bg-[#FAF9F7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#113E65] disabled:cursor-not-allowed disabled:opacity-70 motion-reduce:transition-none";
+import { EkarajAuthLayout } from "../components/EkarajAuthLayout";
+import { EkarajAuthCard } from "../components/EkarajAuthCard";
+import { ekarajPrimaryButtonClass, ekarajSecondaryButtonClass } from "../components/EkarajAuthStyles";
+
+
 
 function IndividualOtpCodeField({ value, children }: { value: string; children: ReactNode }) {
   return (
@@ -483,41 +484,13 @@ function OtpPage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[#E5EAF0] text-[#111418] antialiased">
-      <title>EKARAJ BANK | Email Verification</title>
-      <header className="shrink-0 border-b border-[#C5AF82] bg-[#FAF9F7] text-[#1A365D]">
-        <div className="mx-auto flex min-h-[55px] max-w-[1200px] items-center justify-between gap-3 px-3 py-1.5 sm:px-6">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <img src="/assets/ekaraj-crown-transparent.png" alt="" aria-hidden="true" width={375} height={340} className="h-10 w-auto shrink-0 object-contain" />
-            <p className="min-w-0 text-xs font-semibold leading-4 tracking-[0.02em] text-[#113E65] sm:text-sm sm:tracking-[0.06em]">Ekaraj Bank Customer Portal</p>
-          </div>
-          <p className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-medium leading-4 sm:gap-2 sm:text-xs">
-            <ShieldCheck aria-hidden="true" size={18} className="shrink-0" />
-            <span className="max-w-[88px] sm:max-w-none">Secure Personal Banking</span>
-          </p>
-        </div>
-      </header>
-      <main className="flex flex-1 items-center justify-center px-3 py-1.5 sm:px-6">
-        <section aria-label="Individual OTP verification card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
-          <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
-            <img src="/assets/ekaraj-building-reference.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 h-[85%] w-[85%] object-cover object-[60%_70%] opacity-[0.1] [mask-image:radial-gradient(ellipse_at_75%_65%,#000_10%,transparent_80%)]" />
-            <svg aria-hidden="true" focusable="false" viewBox="0 0 450 470" preserveAspectRatio="none" fill="none" className="pointer-events-none absolute inset-0 h-full w-full">
-              <path d="M-70 85C95 35 120 300 330 285S500 215 520 150" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.35" />
-              <path d="M-80 105C80 55 135 325 340 305S510 235 530 175" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.2" />
-            </svg>
-            <h2 className="relative px-6 pt-4 font-serif text-2xl font-medium leading-8 tracking-tight lg:px-7">
-              Secure Verification<br />for a Safer Tomorrow.
-            </h2>
-            <div aria-hidden="true" className="relative flex min-h-0 flex-1 items-center justify-center px-6 py-2">
-              <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-auto w-40 max-w-full object-contain" />
-            </div>
-            <div className="relative space-y-2.5 px-6 pb-4 pt-2 lg:px-7">
-              <p className="flex items-center gap-3 text-xs font-medium leading-4"><ShieldCheck aria-hidden="true" size={20} className="shrink-0 text-[#C6A15B]" />Secure Verification</p>
-              <p className="flex items-center gap-3 text-xs font-medium leading-4"><Clock3 aria-hidden="true" size={20} className="shrink-0 text-[#C6A15B]" />Your Trusted Banking Partner</p>
-            </div>
-          </aside>
-          <section aria-label="Email verification" className="flex min-w-0 items-center px-5 py-3 sm:px-8 md:px-7 lg:px-9">
-            <div className="mx-auto w-full max-w-[392px]">
+    <EkarajAuthLayout title="EKARAJ BANK | Email Verification">
+      <EkarajAuthCard
+        ariaLabel="Individual OTP verification card"
+        formLabel="Email verification"
+        variant="otp"
+        leftHeading={<>Secure Verification<br />for a Safer Tomorrow.</>}
+      >
               <div className="mb-4">
                 <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">OTP Verification</h1>
                 <p className="mt-0.5 text-sm leading-5 text-[#111418]">
@@ -557,7 +530,7 @@ function OtpPage() {
           type="button"
           onClick={handleVerifyOtp}
           disabled={verifying || resending || completed}
-          className={otpPrimaryButtonClass}
+          className={ekarajPrimaryButtonClass}
           aria-busy={verifying || resending || completed}
         >
           {(verifying ||
@@ -578,7 +551,7 @@ function OtpPage() {
               type="button"
               onClick={handleResendOtp}
               disabled={verifying || resending}
-              className={otpSecondaryButtonClass}
+              className={ekarajSecondaryButtonClass}
               aria-busy={resending}
             >
               {resending && <span aria-hidden="true" className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#1A365D]/25 border-t-[#1A365D] motion-reduce:animate-none" />}
@@ -599,26 +572,15 @@ function OtpPage() {
             <button
               type="button"
               onClick={handleTestProtectedApi}
-              className={otpSecondaryButtonClass}
+              className={ekarajSecondaryButtonClass}
             >
               Test Protected API
             </button>
             <AuthNotice message={testMessage} />
           </div>
         )}
-            </div>
-          </section>
-        </section>
-      </main>
-      <footer className="shrink-0 border-t border-[#EBEAE6] bg-[#FAF9F7] text-[#1A365D]">
-        <div className="mx-auto flex min-h-[39px] max-w-[1200px] flex-wrap items-center justify-center gap-x-4 px-3 py-1 text-[10px] leading-4 sm:justify-between sm:px-6 sm:text-[11px]">
-          <p>© 2026 EKARAJ BANK. All rights reserved.</p>
-          <p>
-            Secure <span aria-hidden="true" className="mx-1 text-[#757575]">•</span> Simple <span aria-hidden="true" className="mx-1 text-[#757575]">•</span> Convenient
-          </p>
-        </div>
-      </footer>
-    </div>
+      </EkarajAuthCard>
+    </EkarajAuthLayout>
   );
 
 }
