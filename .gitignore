@@ -1,0 +1,9 @@
+# Temporary, binary and archive files
+bore.zip
+*.zip
+*.tar.gz
+*.exe
+
+# OS generated files
+Thumbs.db
+.DS_Store

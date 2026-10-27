@@ -28,6 +28,72 @@ export default function OtcTransactionPage() {
   const [error, setError] = useState<string | null>(null);
   const [receipt, setReceipt] = useState<OtcTransactionResponseDto | null>(null);
 
+  const getAccountStatusStyle = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return {
+          cardBg: 'border-emerald-200 bg-emerald-50/70 text-slate-700',
+          nameText: 'text-emerald-950 font-bold',
+          badgeClass: 'status-pill-emerald',
+          balanceText: 'text-emerald-800',
+          notice: null,
+        };
+      case 'FROZEN':
+        return {
+          cardBg: 'border-rose-300 bg-rose-50/90 text-rose-950',
+          nameText: 'text-rose-950 font-bold',
+          badgeClass: 'status-pill-crimson',
+          balanceText: 'text-rose-900',
+          notice: (
+            <div className="mt-2.5 pt-2 border-t border-rose-200 flex items-center gap-1.5 text-[11px] font-semibold text-rose-700">
+              <svg className="h-4 w-4 shrink-0 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Account is FROZEN: Core banking policies restrict all deposits, withdrawals, and debit operations.</span>
+            </div>
+          ),
+        };
+      case 'DORMANT':
+        return {
+          cardBg: 'border-amber-300 bg-amber-50/90 text-amber-950',
+          nameText: 'text-amber-950 font-bold',
+          badgeClass: 'status-pill-amber',
+          balanceText: 'text-amber-900',
+          notice: (
+            <div className="mt-2.5 pt-2 border-t border-amber-200 flex items-center gap-1.5 text-[11px] font-semibold text-amber-800">
+              <svg className="h-4 w-4 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Account is DORMANT: Re-verification or reactivation may be required before ledger settlement.</span>
+            </div>
+          ),
+        };
+      case 'CLOSED':
+        return {
+          cardBg: 'border-slate-300 bg-slate-100 text-slate-800',
+          nameText: 'text-slate-900 font-bold',
+          badgeClass: 'status-pill-crimson',
+          balanceText: 'text-slate-700',
+          notice: (
+            <div className="mt-2.5 pt-2 border-t border-slate-200 flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+              <svg className="h-4 w-4 shrink-0 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              <span>Account is CLOSED: No financial transactions can be executed on this account.</span>
+            </div>
+          ),
+        };
+      default:
+        return {
+          cardBg: 'border-slate-200 bg-slate-50 text-slate-700',
+          nameText: 'text-slate-900 font-bold',
+          badgeClass: 'status-pill-blue',
+          balanceText: 'text-slate-800',
+          notice: null,
+        };
+    }
+  };
+
   const handleLookupAccount = async () => {
     if (!accountNumber.trim()) {
       setAccountLookupError('Please enter an account number to verify.');
@@ -74,6 +140,18 @@ export default function OtcTransactionPage() {
       }
     }
 
+    if (verifiedAccount?.status === 'FROZEN') {
+      setError(
+        'Cannot process transaction: This account is currently FROZEN. Please unfreeze the account in Customer Accounts first.',
+      );
+      return;
+    }
+
+    if (verifiedAccount?.status === 'CLOSED') {
+      setError('Cannot process transaction: This account is CLOSED.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     setReceipt(null);
@@ -95,21 +173,22 @@ export default function OtcTransactionPage() {
           : await otcApi.withdraw(payload, idempotencyKey);
 
       setReceipt(res.data);
-      // Update local verified account balance if present
       if (verifiedAccount) {
         setVerifiedAccount({
           ...verifiedAccount,
-          currentBalance: res.data.balanceAfter,
           availableBalance: res.data.balanceAfter,
+          currentBalance: res.data.balanceAfter,
         });
       }
       setAmount('');
+      setDepositorName('');
+      setNrcOrId('');
       setRemark('');
     } catch (err) {
       const axErr = err as AxiosError<{ message?: string }>;
       setError(
         axErr.response?.data?.message ||
-          `OTC ${operationType === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'} failed. Please try again.`,
+          `Failed to process OTC ${operationType.toLowerCase()}. Please verify drawer funds and account status.`,
       );
     } finally {
       setIsLoading(false);
@@ -119,295 +198,321 @@ export default function OtcTransactionPage() {
   const handleReset = () => {
     setReceipt(null);
     setError(null);
+    setAccountLookupError(null);
+    setVerifiedAccount(null);
+    setAccountNumber('');
     setAmount('');
-    setRemark('');
     setDepositorName('');
     setNrcOrId('');
+    setRemark('');
   };
 
   return (
-    <AdminLayout pageTitle="OTC Operations (Teller Counter)">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">Over-the-Counter (OTC) Banking</h2>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Process direct counter cash deposits and cash withdrawals for walk-in customers.
-          </p>
-        </div>
-      </div>
-
-      {/* Top Teller Daily Cash Summary Widget */}
-      <TellerDailyCashSummaryWidget />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left 2 Cols: Operations Form */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 space-y-6">
-          {/* Operation Switcher Tabs */}
+    <AdminLayout pageTitle="VIP Overdrafts & OTC">
+      <div className="max-w-[1440px] mx-auto space-y-6">
+        
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
-              Select Counter Operation
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setOperationType('DEPOSIT');
-                  setError(null);
-                }}
-                className={[
-                  'flex items-center justify-center gap-2 rounded-xl border p-3.5 text-sm font-semibold transition-all',
-                  operationType === 'DEPOSIT'
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-sm'
-                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
-                ].join(' ')}
-              >
-                <svg className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Cash Deposit (ငွေသွင်း)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setOperationType('WITHDRAW');
-                  setError(null);
-                }}
-                className={[
-                  'flex items-center justify-center gap-2 rounded-xl border p-3.5 text-sm font-semibold transition-all',
-                  operationType === 'WITHDRAW'
-                    ? 'border-amber-600 bg-amber-50 text-amber-700 shadow-sm'
-                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
-                ].join(' ')}
-              >
-                <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                </svg>
-                <span>Cash Withdrawal (ငွေထုတ်)</span>
-              </button>
-            </div>
+            <h2 className="text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight">
+              Over-the-Counter (OTC) Banking
+            </h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-500 font-medium">
+              Process verified teller cash deposits and withdrawals with real-time audit ledger logging
+            </p>
           </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200/80 px-3.5 py-1.5 rounded-full shadow-xs w-fit">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Teller Desk Active</span>
+          </div>
+        </div>
 
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              <p className="font-semibold">Operation Failed</p>
-              <p className="mt-1">{error}</p>
-            </div>
-          )}
+        {/* Teller Cash Drawer Float Widget */}
+        <TellerDailyCashSummaryWidget />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Account Lookup Row */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Target Bank Account Number <span className="text-red-500">*</span>
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="e.g. 1001234567"
-                  value={accountNumber}
-                  onChange={(e) => {
-                    setAccountNumber(e.target.value);
-                    setVerifiedAccount(null);
-                    setAccountLookupError(null);
-                  }}
-                  className="flex-1 rounded-lg border border-gray-300 px-3.5 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  required
-                  disabled={isLoading}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleLookupAccount}
-                  disabled={isVerifying || !accountNumber.trim()}
-                >
-                  {isVerifying ? 'Checking...' : 'Verify'}
-                </Button>
-              </div>
-              {accountLookupError && (
-                <p className="mt-1.5 text-xs text-red-600">{accountLookupError}</p>
-              )}
-            </div>
-
-            {/* Verified Account Card */}
-            {verifiedAccount && (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
-                    Account Verified ✓
-                  </span>
-                  <span
-                    className={[
-                      'rounded-full px-2 py-0.5 text-xs font-semibold',
-                      verifiedAccount.status === 'ACTIVE'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700',
-                    ].join(' ')}
+        {/* Main Grid: Form + Auxiliary Info */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          
+          {/* Form Card */}
+          <div className="bg-white rounded-xl p-6 sm:p-8 lg:col-span-2 border border-slate-200/80 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] space-y-6">
+            
+            {/* Operation Type Switcher */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Operation:</span>
+                <div className="flex items-center rounded-lg bg-slate-100 p-1 border border-slate-200/60 shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOperationType('DEPOSIT');
+                      setError(null);
+                    }}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                      operationType === 'DEPOSIT'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   >
-                    {verifiedAccount.status}
-                  </span>
+                    Cash Deposit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOperationType('WITHDRAW');
+                      setError(null);
+                    }}
+                    className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+                      operationType === 'WITHDRAW'
+                        ? 'bg-rose-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Cash Withdrawal
+                  </button>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                  <div>
-                    <span className="text-gray-500 block">Customer Name</span>
-                    <span className="font-bold text-gray-900">{verifiedAccount.customerName}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block">Category / Type</span>
-                    <span className="font-medium text-gray-800">
-                      {verifiedAccount.accountCategory} • {verifiedAccount.accountType}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block">Available Balance</span>
-                    <span className="font-bold text-blue-700 font-mono">
-                      {formatCurrency(verifiedAccount.availableBalance ?? 0, verifiedAccount.currency)}
-                    </span>
-                  </div>
-                </div>
+              </div>
+
+              <span className={`status-pill-${operationType === 'DEPOSIT' ? 'emerald' : 'amber'} text-[11px]`}>
+                {operationType === 'DEPOSIT' ? 'Credit Ledger' : 'Debit Ledger'}
+              </span>
+            </div>
+
+            {error && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700 flex items-start gap-2.5">
+                <svg className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>{error}</span>
               </div>
             )}
 
-            {/* Amount and Person Details */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                label={`${operationType === 'DEPOSIT' ? 'Deposit' : 'Withdrawal'} Amount (MMK)`}
-                type="number"
-                placeholder="e.g. 500000"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                disabled={isLoading}
-                min={100}
-              />
-              <Input
-                label="Depositor / Withdrawer Full Name"
-                placeholder="Walk-in customer name"
-                value={depositorName}
-                onChange={(e) => setDepositorName(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                label="NRC or National ID Number"
-                placeholder="e.g. 12/DAGAMA(N)123456"
-                value={nrcOrId}
-                onChange={(e) => setNrcOrId(e.target.value)}
-                disabled={isLoading}
-              />
-              <Input
-                label="Counter Narration / Notes"
-                placeholder="e.g. Salary cash deposit / Cash withdrawal"
-                value={remark}
-                onChange={(e) => setRemark(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Button
-                type="submit"
-                variant={operationType === 'DEPOSIT' ? 'primary' : 'danger'}
-                isLoading={isLoading}
-                className="w-full sm:w-auto px-6 py-2.5"
-              >
-                {operationType === 'DEPOSIT' ? 'Confirm Cash Deposit' : 'Confirm Cash Withdrawal'}
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        {/* Right 1 Col: Receipt or Guidelines */}
-        <div className="space-y-6">
-          {receipt ? (
-            <div className="rounded-xl border border-emerald-200 bg-white p-6 shadow-sm space-y-4">
-              <div className="flex items-center gap-2 text-emerald-700">
-                <svg className="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 className="font-bold text-gray-900">Transaction Receipt</h3>
-              </div>
-
-              <div className="divide-y divide-gray-100 text-xs space-y-2.5">
-                <div className="flex justify-between pt-2">
-                  <span className="text-gray-500">Transaction Reference</span>
-                  <span className="font-mono font-bold text-gray-900">{receipt.transactionRef}</span>
-                </div>
-                <div className="flex justify-between pt-2.5">
-                  <span className="text-gray-500">Operation Type</span>
-                  <span
-                    className={[
-                      'font-semibold px-2 py-0.5 rounded text-[11px]',
-                      receipt.transactionType === 'OTC_DEPOSIT'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800',
-                    ].join(' ')}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              {/* Account Number Lookup Field */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Target Account Number <span className="text-rose-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="e.g. 1008207493"
+                      value={accountNumber}
+                      onChange={(e) => {
+                        setAccountNumber(e.target.value);
+                        setVerifiedAccount(null);
+                        setAccountLookupError(null);
+                      }}
+                      disabled={isLoading || isVerifying}
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleLookupAccount}
+                    isLoading={isVerifying}
+                    disabled={isLoading || !accountNumber.trim()}
+                    className="shrink-0"
                   >
-                    {receipt.transactionType}
-                  </span>
+                    Verify Account
+                  </Button>
                 </div>
-                <div className="flex justify-between pt-2.5">
-                  <span className="text-gray-500">Account Number</span>
-                  <span className="font-mono font-medium text-gray-800">{receipt.accountNumber}</span>
-                </div>
-                <div className="flex justify-between pt-2.5">
-                  <span className="text-gray-500">Customer</span>
-                  <span className="font-medium text-gray-800">{receipt.customerName}</span>
-                </div>
-                <div className="flex justify-between pt-2.5">
-                  <span className="text-gray-500">Transacted Amount</span>
-                  <span className="font-mono font-bold text-gray-900 text-sm">
-                    {formatCurrency(receipt.amount, receipt.currency)}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2.5">
-                  <span className="text-gray-500">Balance Before</span>
-                  <span className="font-mono text-gray-600">
-                    {formatCurrency(receipt.balanceBefore, receipt.currency)}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2.5">
-                  <span className="text-gray-500">Balance After</span>
-                  <span className="font-mono font-bold text-emerald-700">
-                    {formatCurrency(receipt.balanceAfter, receipt.currency)}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2.5">
-                  <span className="text-gray-500">Processed By Teller</span>
-                  <span className="font-mono text-gray-700">{receipt.tellerUsername}</span>
-                </div>
-                <div className="flex justify-between pt-2.5">
-                  <span className="text-gray-500">Time</span>
-                  <span className="font-mono text-gray-500">
-                    {receipt.transactedAt ? new Date(receipt.transactedAt).toLocaleTimeString() : '—'}
-                  </span>
-                </div>
+
+                {accountLookupError && (
+                  <p className="mt-1 text-xs text-rose-600 font-medium">
+                    {accountLookupError}
+                  </p>
+                )}
+
+                {/* Verified Account Banner with Dynamic Status Colors */}
+                {verifiedAccount && (() => {
+                  const style = getAccountStatusStyle(verifiedAccount.status);
+                  return (
+                    <div className={`mt-2.5 rounded-xl border p-3.5 text-xs shadow-xs transition-all ${style.cardBg}`}>
+                      <div className="flex items-center justify-between font-bold">
+                        <span className={style.nameText}>{verifiedAccount.customerName}</span>
+                        <span className={`${style.badgeClass} text-[10px] uppercase font-bold tracking-wider`}>
+                          {verifiedAccount.status}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between text-[11px] opacity-90">
+                        <span>
+                          Product: <strong className="font-semibold text-slate-800">{verifiedAccount.accountType}</strong> ({verifiedAccount.accountCategory})
+                        </span>
+                        <span>
+                          Available: <strong className={`font-mono font-bold tabular-nums ${style.balanceText}`}>{formatCurrency(verifiedAccount.availableBalance, verifiedAccount.currency)}</strong>
+                        </span>
+                      </div>
+                      {style.notice}
+                    </div>
+                  );
+                })()}
               </div>
 
-              <Button variant="secondary" onClick={handleReset} className="w-full mt-2">
-                Process Another Transaction
-              </Button>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-5 space-y-4 text-xs text-gray-600">
-              <h4 className="font-bold text-gray-800 text-sm uppercase tracking-wide">
-                Teller Counter Policy
-              </h4>
-              <ul className="space-y-2 list-disc pl-4 leading-relaxed">
-                <li>
-                  <strong>Pessimistic Concurrency:</strong> Database accounts are locked during transaction execution to prevent double spending.
-                </li>
-                <li>
-                  <strong>Minimum Balance (50,000 MMK):</strong> Savings and retail accounts must maintain a minimum reserve balance. Withdrawals exceeding net available funds will be rejected.
-                </li>
-                <li>
-                  <strong>Vault Cash Recording:</strong> Counter deposits and withdrawals are recorded with double-entry General Ledger balancing vault cash accounts against customer liabilities.
-                </li>
-              </ul>
-            </div>
-          )}
+              {/* Amount */}
+              <div>
+                <Input
+                  label={`Transaction Amount (MMK) *`}
+                  placeholder="Minimum 100 MMK"
+                  type="number"
+                  step="0.01"
+                  min="100"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  disabled={isLoading}
+                  required
+                />
+              </div>
+
+              {/* Depositor / Presenter Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label={operationType === 'DEPOSIT' ? 'Depositor Name (Optional)' : 'Withdrawer Name (Optional)'}
+                  placeholder="Full name of person at counter"
+                  value={depositorName}
+                  onChange={(e) => setDepositorName(e.target.value)}
+                  disabled={isLoading}
+                />
+
+                <Input
+                  label="NRC / National ID (Optional)"
+                  placeholder="e.g. 12/DAGAMA(N)123456"
+                  value={nrcOrId}
+                  onChange={(e) => setNrcOrId(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Remarks */}
+              <div>
+                <Input
+                  label="Operation Remark (Optional)"
+                  placeholder="e.g. Cash withdrawal for payroll"
+                  value={remark}
+                  onChange={(e) => setRemark(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  isLoading={isLoading}
+                  disabled={isLoading || verifiedAccount?.status === 'FROZEN' || verifiedAccount?.status === 'CLOSED'}
+                  className={`w-full sm:w-auto px-8 ${
+                    verifiedAccount?.status === 'FROZEN'
+                      ? 'bg-rose-600 hover:bg-rose-700 opacity-60 cursor-not-allowed'
+                      : ''
+                  }`}
+                >
+                  {verifiedAccount?.status === 'FROZEN'
+                    ? 'Account is Frozen'
+                    : verifiedAccount?.status === 'CLOSED'
+                    ? 'Account is Closed'
+                    : operationType === 'DEPOSIT'
+                    ? 'Process Cash Deposit'
+                    : 'Process Cash Withdrawal'}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          {/* Right Column: Receipt or Counter Policy */}
+          <div className="space-y-5">
+            {receipt ? (
+              <div className="bg-white rounded-xl p-6 border border-slate-200/80 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
+                      ✓
+                    </span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      Receipt Ready
+                    </span>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-slate-500">
+                    {receipt.transactionRef}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs divide-y divide-slate-100">
+                  <div className="flex justify-between pt-1">
+                    <span className="text-slate-400 font-medium">Operation</span>
+                    <span className="status-pill-emerald text-[10px]">
+                      {receipt.transactionType}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-2.5">
+                    <span className="text-slate-400 font-medium">Account Number</span>
+                    <span className="font-mono font-bold text-slate-900">{receipt.accountNumber}</span>
+                  </div>
+                  <div className="flex justify-between pt-2.5">
+                    <span className="text-slate-400 font-medium">Customer</span>
+                    <span className="font-semibold text-slate-900">{receipt.customerName}</span>
+                  </div>
+                  <div className="flex justify-between pt-2.5">
+                    <span className="text-slate-400 font-medium">Amount</span>
+                    <span className="font-mono font-bold text-sky-600 text-sm tabular-nums">
+                      {formatCurrency(receipt.amount, receipt.currency)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-2.5">
+                    <span className="text-slate-400 font-medium">Balance After</span>
+                    <span className="font-mono font-bold text-emerald-700 tabular-nums">
+                      {formatCurrency(receipt.balanceAfter, receipt.currency)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-2.5">
+                    <span className="text-slate-400 font-medium">Processed By</span>
+                    <span className="font-mono text-slate-700 font-medium">{receipt.tellerUsername}</span>
+                  </div>
+                  <div className="flex justify-between pt-2.5">
+                    <span className="text-slate-400 font-medium">Timestamp</span>
+                    <span className="font-mono text-slate-500 text-[11px]">
+                      {receipt.transactedAt ? new Date(receipt.transactedAt).toLocaleTimeString() : '—'}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  variant="secondary"
+                  onClick={handleReset}
+                  className="w-full mt-3"
+                >
+                  Process Another Transaction
+                </Button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl p-6 border border-slate-200/80 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.05)] space-y-4 text-xs text-slate-600 font-medium">
+                {/* Modern Teller Counter Policy SVG Header (replacing ugly emoji) */}
+                <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-50 text-sky-600 border border-sky-100 shadow-xs">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                    </svg>
+                  </div>
+                  <h4 className="font-bold text-slate-900 text-sm tracking-tight">
+                    Teller Counter Policy
+                  </h4>
+                </div>
+                <ul className="space-y-3 list-disc pl-4 leading-relaxed">
+                  <li>
+                    <strong className="text-slate-800">Pessimistic Concurrency:</strong> Database accounts are locked during transaction execution to prevent double spending.
+                  </li>
+                  <li>
+                    <strong className="text-slate-800">Minimum Balance (50,000 MMK):</strong> Savings and retail accounts must maintain reserve balance. Withdrawals exceeding net available funds will be rejected.
+                  </li>
+                  <li>
+                    <strong className="text-slate-800">Teller Drawer Balancing:</strong> Every cash-in and cash-out strictly debits or credits your current physical drawer float.
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </AdminLayout>
