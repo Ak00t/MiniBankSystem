@@ -4,6 +4,7 @@ import {
 } from "react";
 
 import {
+  Navigate,
   useNavigate,
 } from "react-router-dom";
 
@@ -218,7 +219,9 @@ function PasswordResetOtpPage() {
       // ==================================================
 
       navigate(
-        "/password-reset/new-password"
+        "/password-reset/new-password",
+        // Leave this page before its cleared challenge can trigger the guard.
+        { replace: true, flushSync: true }
       );
 
 
@@ -387,6 +390,13 @@ function PasswordResetOtpPage() {
   // ======================================================
   // UI
   // ======================================================
+
+  if (
+    !challengeGroupId ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(challengeGroupId)
+  ) {
+    return <Navigate to="/forgot-password" replace />;
+  }
 
   return (
     <EkarajAuthLayout title="EKARAJ BANK | Password Reset Verification">

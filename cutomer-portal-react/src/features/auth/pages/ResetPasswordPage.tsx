@@ -4,6 +4,7 @@ import {
 } from "react";
 
 import {
+  Navigate,
   useNavigate,
 } from "react-router-dom";
 
@@ -410,6 +411,15 @@ function ResetPasswordPage() {
   // UI
   // ======================================================
 
+  // A completed reset clears its authorization before showing the success screen.
+  if (
+    !success &&
+    (!verifiedChallengeGroupId ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(verifiedChallengeGroupId))
+  ) {
+    return <Navigate to="/forgot-password" replace />;
+  }
+
   return (
     <EkarajAuthLayout title="EKARAJ BANK | Create New Password">
       <EkarajAuthCard
@@ -425,7 +435,7 @@ function ResetPasswordPage() {
             <p>You can now sign in to your Ekaraj Bank account using your new password.</p>
             <button
               type="button"
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/login", { replace: true })}
               className={ekarajPrimaryButtonClass}
             >
               Back to Login

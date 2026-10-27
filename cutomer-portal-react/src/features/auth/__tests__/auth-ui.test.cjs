@@ -61,11 +61,22 @@ async function setup(t, page, options = {}) {
   const Component = load('src/features/auth/pages/' + page + '.tsx').default;
   let location;
   function Probe() { location = router.useLocation(); return React.createElement(Component); }
+  // Recovery navigation must replace the mounted page, as the application router does.
+  const memoryRouter = options.routedPasswordReset ? router.createMemoryRouter([
+    { path: '/password-reset/otp', element: React.createElement(Component) },
+    { path: '/password-reset/new-password', element: React.createElement(load('src/features/auth/pages/ResetPasswordPage.tsx').default) },
+    { path: '/forgot-password', element: React.createElement(load('src/features/auth/pages/ForgotPasswordPage.tsx').default) },
+  ], { initialEntries: ['/password-reset/otp'] }) : null;
   const container = document.createElement('div'); document.body.append(container);
   const root = createRoot(container);
   const perform = async fn => { await act(async () => { fn(); await flush(); }); };
-  await perform(() => root.render(React.createElement(router.MemoryRouter, null, React.createElement(Probe))));
-  t.after(async () => { await perform(() => root.unmount()); container.remove(); axios.defaults.adapter = originalAdapter; });
+  t.after(async () => {
+    try { await perform(() => root.unmount()); }
+    finally { memoryRouter?.dispose(); container.remove(); axios.defaults.adapter = originalAdapter; }
+  });
+  await perform(() => root.render(memoryRouter
+    ? React.createElement(router.RouterProvider, { router: memoryRouter })
+    : React.createElement(router.MemoryRouter, null, React.createElement(Probe))));
   const fill = async (id, value) => {
     const element = container.querySelector('#' + id); assert.ok(element, id);
     await perform(() => element.focus());
@@ -76,7 +87,10 @@ async function setup(t, page, options = {}) {
     const button = [...container.querySelectorAll('button')].find(item => item.getAttribute('aria-label') === label || item.textContent.trim() === label);
     assert.ok(button, label); button.click();
   });
-  return { container, calls, fill, click, perform, location: () => location.pathname + location.search,
+  return { container, calls, fill, click, perform, location: () => {
+    const current = memoryRouter ? memoryRouter.state.location : location;
+    return current.pathname + current.search;
+  },
     submit: () => perform(() => container.querySelector('form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))),
     setHandler: value => { handler = value; } };
 }
@@ -146,13 +160,17 @@ test('forgot-password keeps customer identifier recovery and server challenge', 
 });
 
 test('password recovery OTP retains no-cooldown resend, challenge rotation and verification', async t => {
-  const h = await setup(t, 'PasswordResetOtpPage');
+  const h = await setup(t, 'PasswordResetOtpPage', { routedPasswordReset: true });
   await h.click('Resend OTP'); await h.click('Resend OTP');
   assert.equal(h.calls.filter(c => c.url.includes('resend')).length, 2);
   await h.fill('individual-recovery-otp', '123456'); await h.submit();
   assert.deepEqual(h.calls.at(-1).body, { challengeGroupId: renewed, otp: '123456' });
   assert.equal(sessionStorage.getItem('verifiedPasswordResetChallengeGroupId'), renewed);
   assert.equal(h.location(), '/password-reset/new-password');
+  assert.equal(sessionStorage.getItem('passwordResetChallengeGroupId'), null);
+  assert.equal(h.container.querySelector('#individual-recovery-otp'), null);
+  assert.ok(h.container.querySelector('form input#individual-reset-password'));
+  assert.equal(h.container.querySelector('h1').textContent, 'Create New Password');
 });
 
 test('password reset preserves original rules, payload, success state and explicit login action', async t => {
