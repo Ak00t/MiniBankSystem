@@ -1,6 +1,5 @@
 import {
   Clock3,
-  LogIn,
   ShieldAlert,
 } from "lucide-react";
 
@@ -119,7 +118,7 @@ function SessionTimeoutModal({
         >
 
           Please login again to continue
-          using ACE Bank securely.
+          using Ekaraj Bank securely.
 
         </p>
 
@@ -133,15 +132,13 @@ function SessionTimeoutModal({
             items-center justify-center
             gap-2
             rounded-xl
-            bg-blue-600
+            bg-[#56ABC0]
             px-5 py-3.5
             font-semibold
-            text-white
-            hover:bg-blue-700
+            text-[#122E52]
+            hover:bg-[#4DA0B5]
           "
         >
-
-          <LogIn size={18} />
 
           Login Again
 
