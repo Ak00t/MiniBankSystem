@@ -79,7 +79,6 @@ export default function CorporateLoginPage() {
           <div className="mx-auto w-full max-w-[392px] md:[@media(max-height:700px)]:max-w-none">
             <div className="mb-4 md:[@media(max-height:700px)]:mb-2">
               <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">Corporate Login</h1>
-              <p className="mt-0.5 text-sm leading-5 text-[#111418] md:[@media(max-height:700px)]:leading-[18px]">Login securely using your Company Customer ID and Corporate User ID to access your corporate banking services.</p>
               <div aria-hidden="true" className="mt-1 h-px w-10 bg-[#C6A15B]" />
             </div>
             <form onSubmit={submit} autoComplete="off" noValidate className={corporateLoginFormClass}>
