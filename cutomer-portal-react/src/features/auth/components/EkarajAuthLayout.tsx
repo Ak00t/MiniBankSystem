@@ -4,10 +4,17 @@ import { ShieldCheck } from "lucide-react";
 type EkarajAuthLayoutProps = {
   title: string;
   children: ReactNode;
+  portalLabel?: string;
+  securityLabel?: string;
 };
 
 /** Approved EKARAJ page chrome. The native title keeps React's existing title behavior. */
-export function EkarajAuthLayout({ title, children }: EkarajAuthLayoutProps) {
+export function EkarajAuthLayout({
+  title,
+  children,
+  portalLabel = "Ekaraj Bank Customer Portal",
+  securityLabel = "Secure Personal Banking",
+}: EkarajAuthLayoutProps) {
   return (
     <div className="flex min-h-dvh flex-col bg-[#E5EAF0] text-[#111418] antialiased">
       <title>{title}</title>
@@ -22,11 +29,11 @@ export function EkarajAuthLayout({ title, children }: EkarajAuthLayoutProps) {
               height={340}
               className="h-10 w-auto shrink-0 object-contain"
             />
-            <p className="min-w-0 text-xs font-semibold leading-4 tracking-[0.02em] text-[#113E65] sm:text-sm sm:tracking-[0.06em]">Ekaraj Bank Customer Portal</p>
+            <p className="min-w-0 text-xs font-semibold leading-4 tracking-[0.02em] text-[#113E65] sm:text-sm sm:tracking-[0.06em]">{portalLabel}</p>
           </div>
           <p className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-medium leading-4 sm:gap-2 sm:text-xs">
             <ShieldCheck aria-hidden="true" size={18} className="shrink-0" />
-            <span className="max-w-[88px] sm:max-w-none">Secure Personal Banking</span>
+            <span className="max-w-[88px] sm:max-w-none">{securityLabel}</span>
           </p>
         </div>
       </header>

@@ -148,10 +148,17 @@ for (const [route, seed] of [
   ['/corporate/first-login/change-password', setupSeed('password')],
   ['/corporate/first-login/setup-pin', setupSeed('pin')],
 ]) {
-  test(route + ' uses ACE Bank presentation with labels, empty native controls and no decorative arrows', async t => {
+  const ekarajLogin = route === '/corporate/login';
+  test(route + ' uses ' + (ekarajLogin ? 'EKARAJ Bank' : 'ACE Bank') + ' presentation with labels, empty native controls and no decorative arrows', async t => {
     const app = await ui(t, { route, seed });
-    assert.match(app.container.querySelector('header').textContent, /ACE Bank.*Corporate Banking Portal/);
-    assert.equal(app.container.querySelector('img').getAttribute('src'), '/images.jfif');
+    if (ekarajLogin) {
+      const header = app.container.querySelector('header');
+      assert.equal(header.querySelector('p').textContent, 'EKARAJ BANK | Corporate Portal');
+      assert.equal(header.querySelector('img').getAttribute('src'), '/assets/ekaraj-crown-transparent.png');
+    } else {
+      assert.match(app.container.querySelector('header').textContent, /ACE Bank.*Corporate Banking Portal/);
+      assert.equal(app.container.querySelector('img').getAttribute('src'), '/images.jfif');
+    }
     assert.equal(app.container.querySelectorAll('button .lucide-arrow-right,button .lucide-arrow-left,button .lucide-log-in,a .lucide-arrow-right,a .lucide-arrow-left').length, 0);
     for (const input of app.container.querySelectorAll('input')) {
       assert.equal(input.value, ''); assert.ok(input.labels.length); assert.equal(input.disabled, false);
