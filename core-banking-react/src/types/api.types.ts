@@ -244,6 +244,9 @@ export interface AccountResponse {
   isJointAccount: boolean;
   customerCode: string;
   customerName: string;
+  nrc?: string;
+  phone?: string;
+  profileImageUrl?: string;
   currentBalance: number;
   availableBalance: number;
   currency: string;
@@ -318,9 +321,9 @@ export interface OtcTransactionRequestDto {
   accountNumber: string;
   amount: number;
   currency?: string;
-  remark?: string;
-  depositorOrWithdrawerName?: string;
-  nrcOrId?: string;
+  remark: string;
+  manualReferenceId: string;
+  manualAuditNote: string;
 }
 
 export interface OtcTransactionResponseDto {
@@ -330,6 +333,9 @@ export interface OtcTransactionResponseDto {
   accountNumber: string;
   customerCode: string;
   customerName: string;
+  nrc?: string;
+  phone?: string;
+  profileImageUrl?: string;
   amount: number;
   serviceFee: number;
   balanceBefore: number;
@@ -338,6 +344,8 @@ export interface OtcTransactionResponseDto {
   tellerUsername: string;
   depositorOrWithdrawerName?: string;
   description?: string;
+  manualReferenceId?: string;
+  manualAuditNote?: string;
   transactedAt: string;
 }
 

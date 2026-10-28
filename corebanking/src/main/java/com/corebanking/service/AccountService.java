@@ -13,6 +13,7 @@ import com.corebanking.entity.CorporateCredential;
 import com.corebanking.entity.CorporateUser;
 import com.corebanking.entity.CustomerCredentials;
 import com.corebanking.entity.Customers;
+import com.corebanking.entity.PersonalInfo;
 import com.corebanking.entity.StaffUsers;
 import com.corebanking.entity.enums.AccountCategory;
 import com.corebanking.entity.enums.AccountStatus;
@@ -509,6 +510,10 @@ public class AccountService {
 
     private AccountResponseDTO mapToResponseDTO(Accounts account) {
         Customers customer = account.getCustomer();
+        PersonalInfo personalInfo = customer != null ? customer.getPersonalInfo() : null;
+        String phone = personalInfo != null && personalInfo.getPhone() != null
+                ? personalInfo.getPhone()
+                : (customer != null ? customer.getPhone() : null);
         return AccountResponseDTO.builder()
                 .accountNumber(account.getAccountNumber())
                 .accountType(account.getAccountType() != null ? account.getAccountType().name() : null)
@@ -516,6 +521,9 @@ public class AccountService {
                 .isJointAccount(account.isJointAccount())
                 .customerCode(customer != null ? customer.getCustomerCode() : null)
                 .customerName(customer != null ? customer.getFullName() : null)
+                .nrc(personalInfo != null ? personalInfo.getNrc() : null)
+                .phone(phone)
+                .profileImageUrl(personalInfo != null ? personalInfo.getProfileImageUrl() : null)
                 .currentBalance(account.getCurrentBalance())
                 .availableBalance(account.getAvailableBalance())
                 .currency(account.getCurrency())
