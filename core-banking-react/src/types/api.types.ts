@@ -129,7 +129,8 @@ export interface FeeScheduleResponse {
   currency: string;
   activeFrom: string;
   activeUntil: string | null;
-  active: boolean;
+  active?: boolean;
+  isActive?: boolean;
   createdByStaffId: string | null;
   createdAt: string;
   updatedById: string | null;
@@ -169,7 +170,8 @@ export interface AnnouncementResponse {
   title: string;
   message: string;
   audience: AnnouncementAudience;
-  active: boolean;
+  active?: boolean;
+  isActive?: boolean;
   isDeleted: boolean;
   startsAt: string | null;
   endsAt: string | null;
@@ -366,3 +368,4 @@ export interface DailyCashSummaryResponse {
   withdrawalCount: number;
   currency: string;
 }
+

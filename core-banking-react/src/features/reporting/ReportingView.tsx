@@ -3,11 +3,27 @@ import ReportFilterBar, { type ReportTab } from './components/ReportFilterBar';
 import DailyLedgerPanel from './components/DailyLedgerPanel';
 import AccountStatusPanel from './components/AccountStatusPanel';
 import AuditTrailPanel from './components/AuditTrailPanel';
+import FeeRevenuePanel from './components/FeeRevenuePanel';
+import LargeTransactionPanel from './components/LargeTransactionPanel';
 
 const today = new Date().toISOString().slice(0, 10);
 const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
 const todayDt = today + 'T23:59';
 const monthAgoDt = monthAgo + 'T00:00';
+
+function tabStyle(active: boolean): React.CSSProperties {
+  return {
+    padding: '9px 18px',
+    borderRadius: '8px',
+    border: 'none',
+    fontSize: '13px',
+    fontWeight: active ? 700 : 500,
+    cursor: 'pointer',
+    backgroundColor: active ? '#2563EB' : '#f1f5f9',
+    color: active ? '#ffffff' : '#475569',
+    transition: 'all 0.15s',
+  };
+}
 
 const ReportingView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ReportTab>('ledger');
@@ -18,12 +34,16 @@ const ReportingView: React.FC = () => {
   const [ledgerStatus, setLedgerStatus] = useState('');
   const [ledgerTransactionType, setLedgerTransactionType] = useState('');
   const [accountStatus, setAccountStatus] = useState('');
-
+  
   const [auditStartDate, setAuditStartDate] = useState(monthAgoDt);
   const [auditEndDate, setAuditEndDate] = useState(todayDt);
   const [staffId, setStaffId] = useState('');
   const [actionType, setActionType] = useState('');
   const [accountNo, setAccountNo] = useState('');
+
+  const [feeChannel, setFeeChannel] = useState('');
+  const [amlThreshold, setAmlThreshold] = useState<number>(10000000);
+  const [amlTransactionType, setAmlTransactionType] = useState('');
 
   // Applied filter states (applied on Search / Reset)
   const [appliedStartDate, setAppliedStartDate] = useState(monthAgo);
@@ -38,16 +58,24 @@ const ReportingView: React.FC = () => {
   const [appliedActionType, setAppliedActionType] = useState('');
   const [appliedAccountNo, setAppliedAccountNo] = useState('');
 
+  const [appliedFeeChannel, setAppliedFeeChannel] = useState('');
+  const [appliedAmlThreshold, setAppliedAmlThreshold] = useState<number>(10000000);
+  const [appliedAmlTransactionType, setAppliedAmlTransactionType] = useState('');
+
   const [hasSearched, setHasSearched] = useState<Record<ReportTab, boolean>>({
     ledger: false,
     account: false,
     audit: false,
+    fee: false,
+    aml: false,
   });
 
   const [searchKeys, setSearchKeys] = useState<Record<ReportTab, number>>({
     ledger: 0,
     account: 0,
     audit: 0,
+    fee: 0,
+    aml: 0,
   });
 
   const [isSearching, setIsSearching] = useState(false);
@@ -63,6 +91,9 @@ const ReportingView: React.FC = () => {
     setAppliedStaffId(staffId);
     setAppliedActionType(actionType);
     setAppliedAccountNo(accountNo);
+    setAppliedFeeChannel(feeChannel);
+    setAppliedAmlThreshold(amlThreshold);
+    setAppliedAmlTransactionType(amlTransactionType);
 
     setHasSearched((prev) => ({ ...prev, [activeTab]: true }));
     setSearchKeys((prev) => ({ ...prev, [activeTab]: prev[activeTab] + 1 }));
@@ -96,6 +127,22 @@ const ReportingView: React.FC = () => {
       setAppliedStaffId('');
       setAppliedActionType('');
       setAppliedAccountNo('');
+    } else if (activeTab === 'fee') {
+      setStartDate(monthAgo);
+      setEndDate(today);
+      setFeeChannel('');
+      setAppliedStartDate(monthAgo);
+      setAppliedEndDate(today);
+      setAppliedFeeChannel('');
+    } else if (activeTab === 'aml') {
+      setStartDate(monthAgo);
+      setEndDate(today);
+      setAmlThreshold(10000000);
+      setAmlTransactionType('');
+      setAppliedStartDate(monthAgo);
+      setAppliedEndDate(today);
+      setAppliedAmlThreshold(10000000);
+      setAppliedAmlTransactionType('');
     }
 
     setHasSearched((prev) => ({ ...prev, [activeTab]: false }));
@@ -107,92 +154,84 @@ const ReportingView: React.FC = () => {
     ledger: {
       title: 'Ready to Generate Daily Ledger Summary',
       description:
-        'Select your date range and filters above, then click "Search Report" to inspect transaction volumes and double-entry General Ledger reconciliation.',
+        'Select your date range and filters above, then click the "Search" button to view transaction volumes and ledger summaries.',
     },
     account: {
       title: 'Ready to Generate Account Status Report',
       description:
-        'Select your date range and status filters above, then click "Search Report" to inspect accounts portfolio standing and balance brackets.',
+        'Select your date range and status filters above, then click the "Search" button to inspect account statuses and balance brackets.',
     },
     audit: {
       title: 'Ready to View Audit Trail Logs',
       description:
-        'Specify your desired time window, staff ID, or account number above, then click "Search Report" to retrieve tamper-evident audit records.',
+        'Specify your desired time window, staff ID, or account number above, then click the "Search" button to retrieve audit logs.',
+    },
+    fee: {
+      title: 'Ready to Generate Fee & Revenue Report',
+      description:
+        'Select your date range and channel filters above, then click the "Search" button to analyze collected fees and non-interest income.',
+    },
+    aml: {
+      title: 'Ready to Generate Large Transaction & AML Report',
+      description:
+        'Define the threshold amount and transaction filters above, then click the "Search" button to flag high-value AML compliance records.',
     },
   };
 
   return (
-    <div className="max-w-[1440px] mx-auto space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
-        <div>
-          <h2 className="text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight">
-            Reporting & Financial Analytics
-          </h2>
-          <p className="mt-0.5 text-xs sm:text-sm text-slate-500 font-medium">
-            EKARAJ BANK Core Banking Telemetry: General Ledger summaries, balance reconciliations, and audit trail logs
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200/80 px-3.5 py-1.5 rounded-full shadow-xs w-fit">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Real-time Ledger Balancing</span>
-        </div>
+    <div>
+      <div style={{ marginBottom: '24px' }}>
+        <h2
+          style={{
+            fontSize: '18px',
+            fontWeight: 700,
+            color: '#1E40AF',
+            margin: '0 0 4px 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          Reporting & Analytics
+        </h2>
+        <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+          Staff Operations Portal — Group 2 Reporting Subsystem
+        </p>
       </div>
 
-      {/* Tabs Switcher (No Emojis, No Black color - Clean Light Theme) */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center rounded-lg bg-slate-100 p-1 border border-slate-200/60 shadow-xs flex-wrap">
-          <button
-            type="button"
-            onClick={() => setActiveTab('ledger')}
-            className={[
-              'px-4 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-2 cursor-pointer',
-              activeTab === 'ledger'
-                ? 'bg-white text-sky-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900',
-            ].join(' ')}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-            </svg>
-            <span>Daily Ledger Summary</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('account')}
-            className={[
-              'px-4 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-2 cursor-pointer',
-              activeTab === 'account'
-                ? 'bg-white text-sky-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900',
-            ].join(' ')}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-            </svg>
-            <span>Account Status</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('audit')}
-            className={[
-              'px-4 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-2 cursor-pointer',
-              activeTab === 'audit'
-                ? 'bg-white text-sky-600 shadow-xs'
-                : 'text-slate-600 hover:text-slate-900',
-            ].join(' ')}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-            </svg>
-            <span>Audit Trail Logs</span>
-          </button>
-        </div>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <button
+          style={tabStyle(activeTab === 'ledger')}
+          onClick={() => setActiveTab('ledger')}
+        >
+          Daily Ledger Summary
+        </button>
+        <button
+          style={tabStyle(activeTab === 'account')}
+          onClick={() => setActiveTab('account')}
+        >
+          Account Status
+        </button>
+        <button
+          style={tabStyle(activeTab === 'audit')}
+          onClick={() => setActiveTab('audit')}
+        >
+          Audit Trail Logs
+        </button>
+        <button
+          style={tabStyle(activeTab === 'fee')}
+          onClick={() => setActiveTab('fee')}
+        >
+          Fee & Revenue Breakdown
+        </button>
+        <button
+          style={tabStyle(activeTab === 'aml')}
+          onClick={() => setActiveTab('aml')}
+        >
+          Large Transactions (AML)
+        </button>
       </div>
 
-      {/* Filter Bar */}
       <ReportFilterBar
         activeTab={activeTab}
         startDate={startDate}
@@ -215,6 +254,12 @@ const ReportingView: React.FC = () => {
         onAuditStartDateChange={setAuditStartDate}
         auditEndDate={auditEndDate}
         onAuditEndDateChange={setAuditEndDate}
+        feeChannel={feeChannel}
+        onFeeChannelChange={setFeeChannel}
+        amlThreshold={amlThreshold}
+        onAmlThresholdChange={setAmlThreshold}
+        amlTransactionType={amlTransactionType}
+        onAmlTransactionTypeChange={setAmlTransactionType}
         onSearch={handleSearch}
         onReset={handleReset}
         loading={isSearching}
@@ -234,6 +279,7 @@ const ReportingView: React.FC = () => {
           />
         </div>
       )}
+
       {hasSearched.account && (
         <div style={{ display: activeTab === 'account' ? 'block' : 'none' }}>
           <AccountStatusPanel
@@ -247,6 +293,7 @@ const ReportingView: React.FC = () => {
           />
         </div>
       )}
+
       {hasSearched.audit && (
         <div style={{ display: activeTab === 'audit' ? 'block' : 'none' }}>
           <AuditTrailPanel
@@ -263,26 +310,100 @@ const ReportingView: React.FC = () => {
         </div>
       )}
 
+      {hasSearched.fee && (
+        <div style={{ display: activeTab === 'fee' ? 'block' : 'none' }}>
+          <FeeRevenuePanel
+            startDate={appliedStartDate}
+            endDate={appliedEndDate}
+            channel={appliedFeeChannel}
+            searchKey={searchKeys.fee}
+            onLoadingChange={(l) => {
+              if (activeTab === 'fee') setIsSearching(l);
+            }}
+          />
+        </div>
+      )}
+
+      {hasSearched.aml && (
+        <div style={{ display: activeTab === 'aml' ? 'block' : 'none' }}>
+          <LargeTransactionPanel
+            startDate={appliedStartDate}
+            endDate={appliedEndDate}
+            threshold={appliedAmlThreshold}
+            transactionType={appliedAmlTransactionType}
+            searchKey={searchKeys.aml}
+            onLoadingChange={(l) => {
+              if (activeTab === 'aml') setIsSearching(l);
+            }}
+          />
+        </div>
+      )}
+
       {!hasSearched[activeTab] && (
-        <div className="glass-panel p-16 text-center space-y-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-400/20 text-amber-800 text-2xl mx-auto border border-amber-400/30">
+        <div
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '10px',
+            border: '1px dashed #cbd5e1',
+            padding: '56px 24px',
+            textAlign: 'center',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+          }}
+        >
+          <div
+            style={{
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              backgroundColor: '#eff6ff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: '22px',
+            }}
+          >
             🔍
           </div>
-          <div>
-            <h3 className="text-base font-black text-[#1E1B4B] tracking-tight">
-              {tabInfo[activeTab].title}
-            </h3>
-            <p className="text-xs sm:text-sm text-zinc-500 max-w-md mx-auto mt-1 font-medium leading-relaxed">
-              {tabInfo[activeTab].description}
-            </p>
-          </div>
+          <h3
+            style={{
+              fontSize: '15px',
+              fontWeight: 700,
+              color: '#1e293b',
+              margin: '0 0 8px 0',
+            }}
+          >
+            {tabInfo[activeTab].title}
+          </h3>
+          <p
+            style={{
+              fontSize: '13px',
+              color: '#64748b',
+              maxWidth: '460px',
+              margin: '0 auto 20px',
+              lineHeight: '1.5',
+            }}
+          >
+            {tabInfo[activeTab].description}
+          </p>
           <button
             type="button"
             onClick={handleSearch}
             disabled={isSearching}
-            className="btn-liquid-gold px-8 py-2.5 text-xs inline-flex items-center gap-2"
+            style={{
+              padding: '9px 24px',
+              backgroundColor: '#2563EB',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: isSearching ? 'not-allowed' : 'pointer',
+              opacity: isSearching ? 0.7 : 1,
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            }}
           >
-            {isSearching ? 'Generating Report...' : 'Search Report'}
+            {isSearching ? 'Searching...' : 'Search Report'}
           </button>
         </div>
       )}

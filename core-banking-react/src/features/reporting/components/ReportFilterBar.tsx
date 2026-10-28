@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type ReportTab = 'ledger' | 'account' | 'audit';
+export type ReportTab = 'ledger' | 'account' | 'audit' | 'fee' | 'aml';
 
 interface ReportFilterBarProps {
   activeTab: ReportTab;
@@ -24,10 +24,45 @@ interface ReportFilterBarProps {
   onAuditStartDateChange: (v: string) => void;
   auditEndDate: string;
   onAuditEndDateChange: (v: string) => void;
+  feeChannel?: string;
+  onFeeChannelChange?: (v: string) => void;
+  amlThreshold?: number;
+  onAmlThresholdChange?: (v: number) => void;
+  amlTransactionType?: string;
+  onAmlTransactionTypeChange?: (v: string) => void;
   onSearch: () => void;
   onReset: () => void;
   loading?: boolean;
 }
+
+const inputStyle: React.CSSProperties = {
+  padding: '8px 10px',
+  borderRadius: '6px',
+  border: '1px solid #cbd5e1',
+  fontSize: '13px',
+  outline: 'none',
+  minWidth: '140px',
+  flex: '1',
+  color: '#334155',
+  backgroundColor: '#fff',
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: '11px',
+  fontWeight: 600,
+  color: '#475569',
+  marginBottom: '4px',
+  display: 'block',
+  textTransform: 'uppercase',
+  letterSpacing: '0.3px',
+};
+
+const fieldWrap: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: '130px',
+  flex: '1',
+};
 
 const LEDGER_STATUSES = ['', 'COMPLETED', 'PENDING', 'FAILED', 'REVERSED'];
 const LEDGER_TRANSACTION_TYPES = [
@@ -40,6 +75,7 @@ const LEDGER_TRANSACTION_TYPES = [
   'REFUND',
 ];
 const ACCOUNT_STATUSES = ['', 'ACTIVE', 'FROZEN', 'SUSPENDED', 'CLOSED'];
+const CHANNELS = ['', 'CUSTOMER_PORTAL', 'STAFF_PORTAL', 'PAYMENT_GATEWAY', 'SYSTEM'];
 const ACTION_TYPES = [
   '',
   'LOGIN',
@@ -81,45 +117,62 @@ const ReportFilterBar: React.FC<ReportFilterBarProps> = (props) => {
     auditEndDate,
     onAuditStartDateChange,
     onAuditEndDateChange,
+    feeChannel = '',
+    onFeeChannelChange,
+    amlThreshold = 10000000,
+    onAmlThresholdChange,
+    amlTransactionType = '',
+    onAmlTransactionTypeChange,
     onSearch,
     onReset,
     loading,
   } = props;
 
   return (
-    <div className="glass-panel p-6 space-y-4">
-      <div className="flex items-center gap-2 pb-3 border-b border-purple-950/10">
-        <span className="text-base font-black text-[#1E1B4B] tracking-tight">
-          Filter Parameters &amp; Query Scope
-        </span>
+    <div
+      style={{
+        backgroundColor: '#ffffff',
+        borderRadius: '10px',
+        border: '1px solid #e2e8f0',
+        padding: '20px 24px',
+        marginBottom: '20px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '13px',
+          fontWeight: 700,
+          color: '#1E40AF',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+        }}
+      >
+        Filter & Search
       </div>
-
-      <div className="flex flex-wrap items-end gap-3.5">
-        {(activeTab === 'ledger' || activeTab === 'account') && (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'flex-end' }}>
+        {activeTab !== 'audit' && (
           <>
-            <div className="flex flex-col min-w-[140px] flex-1">
-              <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                Start Date
-              </label>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Start Date</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => onStartDateChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+                style={inputStyle}
               />
             </div>
-
-            <div className="flex flex-col min-w-[140px] flex-1">
-              <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                End Date
-              </label>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>End Date</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => onEndDateChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+                style={inputStyle}
               />
             </div>
           </>
@@ -127,152 +180,195 @@ const ReportFilterBar: React.FC<ReportFilterBarProps> = (props) => {
 
         {activeTab === 'ledger' && (
           <>
-            <div className="flex flex-col min-w-[140px] flex-1">
-              <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                Ledger Status
-              </label>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Transaction Type</label>
               <select
-                value={ledgerStatus}
-                onChange={(e) => onLedgerStatusChange(e.target.value)}
-                className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs font-semibold text-[#1E1B4B] focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+                value={ledgerTransactionType}
+                onChange={(e) => onLedgerTransactionTypeChange?.(e.target.value)}
+                style={inputStyle}
               >
-                {LEDGER_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s === '' ? 'All Statuses' : s}
+                {LEDGER_TRANSACTION_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t || 'All Types'}
                   </option>
                 ))}
               </select>
             </div>
-
-            {onLedgerTransactionTypeChange && (
-              <div className="flex flex-col min-w-[160px] flex-1">
-                <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                  Transaction Type
-                </label>
-                <select
-                  value={ledgerTransactionType}
-                  onChange={(e) => onLedgerTransactionTypeChange(e.target.value)}
-                  className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs font-semibold text-[#1E1B4B] focus:outline-none focus:ring-2 focus:ring-amber-400/25"
-                >
-                  {LEDGER_TRANSACTION_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t === '' ? 'All Types' : t.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Transaction Status</label>
+              <select
+                value={ledgerStatus}
+                onChange={(e) => onLedgerStatusChange(e.target.value)}
+                style={inputStyle}
+              >
+                {LEDGER_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s || 'All Statuses'}
+                  </option>
+                ))}
+              </select>
+            </div>
           </>
         )}
 
         {activeTab === 'account' && (
-          <div className="flex flex-col min-w-[140px] flex-1">
-            <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-              Account Status
-            </label>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Account Status</label>
             <select
               value={accountStatus}
               onChange={(e) => onAccountStatusChange(e.target.value)}
-              className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs font-semibold text-[#1E1B4B] focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+              style={inputStyle}
             >
               {ACCOUNT_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {s === '' ? 'All Statuses' : s}
+                  {s || 'All Statuses'}
                 </option>
               ))}
             </select>
           </div>
         )}
 
+        {activeTab === 'fee' && (
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Channel</label>
+            <select
+              value={feeChannel}
+              onChange={(e) => onFeeChannelChange?.(e.target.value)}
+              style={inputStyle}
+            >
+              {CHANNELS.map((c) => (
+                <option key={c} value={c}>
+                  {c || 'All Channels'}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {activeTab === 'aml' && (
+          <>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Min Threshold (MMK)</label>
+              <input
+                type="number"
+                value={amlThreshold || ''}
+                onChange={(e) => onAmlThresholdChange?.(Number(e.target.value))}
+                onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+                style={inputStyle}
+                placeholder="10000000"
+              />
+            </div>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Transaction Type</label>
+              <select
+                value={amlTransactionType}
+                onChange={(e) => onAmlTransactionTypeChange?.(e.target.value)}
+                style={inputStyle}
+              >
+                {LEDGER_TRANSACTION_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t || 'All Types'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
+
         {activeTab === 'audit' && (
           <>
-            <div className="flex flex-col min-w-[150px] flex-1">
-              <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                From Date/Time
-              </label>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Start DateTime</label>
               <input
                 type="datetime-local"
                 value={auditStartDate}
                 onChange={(e) => onAuditStartDateChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+                style={inputStyle}
               />
             </div>
-
-            <div className="flex flex-col min-w-[150px] flex-1">
-              <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                To Date/Time
-              </label>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>End DateTime</label>
               <input
                 type="datetime-local"
                 value={auditEndDate}
                 onChange={(e) => onAuditEndDateChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+                style={inputStyle}
               />
             </div>
-
-            <div className="flex flex-col min-w-[120px] flex-1">
-              <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                Staff ID
-              </label>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Staff ID</label>
               <input
                 type="text"
-                placeholder="e.g. STF-001"
+                placeholder="e.g. staff-uuid"
                 value={staffId}
                 onChange={(e) => onStaffIdChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+                style={inputStyle}
               />
             </div>
-
-            <div className="flex flex-col min-w-[140px] flex-1">
-              <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                Action Type
-              </label>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Action Type</label>
               <select
                 value={actionType}
                 onChange={(e) => onActionTypeChange(e.target.value)}
-                className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs font-semibold text-[#1E1B4B] focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+                style={inputStyle}
               >
                 {ACTION_TYPES.map((a) => (
                   <option key={a} value={a}>
-                    {a === '' ? 'All Actions' : a.replace(/_/g, ' ')}
+                    {a || 'All Actions'}
                   </option>
                 ))}
               </select>
             </div>
-
-            <div className="flex flex-col min-w-[130px] flex-1">
-              <label className="text-[11px] font-bold text-[#1E1B4B] uppercase tracking-wider mb-1.5">
-                Account No.
-              </label>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Account No.</label>
               <input
                 type="text"
-                placeholder="Account number"
+                placeholder="e.g. ACC-001"
                 value={accountNo}
                 onChange={(e) => onAccountNoChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onSearch()}
-                className="rounded-xl border border-purple-950/15 bg-white/80 px-3.5 py-2 text-xs text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-400/25"
+                style={inputStyle}
               />
             </div>
           </>
         )}
 
-        <div className="flex items-center gap-2.5 ml-auto">
+        <div style={{ display: 'flex', gap: '8px', alignSelf: 'flex-end', paddingBottom: '0' }}>
           <button
             type="button"
             onClick={onSearch}
             disabled={loading}
-            className="btn-liquid-gold px-6 py-2 text-xs"
+            style={{
+              padding: '8px 20px',
+              backgroundColor: '#2563EB',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1,
+            }}
           >
-            {loading ? 'Searching...' : 'Search'}
+            {loading ? 'Loading...' : 'Search'}
           </button>
           <button
             type="button"
             onClick={onReset}
             disabled={loading}
-            className="rounded-full border border-purple-950/15 bg-white/80 hover:bg-white px-5 py-2 text-xs font-bold text-[#1E1B4B] shadow-xs transition-colors"
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#f1f5f9',
+              color: '#334155',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}
           >
             Reset
           </button>

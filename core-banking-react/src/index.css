@@ -1,250 +1,35 @@
 @import "tailwindcss";
 
-/* Override the default #root constraint from the Vite template */
-#root {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  text-align: left;
-  border-inline: none;
-  min-height: 100svh;
-  display: block;
-  box-sizing: border-box;
+@layer base {
+  :root {
+    --primary: #0f172a;
+    --primary-hover: #1e293b;
+    --bank-blue: #1d4ed8;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+  }
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #F8FAFC;
-  color: #0F172A;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Smooth scrollbar (Linear / Notion style) */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 transparent;
-}
-
+/* Custom scrollbar for banking tables */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f1f5f9;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 9999px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
-}
-
-/* ============================================================ */
-/* Ultra-Clean Minimalist Light SaaS Theme (Notion / Linear)    */
-/* ============================================================ */
-
-/* 1. Crisp White Card with 3D Elevation & Micro-Interactions */
-.glass-panel {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 2px 10px -3px rgba(6, 81, 237, 0.05);
-  border-radius: 0.75rem; /* 12px / rounded-xl */
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
-  will-change: transform, box-shadow;
-}
-
-.glass-panel:hover {
-  border-color: #CBD5E1;
-  box-shadow: 0 10px 24px -6px rgba(2, 132, 199, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-}
-
-/* 2. Hero Metric Card (3D Floating Lift on Hover) */
-.glass-hero-purple,
-.metric-card {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 2px 10px -3px rgba(6, 81, 237, 0.05);
-  border-radius: 0.75rem; /* 12px / rounded-xl */
-  color: #0F172A;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
-  will-change: transform, box-shadow;
-}
-
-.glass-hero-purple:hover,
-.metric-card:hover {
-  transform: perspective(1000px) translateY(-3px) scale(1.006);
-  border-color: #BAE6FD;
-  box-shadow: 0 14px 28px -6px rgba(2, 132, 199, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
-}
-
-/* 3. Pure White Dense Financial Tables */
-.glass-table-panel {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 2px 10px -3px rgba(6, 81, 237, 0.04);
-  border-radius: 0.75rem;
-}
-
-/* 4. Stationary Clean White Sidebar */
-.glass-sidebar {
-  background: #FFFFFF;
-  border-right: 1px solid #E2E8F0;
-  box-shadow: 1px 0 2px 0 rgba(15, 23, 42, 0.02);
-}
-
-/* 5. Primary CTA Rounded Button with 3D Depth */
-.btn-liquid-gold,
-.btn-primary-blue {
-  background: #0284C7;
-  color: #FFFFFF !important;
-  font-weight: 600;
-  border-radius: 0.625rem;
-  box-shadow: 0 1px 2px 0 rgba(2, 132, 199, 0.2);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-liquid-gold:hover,
-.btn-primary-blue:hover {
-  background: #0369A1;
-  transform: translateY(-1.5px) scale(1.01);
-  box-shadow: 0 6px 16px -2px rgba(2, 132, 199, 0.35);
-}
-
-.btn-liquid-gold:active,
-.btn-primary-blue:active {
-  transform: translateY(0.5px) scale(0.99);
-  box-shadow: 0 1px 2px 0 rgba(2, 132, 199, 0.2);
-}
-
-.btn-liquid-gold svg,
-.btn-primary-blue svg {
-  color: #FFFFFF !important;
-}
-
-/* ============================================================ */
-/* 3D Animations & Smooth Lively Micro-Effects                  */
-/* ============================================================ */
-
-/* Gentle Floating 3D Rhythm (Crown Logo / Badges) */
-@keyframes gentleFloat {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-4px) rotate(0.8deg);
-  }
-}
-
-.animate-gentle-float {
-  animation: gentleFloat 3.8s ease-in-out infinite;
-  will-change: transform;
-}
-
-/* Subtle 3D Card Hover Tilt/Lift Utility */
-.card-hover-3d {
-  transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.26s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
-  will-change: transform, box-shadow;
-}
-
-.card-hover-3d:hover {
-  transform: perspective(1000px) translateY(-3px) scale(1.008);
-  box-shadow: 0 14px 28px -6px rgba(2, 132, 199, 0.12), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
-}
-
-.card-hover-3d:active {
-  transform: perspective(1000px) translateY(0) scale(0.995);
-}
-
-/* Smooth Ambient Pulse Glow */
-@keyframes ambientGlow {
-  0%, 100% {
-    box-shadow: 0 0 12px rgba(14, 165, 233, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 24px rgba(14, 165, 233, 0.32);
-  }
-}
-
-.glow-ambient {
-  animation: ambientGlow 3.5s ease-in-out infinite;
-}
-
-/* Smooth Fluid Page Entrance */
-@keyframes fluidEntrance {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fluid-enter {
-  animation: fluidEntrance 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* 6. Semantic Status Pastel Pill Badges */
-.status-pill-emerald {
-  background: #D1FAE5;
-  color: #047857;
-  border: 1px solid #A7F3D0;
-  border-radius: 9999px;
-  padding: 0.15rem 0.625rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.status-pill-amber {
-  background: #FEF3C7;
-  color: #B45309;
-  border: 1px solid #FDE68A;
-  border-radius: 9999px;
-  padding: 0.15rem 0.625rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.status-pill-crimson {
-  background: #FEE2E2;
-  color: #B91C1C;
-  border: 1px solid #FECACA;
-  border-radius: 9999px;
-  padding: 0.15rem 0.625rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.status-pill-purple,
-.status-pill-blue {
-  background: #E0F2FE;
-  color: #0369A1;
-  border: 1px solid #BAE6FD;
-  border-radius: 9999px;
-  padding: 0.15rem 0.625rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  background: #94a3b8;
 }
