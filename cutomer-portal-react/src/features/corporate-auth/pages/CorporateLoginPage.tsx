@@ -47,25 +47,19 @@ export default function CorporateLoginPage() {
     >
       <section aria-label="Corporate login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
         <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-            <div className="absolute inset-x-0 top-0 aspect-[1200/1624] min-h-full">
-              <img data-corporate-building src="/assets/ekaraj-building-reference.jpg" alt="" className="absolute inset-0 h-full w-full object-cover object-[65%_top] opacity-80" />
-              <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(229,234,240,0.94)_0%,rgba(229,234,240,0.72)_28%,rgba(229,234,240,0.2)_55%,transparent_80%)]" />
-              <div data-corporate-building-branding className="absolute left-[51%] top-[40%] flex w-[34%] -translate-x-1/2 -rotate-[16deg] items-center justify-center gap-1 rounded-sm border border-[#C6A15B]/60 bg-[#F5F3EF]/85 px-1.5 py-1 text-[#122E52] shadow-sm">
-                <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-auto w-[22%] shrink-0 object-contain" />
-                <span className="whitespace-nowrap text-[clamp(8px,0.8vw,11px)] font-semibold leading-4 tracking-[0.04em]">EKARAJ BANK</span>
-              </div>
-            </div>
-          </div>
+          <img data-corporate-building src="/assets/ekaraj-building-reference.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 h-[85%] w-[85%] object-cover object-[60%_70%] opacity-[0.1] [mask-image:radial-gradient(ellipse_at_75%_65%,#000_10%,transparent_80%)]" />
           <svg aria-hidden="true" focusable="false" viewBox="0 0 450 470" preserveAspectRatio="none" fill="none" className="pointer-events-none absolute inset-0 h-full w-full">
             <path d="M-70 85C95 35 120 300 330 285S500 215 520 150" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.35" />
             <path d="M-80 105C80 55 135 325 340 305S510 235 530 175" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.2" />
           </svg>
           <div className="relative px-6 pt-4 lg:px-7">
-            <h2 className="font-serif text-[28px] font-medium leading-9 tracking-tight">Empower Your Business.<br />Bank with Confidence.</h2>
+            <h2 className="font-serif text-2xl font-medium leading-8 tracking-tight">Empower Your Business.<br />Bank with Confidence.</h2>
             <p className="mt-2 text-sm leading-5 text-[#59697D]">Securely access your company's banking services and stay connected with EKARAJ BANK.</p>
           </div>
-          <div className="relative space-y-2.5 px-6 pb-4 pt-2 before:pointer-events-none before:absolute before:inset-x-0 before:-top-4 before:bottom-0 before:bg-[linear-gradient(90deg,rgba(229,234,240,0.97)_0%,rgba(229,234,240,0.90)_60%,rgba(229,234,240,0)_100%)] before:[mask-image:linear-gradient(to_bottom,transparent_0%,#000_18%,#000_100%)] [&>div]:relative lg:px-7">
+          <div aria-hidden="true" className="relative flex min-h-0 flex-1 items-center justify-center px-6 py-2">
+            <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-auto w-40 max-w-full object-contain" />
+          </div>
+          <div className="relative space-y-2.5 px-6 pb-4 pt-2 lg:px-7">
             {[
               { icon: ShieldCheck, title: "Secure Corporate Access", description: "Your business, our priority." },
               { icon: UsersRound, title: "Multi-User Management", description: "Control and monitor with ease." },
@@ -74,21 +68,19 @@ export default function CorporateLoginPage() {
               <div key={title} className="flex items-start gap-3">
                 <Icon aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#C6A15B]" />
                 <div>
-                  <p className="text-xs font-semibold leading-4">{title}</p>
-                  <p className="mt-0.5 text-[11px] leading-4 text-[#59697D]">{description}</p>
+                  <p className="text-xs font-semibold leading-4 text-[#1A365D]">{title}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-[#627084]">{description}</p>
                 </div>
               </div>
             ))}
           </div>
         </aside>
-        <section aria-label="Corporate banking login" className="flex min-w-0 items-center px-5 py-2 sm:px-8 md:px-7 lg:px-9 md:[@media(max-height:700px)]:px-6 md:[@media(max-height:700px)]:py-1">
+        <section aria-label="Corporate banking login" className="flex min-w-0 items-center px-5 py-3 sm:px-8 md:px-7 lg:px-9 md:[@media(max-height:700px)]:px-6 md:[@media(max-height:700px)]:py-1">
           <div className="mx-auto w-full max-w-[392px] md:[@media(max-height:700px)]:max-w-none">
-            <div className="mb-1.5 text-center md:[@media(max-height:700px)]:mb-0">
-              <span aria-hidden="true" className="mx-auto mb-1 flex h-11 w-11 items-center justify-center rounded-full border border-[#C6D5E3] bg-[#EAF2FA] text-[#113E65] md:[@media(max-height:700px)]:mb-0 md:[@media(max-height:700px)]:h-8 md:[@media(max-height:700px)]:w-8">
-                <UsersRound size={24} strokeWidth={1.8} />
-              </span>
+            <div className="mb-4 md:[@media(max-height:700px)]:mb-2">
               <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">Corporate Login</h1>
-              <p className="mt-0.5 text-sm leading-5 text-[#59697D] md:[@media(max-height:700px)]:leading-[18px]">Login securely using your Company Customer ID and Corporate User ID to access your corporate banking services.</p>
+              <p className="mt-0.5 text-sm leading-5 text-[#111418] md:[@media(max-height:700px)]:leading-[18px]">Login securely using your Company Customer ID and Corporate User ID to access your corporate banking services.</p>
+              <div aria-hidden="true" className="mt-1 h-px w-10 bg-[#C6A15B]" />
             </div>
             <form onSubmit={submit} autoComplete="off" noValidate className={corporateLoginFormClass}>
               <div className="relative [&>div>div>svg]:hidden">
