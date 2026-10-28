@@ -10,7 +10,7 @@ import { hasCorporateSession } from "../utils/storage";
 
 // Presentation overrides stay on this page; CorporateField retains its native input behavior.
 const corporateLoginFormClass =
-  "space-y-1.5 md:[@media(max-height:700px)]:space-y-1 [&_label]:mb-1 md:[@media(max-height:700px)]:[&_label]:mb-0.5 md:[@media(max-height:700px)]:[&>[role=alert]]:py-1 md:[@media(max-height:700px)]:[&>[role=alert]]:leading-[18px] [&_label]:text-[#1A365D] [&_input]:border-[#CDD5DF] [&_input]:text-[#111418] [&_input]:transition-colors [&_input]:placeholder:text-[#757575] [&_input]:hover:border-[#C6A15B] [&_input]:focus:border-[#113E65] [&_input]:focus:ring-[#113E65]/15 [&_input]:disabled:bg-[#E5EAF0] [&_input]:disabled:text-[#757575] [&_input]:motion-reduce:transition-none [&_svg]:text-[#757575] [&_button[type=button]]:hover:text-[#122E52] [&_button[type=button]]:focus-visible:ring-[#113E65]";
+  "space-y-1.5 md:[@media(max-height:700px)]:space-y-[3px] [&_label]:mb-1 md:[@media(max-height:700px)]:[&_label]:mb-px md:[@media(max-height:700px)]:[&>[role=alert]]:py-1 md:[@media(max-height:700px)]:[&>[role=alert]]:leading-[18px] [&_label]:text-[#1A365D] [&_input]:border-[#CDD5DF] [&_input]:text-[#111418] [&_input]:transition-colors [&_input]:placeholder:text-[#757575] [&_input]:hover:border-[#C6A15B] [&_input]:focus:border-[#113E65] [&_input]:focus:ring-[#113E65]/15 [&_input]:disabled:bg-[#E5EAF0] [&_input]:disabled:text-[#757575] [&_input]:motion-reduce:transition-none [&_svg]:text-[#757575] [&_button[type=button]]:hover:text-[#122E52] [&_button[type=button]]:focus-visible:ring-[#113E65]";
 const corporateLoginLinkClass =
   "rounded-md font-semibold text-[#122E52] underline underline-offset-4 decoration-[#C6A15B] transition-colors hover:text-[#1A365D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#113E65] motion-reduce:transition-none";
 
@@ -47,11 +47,14 @@ export default function CorporateLoginPage() {
     >
       <section aria-label="Corporate login card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
         <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
-          <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 h-[75%] w-full">
-            <img data-corporate-building src="/assets/ekaraj-building-reference.jpg" alt="" className="absolute inset-0 h-full w-full object-cover object-[65%_top] opacity-80 [mask-image:linear-gradient(to_bottom,transparent_0%,#000_12%,#000_100%)]" />
-            <div data-corporate-building-branding className="absolute right-[15%] top-[29%] flex w-[124px] flex-col items-center gap-0.5 text-[#122E52]">
-              <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-8 w-auto object-contain" />
-              <span className="text-[11px] font-semibold leading-4 tracking-[0.08em]">EKARAJ BANK</span>
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-x-0 top-0 aspect-[1200/1624] min-h-full">
+              <img data-corporate-building src="/assets/ekaraj-building-reference.jpg" alt="" className="absolute inset-0 h-full w-full object-cover object-[65%_top] opacity-80" />
+              <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(229,234,240,0.94)_0%,rgba(229,234,240,0.72)_28%,rgba(229,234,240,0.2)_55%,transparent_80%)]" />
+              <div data-corporate-building-branding className="absolute left-[51%] top-[40%] flex w-[34%] -translate-x-1/2 -rotate-[16deg] items-center justify-center gap-1 rounded-sm border border-[#C6A15B]/60 bg-[#F5F3EF]/85 px-1.5 py-1 text-[#122E52] shadow-sm">
+                <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-auto w-[22%] shrink-0 object-contain" />
+                <span className="whitespace-nowrap text-[clamp(8px,0.8vw,11px)] font-semibold leading-4 tracking-[0.04em]">EKARAJ BANK</span>
+              </div>
             </div>
           </div>
           <svg aria-hidden="true" focusable="false" viewBox="0 0 450 470" preserveAspectRatio="none" fill="none" className="pointer-events-none absolute inset-0 h-full w-full">
@@ -78,10 +81,10 @@ export default function CorporateLoginPage() {
             ))}
           </div>
         </aside>
-        <section aria-label="Corporate banking login" className="flex min-w-0 items-center px-5 py-2 sm:px-8 md:px-7 lg:px-9 md:[@media(max-height:700px)]:px-6">
+        <section aria-label="Corporate banking login" className="flex min-w-0 items-center px-5 py-2 sm:px-8 md:px-7 lg:px-9 md:[@media(max-height:700px)]:px-6 md:[@media(max-height:700px)]:py-1">
           <div className="mx-auto w-full max-w-[392px] md:[@media(max-height:700px)]:max-w-none">
-            <div className="mb-1.5 text-center md:[@media(max-height:700px)]:mb-1">
-              <span aria-hidden="true" className="mx-auto mb-1 flex h-11 w-11 items-center justify-center rounded-full border border-[#C6D5E3] bg-[#EAF2FA] text-[#113E65] md:[@media(max-height:700px)]:mb-0.5 md:[@media(max-height:700px)]:h-9 md:[@media(max-height:700px)]:w-9">
+            <div className="mb-1.5 text-center md:[@media(max-height:700px)]:mb-0">
+              <span aria-hidden="true" className="mx-auto mb-1 flex h-11 w-11 items-center justify-center rounded-full border border-[#C6D5E3] bg-[#EAF2FA] text-[#113E65] md:[@media(max-height:700px)]:mb-0 md:[@media(max-height:700px)]:h-8 md:[@media(max-height:700px)]:w-8">
                 <UsersRound size={24} strokeWidth={1.8} />
               </span>
               <h1 className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">Corporate Login</h1>
@@ -100,11 +103,11 @@ export default function CorporateLoginPage() {
                 {action.busy ? "Please wait..." : "Login"}
               </button>
             </form>
-            <div className="mt-1.5 space-y-1 text-center text-xs leading-5 text-[#59697D] md:[@media(max-height:700px)]:mt-1 md:[@media(max-height:700px)]:space-y-0 md:[@media(max-height:700px)]:leading-4">
+            <div className="mt-3 space-y-2 text-center text-xs leading-5 text-[#59697D] md:[@media(max-height:700px)]:leading-4">
               <p>Personal Banking? <Link to="/login" className={corporateLoginLinkClass}>Individual Customer Login</Link></p>
               <p>Need assistance? <span className="font-semibold text-[#122E52]">Contact your bank</span></p>
             </div>
-            <div className="mt-1.5 flex items-start gap-2.5 rounded-xl border border-[#C6D5E3] bg-[#EAF2FA] p-2 md:[@media(max-height:700px)]:mt-1 md:[@media(max-height:700px)]:p-1.5">
+            <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-[#C6D5E3] bg-[#EAF2FA] p-2 md:[@media(max-height:700px)]:p-1.5">
               <ShieldCheck aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#113E65]" />
               <div>
                 <p className="text-xs font-semibold leading-4 text-[#1A365D]">Your security comes first</p>
