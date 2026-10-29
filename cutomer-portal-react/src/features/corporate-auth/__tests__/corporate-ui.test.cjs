@@ -148,7 +148,8 @@ for (const [route, seed] of [
   ['/corporate/first-login/change-password', setupSeed('password')],
   ['/corporate/first-login/setup-pin', setupSeed('pin')],
 ]) {
-  const ekarajPage = route === '/corporate/login' || route === '/corporate/otp';
+  const ekarajPage = route === '/corporate/login' || route === '/corporate/otp'
+    || route === '/corporate/first-login/change-password' || route === '/corporate/first-login/setup-pin';
   test(route + ' uses ' + (ekarajPage ? 'EKARAJ Bank' : 'ACE Bank') + ' presentation with labels, empty native controls and no decorative arrows', async t => {
     const app = await ui(t, { route, seed });
     if (ekarajPage) {
