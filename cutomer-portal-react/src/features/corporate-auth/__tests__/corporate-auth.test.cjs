@@ -173,7 +173,10 @@ test('normal Corporate OTP verification saves isolated tokens and replaces route
   const app = await setup();
   try {
     await app.login(); await app.verify(); assert.equal(app.router.state.location.pathname, '/corporate/auth-success');
-    assert.equal(app.router.state.historyAction, 'REPLACE'); assert.match(app.container.textContent, /Corporate Dashboard integration is pending/);
+    assert.equal(app.router.state.historyAction, 'REPLACE');
+    assert.equal(app.container.querySelector('h1#corporate-dashboard-heading').textContent, 'Corporate Banking Dashboard');
+    assert.equal(app.container.querySelector('h2#corporate-company-overview').textContent, 'Company Overview');
+    assert.equal(app.container.querySelector('button[type="submit"]').textContent, 'Corporate Logout');
     assert.equal(sessionStorage.getItem('corporateChallengeGroupId'), null); assert.ok(sessionStorage.getItem('corporateAccessToken'));
     assert.ok(sessionStorage.getItem('corporateRefreshToken')); assert.deepEqual(app.calls[1].body, { challengeGroupId: challenge, otp: '123456' }); app.checkIsolation();
   } finally { await app.cleanup(); }
