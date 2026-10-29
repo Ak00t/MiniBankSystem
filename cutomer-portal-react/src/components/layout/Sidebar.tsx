@@ -16,23 +16,20 @@ import {
 
 import {
   NavLink,
-  useNavigate,
 } from "react-router-dom";
 
 import {
   useEffect,
-  useState,
+  useSyncExternalStore,
 } from "react";
 
-import {
-  logoutCustomer,
-} from "../../services/authService";
-
-import {
-  clearTokens,
-} from "../../utils/tokenStorage";
+import { useTranslation } from "react-i18next";
+import { isIndividualLogoutInProgress, useIndividualLogout } from "../../features/auth/hooks/useIndividualLogout";
+import { getAuthenticationGeneration, subscribeToAuthenticationChanges } from "../../utils/tokenStorage";
 import { useAppDispatch ,useAppSelector } from "../../lib/redux";
 import { fetchAnnouncements } from "../../features/customer-account/announcements/store/announcementSlice";
+
+
 
 
 // ======================================================
@@ -41,41 +38,41 @@ import { fetchAnnouncements } from "../../features/customer-account/announcement
 
 const mainMenuItems = [
   {
-    name: "Dashboard",
+    labelKey: "navigation.dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "My Accounts",
+    labelKey: "navigation.accounts",
     path: "/accounts",
     icon: WalletCards,
   },
   {
-    name: "Transfer & Payments",
+    labelKey: "navigation.transfer",
     path: "/transfer",
     icon: ArrowLeftRight,
   },
   {
-    name: "Transaction History",
+    labelKey: "navigation.transactionHistory",
     path: "/transaction",
     icon: History,
   },
   {
-    name: "Account Statement",
+    labelKey: "navigation.accountStatement",
     path: "/statements",
     icon: FileText,
   },
   {
-    name: "Beneficiaries",
+    labelKey: "navigation.beneficiaries",
     path: "/beneficiaries",
     icon: Users,
   },
-    {
-    name: "Announcements",
+  {
+    labelKey: "navigation.announcements",
     path: "/announcements",
     icon: Megaphone,
   },
-];
+] as const;
 
 
 // ======================================================
@@ -84,21 +81,21 @@ const mainMenuItems = [
 
 const accountMenuItems = [
   {
-    name: "Profile",
+    labelKey: "navigation.profile",
     path: "/profile",
     icon: User,
   },
   {
-    name: "Settings",
+    labelKey: "navigation.settings",
     path: "/settings",
     icon: Settings,
   },
   {
-    name: "Help & Support",
+    labelKey: "navigation.support",
     path: "/support",
     icon: HelpCircle,
   },
-];
+] as const;
 
 
 // ======================================================
@@ -107,17 +104,14 @@ const accountMenuItems = [
 
 export default function Sidebar() {
 
-  const navigate =
-    useNavigate();
+  const handleLogout = useIndividualLogout();
+  // A previous session's pending logout must not disable this session's button.
+  useSyncExternalStore(subscribeToAuthenticationChanges, getAuthenticationGeneration);
+  const loggingOut = isIndividualLogoutInProgress();
 
    const dispatch = useAppDispatch();
 
-  const [
-    loggingOut,
-    setLoggingOut,
-  ] = useState(false);
-
-
+  const { t } = useTranslation("common");
     useEffect(() => {
     void dispatch(fetchAnnouncements());
   }, [dispatch]);
@@ -128,92 +122,6 @@ export default function Sidebar() {
       (announcement) => !announcement.isRead,
     ).length,
   );
-
-
-  // ====================================================
-  // LOGOUT
-  // ====================================================
-
-  const handleLogout =
-    async () => {
-
-      // Double click မဖြစ်အောင်
-      if (loggingOut) {
-        return;
-      }
-
-
-      setLoggingOut(true);
-
-
-      try {
-
-        // ----------------------------------------------
-        // Backend Logout API
-        //
-        // POST /api/customer/auth/logout
-        //
-        // api.ts interceptor က
-        // Authorization: Bearer <accessToken>
-        // ကို automatically ထည့်ပေးမယ်
-        // ----------------------------------------------
-
-        await logoutCustomer();
-
-
-        console.log(
-          "Logout successful."
-        );
-
-
-      } catch (error) {
-
-        // Backend logout fail ဖြစ်သော်လည်း
-        // browser ထဲက local authentication data
-        // ကိုတော့ clear လုပ်ပေးမယ်
-
-        console.error(
-          "Logout API failed:",
-          error
-        );
-
-
-      } finally {
-
-        // ----------------------------------------------
-        // ACCESS TOKEN + REFRESH TOKEN CLEAR
-        // ----------------------------------------------
-
-        clearTokens();
-
-
-        // ----------------------------------------------
-        // Temporary login / OTP data CLEAR
-        // ----------------------------------------------
-
-        sessionStorage.removeItem(
-          "challengeGroupId"
-        );
-
-        sessionStorage.removeItem(
-          "maskedEmail"
-        );
-
-
-        // ----------------------------------------------
-        // LOGIN PAGE ပြန်ပို့
-        // ----------------------------------------------
-
-        navigate(
-          "/login",
-          {
-            replace: true,
-          }
-        );
-
-      }
-
-    };
 
 
   // ====================================================
@@ -292,7 +200,7 @@ export default function Sidebar() {
                 text-[#08295C]
               "
             >
-              MiniBank
+              ACE Bank
             </h1>
 
             <p
@@ -302,7 +210,7 @@ export default function Sidebar() {
                 text-slate-400
               "
             >
-              Customer Portal
+              {t("customerPortal")}
             </p>
 
           </div>
@@ -342,7 +250,7 @@ export default function Sidebar() {
               text-slate-400
             "
           >
-            Banking
+            {t("navigation.banking")}
           </p>
 
 
@@ -453,7 +361,7 @@ export default function Sidebar() {
                             truncate
                           "
                         >
-                          {item.name}
+                          {t(item.labelKey)}
                         </span>
 
                                          {/* Announcements unread count badge */}
@@ -517,7 +425,7 @@ export default function Sidebar() {
               text-slate-400
             "
           >
-            Account
+            {t("navigation.account")}
           </p>
 
 
@@ -625,7 +533,7 @@ export default function Sidebar() {
                             truncate
                           "
                         >
-                          {item.name}
+                          {t(item.labelKey)}
                         </span>
 
 
@@ -742,9 +650,10 @@ export default function Sidebar() {
 
             {
               loggingOut
-                ? "Logging out..."
-                : "Logout"
-            }
+                ? t("navigation.loggingOut")
+              : t("navigation.logout")
+              }
+            
 
           </span>
 

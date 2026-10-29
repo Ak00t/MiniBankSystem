@@ -63,7 +63,7 @@ public class CusSecurityConfig {
 
             // Customer API ပဲ ဒီ chain ကိုသုံးမယ်
             .securityMatcher(
-                    "/api/customer/**"
+                    "/api/customer/**", "/api/v1/merchant-payment/**"
             )
             
            

@@ -7,6 +7,13 @@ import com.corebanking.dto.CorporateAccountCreateDTO;
 import com.corebanking.dto.JointHolderAddDTO;
 import com.corebanking.entity.AccountSignatories;
 import com.corebanking.entity.Accounts;
+import com.corebanking.entity.BankTransactions;
+import com.corebanking.entity.enums.InitiatedByType;
+import com.corebanking.entity.enums.TransactionChannel;
+import com.corebanking.entity.enums.TransactionStatus;
+import com.corebanking.entity.enums.TransactionType;
+import com.corebanking.repository.BankTransactionRepository;
+
 import com.corebanking.entity.CompanyInfo;
 import com.corebanking.entity.CorporateAccountAccess;
 import com.corebanking.entity.CorporateCredential;
@@ -67,6 +74,7 @@ public class AccountService {
     private final CorporateUserRepository corporateUserRepository;
     private final CorporateCredentialRepository corporateCredentialRepository;
     private final CorporateAccountAccessRepository corporateAccountAccessRepository;
+    private final BankTransactionRepository bankTransactionRepository;
 
     /**
      * ၁။ Retail Account (Savings / Current) အသစ်ဖွင့်လှစ်ခြင်း
@@ -101,6 +109,9 @@ public class AccountService {
                 .build();
 
         Accounts savedAccount = accountRepository.save(account);
+
+        // Record Initial Deposit Transaction in ledger/bank_transactions if deposit > 0
+        recordInitialDepositTransaction(savedAccount, initialDeposit, staff, customer);
 
         // Temporary Password ကို Auto-generate ထုတ်ယူပြီး Credential Table တွင် သိမ်းဆည်းခြင်း
         String rawPassword = PasswordGeneratorUtil.generateTemporaryPassword(8);
@@ -320,6 +331,9 @@ public class AccountService {
 
         Accounts savedAccount = accountRepository.save(account);
 
+        // Record Initial Deposit Transaction in ledger/bank_transactions if deposit > 0
+        recordInitialDepositTransaction(savedAccount, initialDeposit, staff, company);
+
         // 5. corporate_account_access Table တွင် CEO နှင့် Maker အတွက် Access ပေးခြင်း
         // CEO: can_view = 1, can_approve = 1, can_initiate = 0
         CorporateAccountAccess ceoAccess = CorporateAccountAccess.builder()
@@ -407,7 +421,7 @@ public class AccountService {
         Customers customer = customerRepository.findByCustomerCode(customerCode)
                 .orElseThrow(() -> new RuntimeException("Customer not found with code: " + customerCode));
 
-        List<Accounts> accounts = accountRepository.findByCustomerCustomerCode(customerCode);
+        List<Accounts> accounts = accountRepository.findByCustomer(customer);
 
         return accounts.stream()
                 .map(this::mapToResponseDTO)
@@ -506,6 +520,42 @@ public class AccountService {
             code = "CORP-" + rolePrefix + "-" + datePart + "-" + randomDigits;
         } while (corporateUserRepository.existsByCorporateUserCode(code));
         return code;
+    }
+
+
+    private void recordInitialDepositTransaction(Accounts account, BigDecimal amount, StaffUsers staff, Customers customer) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        String dateStr = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String randSuffix = String.format("%04d", ThreadLocalRandom.current().nextInt(1000, 9999));
+        String txnRef = "TXN-DEP-" + dateStr + "-" + randSuffix;
+
+        BankTransactions transaction = BankTransactions.builder()
+                .transactionRef(txnRef)
+                .transactionType(TransactionType.OTC_DEPOSIT)
+                .status(TransactionStatus.COMPLETED)
+                .sourceAccount(null)
+                .destinationAccount(account)
+                .amount(amount)
+                .serviceFee(BigDecimal.ZERO)
+                .currency(account.getCurrency() != null ? account.getCurrency() : "MMK")
+                .initiatedByType(staff != null ? InitiatedByType.STAFF : InitiatedByType.SYSTEM)
+                .initiatedByStaff(staff)
+                .initiatedByCustomer(customer)
+                .channel(TransactionChannel.STAFF_PORTAL)
+                .externalReference("INITIAL-OPENING-DEPOSIT")
+                .description("Initial Opening Deposit for Account " + account.getAccountNumber())
+                .auditNote("Initial deposit recorded automatically upon account creation by staff: " + (staff != null ? staff.getUsername() : "SYSTEM"))
+                .initiatedAt(now)
+                .completedAt(now)
+                .authorizedAt(now)
+                .updatedAt(now)
+                .updatedByType(UpdatedByType.STAFF)
+                .build();
+
+        bankTransactionRepository.save(transaction);
     }
 
     private AccountResponseDTO mapToResponseDTO(Accounts account) {

@@ -199,7 +199,7 @@
 //           <div className="setup-pin-brand-content">
 
 //             <h1>
-//               MiniBank
+//               ACE Bank
 //             </h1>
 
 //             <h3>
@@ -559,6 +559,7 @@ import {
 
 import PublicAuthLayout
   from "../components/PublicAuthLayout";
+import { consumePendingPaymentRedirect } from "../utils/pendingPaymentRedirect";
 
 
 function SetupPinPage() {
@@ -757,6 +758,8 @@ function SetupPinPage() {
         response.refreshToken
       );
 
+      const destination = consumePendingPaymentRedirect();
+
 
       // =====================================
       // FIRST LOGIN FLOW FINISHED
@@ -783,11 +786,11 @@ function SetupPinPage() {
 
 
       // =====================================
-      // GO TO DASHBOARD
+      // GO TO THE VALIDATED CHECKOUT OR DASHBOARD
       // =====================================
 
       navigate(
-        "/dashboard",
+        destination,
         {
           replace: true,
         }
@@ -942,7 +945,7 @@ function SetupPinPage() {
                     "
                   >
 
-                    MiniBank
+                    ACE Bank
 
                   </h1>
 
@@ -1271,7 +1274,7 @@ function SetupPinPage() {
                     "
                   >
 
-                    MiniBank
+                    ACE Bank
 
                   </h1>
 

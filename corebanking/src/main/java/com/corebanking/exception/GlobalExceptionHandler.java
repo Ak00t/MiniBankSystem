@@ -79,11 +79,20 @@ public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(org.spri
     return buildErrorResponse(HttpStatus.CONFLICT, "DUPLICATE_ENTRY", msg);
 }
 
+@ExceptionHandler(IllegalArgumentException.class)
+public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+    return buildErrorResponse(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+}
+
+@ExceptionHandler(IllegalStateException.class)
+public ResponseEntity<Map<String, Object>> handleIllegalStateException(IllegalStateException ex) {
+    return buildErrorResponse(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage());
+}
+
 @ExceptionHandler(Exception.class)
 public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
 return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", ex.getMessage());
 }
-
 private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String errorCode, String message) {
 Map<String, Object> body = new HashMap<>();
 body.put("timestamp", LocalDateTime.now());
