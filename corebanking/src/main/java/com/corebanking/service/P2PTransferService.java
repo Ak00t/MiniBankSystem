@@ -338,7 +338,7 @@ public class P2PTransferService {
         return String.format("TXN-P2P-%s-%d", dateStr, randomNum);
     }
 
-    private P2PTransferResponseDto mapToResponseDto(BankTransactions txn) {
+    public P2PTransferResponseDto mapToResponseDto(BankTransactions txn) {
         BigDecimal totalDebited = txn.getAmount().add(txn.getServiceFee());
         return P2PTransferResponseDto.builder()
                 .transactionRef(txn.getTransactionRef())
@@ -687,6 +687,178 @@ public class P2PTransferService {
             }
         } catch (Exception e) {
             log.error("Failed to mark queued transfer ref {} as FAILED:", transactionRef, e);
+        }
+    }
+
+    /**
+     * Executes an automated compensating reversal transaction (Auto-Reversal).
+     * Compensates a failed or interrupted transfer by refunding the debited funds (amount + fee)
+     * back to the source account under deterministic pessimistic lock, reversing double-entry ledger entries,
+     * updating status to REVERSED, logging immutable 5Ws audit data, and pushing real-time notifications.
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
+    public BankTransactions executeAutoReversal(String transactionRef, String reversalReason, String failureCode) {
+        log.info("Initiating auto-reversal for transaction Ref: {}, reason: {}", transactionRef, reversalReason);
+
+        BankTransactions bankTransaction = bankTransactionRepository.findByTransactionRef(transactionRef)
+                .orElseThrow(() -> new TransactionException("Transaction record not found for ref: " + transactionRef));
+
+        // Idempotency check on reversal: already reversed?
+        if (bankTransaction.getStatus() == TransactionStatus.REVERSED) {
+            log.warn("Transaction [{}] is already REVERSED. Skipping redundant reversal.", transactionRef);
+            return bankTransaction;
+        }
+
+        Accounts sourceAccount = bankTransaction.getSourceAccount();
+        Accounts destAccount = bankTransaction.getDestinationAccount();
+
+        if (sourceAccount == null) {
+            throw new TransactionException("Cannot reverse transaction without a valid source account.");
+        }
+
+        BigDecimal transferAmount = bankTransaction.getAmount() != null ? bankTransaction.getAmount() : BigDecimal.ZERO;
+        BigDecimal serviceFee = bankTransaction.getServiceFee() != null ? bankTransaction.getServiceFee() : BigDecimal.ZERO;
+        BigDecimal totalRefundAmount = transferAmount.add(serviceFee);
+
+        // Lock source account for balance compensation update
+        Accounts lockedSourceAccount = accountRepository.findByAccountNumberForUpdate(sourceAccount.getAccountNumber())
+                .orElseThrow(() -> new AccountNotFoundException("Source account not found: " + sourceAccount.getAccountNumber()));
+
+        BigDecimal sourceBalanceBefore = lockedSourceAccount.getCurrentBalance();
+
+        // 1. Credit back source account (Amount + Service Fee)
+        lockedSourceAccount.setAvailableBalance(lockedSourceAccount.getAvailableBalance().add(totalRefundAmount));
+        lockedSourceAccount.setCurrentBalance(lockedSourceAccount.getCurrentBalance().add(totalRefundAmount));
+        accountRepository.save(lockedSourceAccount);
+
+        // 2. If destination account was previously credited (status was COMPLETED), debit it back
+        BigDecimal destBalanceBefore = BigDecimal.ZERO;
+        boolean destWasCredited = (bankTransaction.getStatus() == TransactionStatus.COMPLETED && destAccount != null);
+        if (destWasCredited) {
+            Accounts lockedDestAccount = accountRepository.findByAccountNumberForUpdate(destAccount.getAccountNumber())
+                    .orElse(destAccount);
+            destBalanceBefore = lockedDestAccount.getCurrentBalance();
+            lockedDestAccount.setAvailableBalance(lockedDestAccount.getAvailableBalance().subtract(transferAmount));
+            lockedDestAccount.setCurrentBalance(lockedDestAccount.getCurrentBalance().subtract(transferAmount));
+            accountRepository.save(lockedDestAccount);
+        }
+
+        // 3. Update Bank Transaction status
+        LocalDateTime now = LocalDateTime.now();
+        TransactionStatus previousStatus = bankTransaction.getStatus();
+        bankTransaction.setStatus(TransactionStatus.REVERSED);
+        bankTransaction.setFailureCode(failureCode != null && !failureCode.isBlank() ? failureCode : "AUTO_REVERSED");
+        bankTransaction.setFailureMessage(reversalReason != null && reversalReason.length() > 250
+                ? reversalReason.substring(0, 250)
+                : reversalReason);
+        bankTransaction.setAuditNote("Auto-reversal executed. " + (reversalReason != null ? reversalReason : ""));
+        bankTransaction.setCompletedAt(now);
+        bankTransactionRepository.save(bankTransaction);
+
+        // 4. Create Reversal Double-Entry Ledger Entries
+        createReversalLedgerEntries(bankTransaction, lockedSourceAccount, destAccount, transferAmount, serviceFee, sourceBalanceBefore, destBalanceBefore, destWasCredited);
+
+        // 5. Asynchronous Reversal Notification to Customer
+        if (lockedSourceAccount.getCustomer() != null) {
+            asyncNotificationService.sendReversalNotificationAsync(
+                    lockedSourceAccount.getCustomer(),
+                    bankTransaction,
+                    reversalReason
+            );
+        }
+
+        // 6. 5Ws Immutable Audit Trail Logging
+        try {
+            Map<String, Object> oldState = new LinkedHashMap<>();
+            oldState.put("transactionRef", transactionRef);
+            oldState.put("previousStatus", previousStatus != null ? previousStatus.name() : "N/A");
+            oldState.put("sourceBalanceBefore", sourceBalanceBefore);
+
+            Map<String, Object> newState = new LinkedHashMap<>();
+            newState.put("transactionRef", transactionRef);
+            newState.put("newStatus", TransactionStatus.REVERSED.name());
+            newState.put("sourceBalanceAfter", lockedSourceAccount.getCurrentBalance());
+            newState.put("totalRefunded", totalRefundAmount);
+            newState.put("reversalReason", reversalReason);
+
+            String auditDesc = String.format("Auto-reversal completed for transfer [%s]. Refunded %,.2f %s to account %s. Reason: %s",
+                    transactionRef, totalRefundAmount, bankTransaction.getCurrency(), lockedSourceAccount.getAccountNumber(), reversalReason);
+
+            auditTrailService.logDataChange(
+                    "P2P_TRANSFER_AUTO_REVERSED",
+                    "TRANSACTION",
+                    transactionRef,
+                    oldState,
+                    newState,
+                    auditDesc
+            );
+        } catch (Exception auditEx) {
+            log.warn("Non-blocking audit logging failed for auto-reversal Ref: {}", transactionRef, auditEx);
+        }
+
+        log.info("Auto-reversal completed successfully for Ref: {}. Refunded: {} {}", transactionRef, totalRefundAmount, bankTransaction.getCurrency());
+        return bankTransaction;
+    }
+
+    private void createReversalLedgerEntries(BankTransactions txn, Accounts source, Accounts dest, BigDecimal amount, BigDecimal fee, BigDecimal sourceBalBefore, BigDecimal destBalBefore, boolean destWasCredited) {
+        BigDecimal totalRefunded = amount.add(fee);
+
+        // Line 1: Credit Customer Deposit Ledger (Refund)
+        LedgerAccounts sourceLedgerAcc = ledgerAccountRepository.findByCustomerAccount(source)
+                .orElseGet(() -> ledgerAccountRepository.findByLedgerCode("GL-CUSTOMER-DEPOSITS")
+                        .orElse(null));
+
+        if (sourceLedgerAcc != null) {
+            LedgerEntries sourceRefundEntry = LedgerEntries.builder()
+                    .transaction(txn)
+                    .lineNo(1)
+                    .ledgerAccount(sourceLedgerAcc)
+                    .entryType(EntryType.CREDIT)
+                    .amount(totalRefunded)
+                    .currency(txn.getCurrency())
+                    .balanceBefore(sourceBalBefore)
+                    .balanceAfter(sourceBalBefore.add(totalRefunded))
+                    .narration("Auto-Reversal Refund to Acc: " + source.getAccountNumber())
+                    .build();
+            ledgerEntryRepository.save(sourceRefundEntry);
+        }
+
+        // Line 2: Debit Destination if it was credited
+        if (destWasCredited && dest != null) {
+            LedgerAccounts destLedgerAcc = ledgerAccountRepository.findByCustomerAccount(dest)
+                    .orElseGet(() -> ledgerAccountRepository.findByLedgerCode("GL-CUSTOMER-DEPOSITS")
+                            .orElse(null));
+
+            if (destLedgerAcc != null) {
+                LedgerEntries destDebitEntry = LedgerEntries.builder()
+                        .transaction(txn)
+                        .lineNo(2)
+                        .ledgerAccount(destLedgerAcc)
+                        .entryType(EntryType.DEBIT)
+                        .amount(amount)
+                        .currency(txn.getCurrency())
+                        .balanceBefore(destBalBefore)
+                        .balanceAfter(destBalBefore.subtract(amount))
+                        .narration("Auto-Reversal Debit from Acc: " + dest.getAccountNumber())
+                        .build();
+                ledgerEntryRepository.save(destDebitEntry);
+            }
+        }
+
+        // Line 3: Debit Fee Income if fee was charged
+        if (destWasCredited && fee.compareTo(BigDecimal.ZERO) > 0) {
+            ledgerAccountRepository.findByLedgerCode("GL-FEE-REVENUE").ifPresent(feeLedgerAcc -> {
+                LedgerEntries feeReverseEntry = LedgerEntries.builder()
+                        .transaction(txn)
+                        .lineNo(3)
+                        .ledgerAccount(feeLedgerAcc)
+                        .entryType(EntryType.DEBIT)
+                        .amount(fee)
+                        .currency(txn.getCurrency())
+                        .narration("Auto-Reversal Fee Refund for Ref: " + txn.getTransactionRef())
+                        .build();
+                ledgerEntryRepository.save(feeReverseEntry);
+            });
         }
     }
 }

@@ -98,6 +98,21 @@ public class P2PTransferController {
         }
     }
 
+    @PostMapping("/{transactionRef}/reverse")
+    public ResponseEntity<P2PTransferResponseDto> reverseTransfer(
+            @AuthenticationPrincipal String customerId,
+            @PathVariable String transactionRef,
+            @RequestParam(value = "reason", required = false, defaultValue = "Client requested reversal or network timeout") String reason) {
+
+        log.info("Received request to reverse transfer Ref: {} by customer: {}", transactionRef, customerId);
+        com.corebanking.entity.BankTransactions reversedTxn = p2pTransferService.executeAutoReversal(
+                transactionRef,
+                reason,
+                "CLIENT_REQUESTED_REVERSAL"
+        );
+        return ResponseEntity.ok(p2pTransferService.mapToResponseDto(reversedTxn));
+    }
+
     private void logTransferFailureAudit(String customerId, P2PTransferRequestDto request, Exception e) {
         try {
             String category = "TRANSACTION";

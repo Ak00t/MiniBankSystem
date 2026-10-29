@@ -64,6 +64,16 @@ function resolveStatusConfig(data: TransferReceiptData): StatusConfig {
   const descLower = (data.description || "").toLowerCase();
   const transferTypeLabel = resolveTypeLabel(typeUpper, descLower, data.direction);
 
+  // 0. Reversed / Refunded Cases
+  if (statusUpper === "REVERSED" || statusUpper === "REFUNDED") {
+    return {
+      title: "Transfer Reversed & Refunded",
+      badgeLabel: "REVERSED",
+      theme: "failed",
+      transferTypeLabel,
+    };
+  }
+
   // 1. Failed / Cancelled / Rejected Cases
   if (
     statusUpper === "FAILED" ||
