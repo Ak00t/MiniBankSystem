@@ -34,6 +34,7 @@ import {
   Sparkles,
   Lock,
   CreditCard,
+  Pencil,
 } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
@@ -1953,6 +1954,24 @@ export const P2PTransferForm = () => {
                     <span className="font-bold text-slate-700 flex items-center gap-1.5">
                       <ShieldCheck className="w-4 h-4 text-[#00A3C4]" />
                       Today's Limit Usage
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const targetAcc = sourceAccount || accounts[0]?.accountNumber;
+                          navigate("/accounts", {
+                            state: {
+                              accountNumber: targetAcc,
+                              autoOpenLimitModal: true,
+                            },
+                          });
+                        }}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-[#00A3C4] hover:bg-cyan-100/70 border border-cyan-200/60 transition cursor-pointer"
+                        title="Adjust transfer limits in My Account"
+                        aria-label="Edit transfer limits"
+                      >
+                        <Pencil className="w-2.5 h-2.5" />
+                        <span>Edit</span>
+                      </button>
                     </span>
                     <span className="font-bold text-[#00A3C4]">
                       {Math.min(
