@@ -128,7 +128,7 @@ test('Corporate login uses exact DTO keys and its own challenge without maskedEm
     await app.login(); assert.equal(app.router.state.location.pathname, '/corporate/otp');
     assert.deepEqual(app.calls[0].body, { companyCustomerCode: 'COMPANY-001', corporateUserCode: 'CORP-001', password: 'TestPass1!' });
     assert.equal(app.calls[0].auth, undefined); assert.equal(sessionStorage.getItem('corporateChallengeGroupId'), challenge);
-    assert.match(app.container.textContent, /registered Corporate email/); app.checkIsolation();
+    assert.equal(app.container.querySelector('h1').parentElement.querySelector('p').textContent, 'Enter the 6-digit verification code sent to your registered corporate email'); app.checkIsolation();
   } finally { await app.cleanup(); }
 });
 

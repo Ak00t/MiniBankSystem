@@ -131,13 +131,13 @@ async function ui(t, options = {}) {
 const setupSeed = mode => storage => {
   storage.beginCorporateLogin(); storage.saveCorporateChallenge(challenge); storage.beginCorporateSetup(mode, Date.now());
 };
-function pills(input) {
+function pills(input, cellShape = 'rounded-full') {
   assert.ok(input);
   assert.equal(input.getAttribute('inputmode'), 'numeric');
   assert.equal(input.maxLength, 6);
   const cells = [...input.parentElement.querySelectorAll('[aria-hidden="true"] > span')];
   assert.equal(cells.length, 6);
-  assert.ok(cells.every(cell => cell.classList.contains('rounded-full')));
+  assert.ok(cells.every(cell => cell.classList.contains(cellShape)));
   assert.equal(input.getAttribute('aria-hidden'), null);
   return cells;
 }
@@ -148,13 +148,14 @@ for (const [route, seed] of [
   ['/corporate/first-login/change-password', setupSeed('password')],
   ['/corporate/first-login/setup-pin', setupSeed('pin')],
 ]) {
-  const ekarajLogin = route === '/corporate/login';
-  test(route + ' uses ' + (ekarajLogin ? 'EKARAJ Bank' : 'ACE Bank') + ' presentation with labels, empty native controls and no decorative arrows', async t => {
+  const ekarajPage = route === '/corporate/login' || route === '/corporate/otp';
+  test(route + ' uses ' + (ekarajPage ? 'EKARAJ Bank' : 'ACE Bank') + ' presentation with labels, empty native controls and no decorative arrows', async t => {
     const app = await ui(t, { route, seed });
-    if (ekarajLogin) {
+    if (ekarajPage) {
       const header = app.container.querySelector('header');
       assert.equal(header.querySelector('p').textContent, 'EKARAJ BANK | Corporate Portal');
       assert.equal(header.querySelector('img').getAttribute('src'), '/assets/ekaraj-crown-transparent.png');
+      assert.equal(header.querySelectorAll('p')[1].textContent, 'Secure Corporate Banking');
     } else {
       assert.match(app.container.querySelector('header').textContent, /ACE Bank.*Corporate Banking Portal/);
       assert.equal(app.container.querySelector('img').getAttribute('src'), '/images.jfif');
@@ -184,9 +185,9 @@ test('Corporate Login keeps field-specific autofill controls and visibility togg
   app.checkIsolation();
 });
 
-test('Corporate OTP retains one native autofill input, six pill cells, filtering and exact verification DTO', async t => {
+test('Corporate OTP retains one native autofill input, six rounded rectangular cells, filtering and exact verification DTO', async t => {
   const app = await ui(t, { route: '/corporate/otp', seed: storage => storage.saveCorporateChallenge(challenge) });
-  const input = app.container.querySelector('#corporate-otp'), cells = pills(input);
+  const input = app.container.querySelector('#corporate-otp'), cells = pills(input, 'rounded-xl');
   assert.equal(app.container.querySelectorAll('input').length, 1);
   assert.equal(input.getAttribute('autocomplete'), 'one-time-code');
   await app.fill('corporate-otp', '12x34-56');
