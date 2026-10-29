@@ -557,6 +557,8 @@ import { AuthField, AuthCodeField, AuthNotice, AuthPinRules } from "../component
 import { authCodeInputClass } from "../components/IndividualAuthStyles";
 import { EkarajAuthLayout } from "../components/EkarajAuthLayout";
 import { ekarajPrimaryButtonClass } from "../components/EkarajAuthStyles";
+import { IndividualSetupExpiredCard } from "../components/IndividualSetupExpiredCard";
+import { clearIndividualSetupWindow, useIndividualSetupWindow } from "../utils/individualSetupWindow";
 
 // Page-local sizing retains the shared field's single native input and six decorative cells.
 const setupPinRowClass =
@@ -567,6 +569,7 @@ const setupPinRulesClass =
   "[&>ul]:border-[#C6D5E3] [&>ul]:bg-[#EAF2FA] [&>ul]:p-2.5 [&>ul]:text-[#59697D]";
 
 function SetupPinPage() {
+  const setupWindow = useIndividualSetupWindow();
 
   // =========================================
   // NAVIGATION
@@ -712,6 +715,9 @@ function SetupPinPage() {
     // API CALL
     // =====================================
 
+    const setupRequest = setupWindow.capture(challengeGroupId);
+    if (!setupRequest) return;
+
     try {
 
       setLoading(
@@ -733,6 +739,8 @@ function SetupPinPage() {
 
         });
 
+
+      if (!setupWindow.canProceed(setupRequest)) return;
 
       // =====================================
       // CHECK TOKENS
@@ -757,6 +765,7 @@ function SetupPinPage() {
       // SAVE JWT TOKENS
       // =====================================
 
+      clearIndividualSetupWindow(setupRequest);
       saveTokens(
         response.accessToken,
         response.refreshToken
@@ -805,6 +814,8 @@ function SetupPinPage() {
       error: any
     ) {
 
+      if (!setupWindow.canProceed(setupRequest) || setupWindow.handleExpiry(error, setupRequest)) return;
+
       setError(
 
         error.response?.data?.message
@@ -828,6 +839,8 @@ function SetupPinPage() {
   // =========================================
   // UI
   // =========================================
+
+  if (setupWindow.expired) return <IndividualSetupExpiredCard />;
 
   return (
     <EkarajAuthLayout title="EKARAJ BANK | First Login — Set Transaction PIN">

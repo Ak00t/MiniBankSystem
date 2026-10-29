@@ -16,6 +16,8 @@ import {
 import { AuthField, AuthNotice, AuthPasswordRules } from "../components/IndividualAuthUI";
 import { EkarajAuthLayout } from "../components/EkarajAuthLayout";
 import { ekarajPrimaryButtonClass } from "../components/EkarajAuthStyles";
+import { IndividualSetupExpiredCard } from "../components/IndividualSetupExpiredCard";
+import { useIndividualSetupWindow } from "../utils/individualSetupWindow";
 
 const changePasswordInputClass =
   "block min-h-11 w-full rounded-xl border border-[#CDD5DF] bg-white py-2.5 pl-11 pr-12 text-sm text-[#111418] shadow-sm outline-none transition-colors placeholder:text-[#757575] hover:border-[#C6A15B] focus:border-[#113E65] focus:ring-4 focus:ring-[#113E65]/15 disabled:cursor-not-allowed disabled:bg-[#E5EAF0] disabled:text-[#757575] motion-reduce:transition-none";
@@ -27,6 +29,7 @@ const changePasswordRulesClass =
   "rounded-xl border border-[#C6D5E3] bg-[#EAF2FA] [&>div]:border-0 [&>div]:bg-transparent [&>div]:p-2.5 [&>div>p]:mb-1.5 [&>div>p]:text-[#1A365D] [&_li.text-slate-500]:text-[#59697D]";
 
 function ChangePasswordPage() {
+  const setupWindow = useIndividualSetupWindow();
 
   // ======================================================
   // STATE
@@ -218,6 +221,9 @@ function ChangePasswordPage() {
     // API CALL
     // =====================================
 
+    const setupRequest = setupWindow.capture(challengeGroupId);
+    if (!setupRequest) return;
+
     try {
 
       setLoading(
@@ -239,6 +245,8 @@ function ChangePasswordPage() {
       });
 
 
+      if (!setupWindow.canProceed(setupRequest)) return;
+
       // Password change success
       // challengeGroupId ကို မဖျက်သေးပါ
       // Setup PIN မှာ ပြန်သုံးရမယ်
@@ -251,6 +259,8 @@ function ChangePasswordPage() {
     } catch (
       error: any
     ) {
+
+      if (!setupWindow.canProceed(setupRequest) || setupWindow.handleExpiry(error, setupRequest)) return;
 
       setError(
 
@@ -275,6 +285,8 @@ function ChangePasswordPage() {
   // ======================================================
   // UI
   // ======================================================
+
+  if (setupWindow.expired) return <IndividualSetupExpiredCard />;
 
   return (
     <EkarajAuthLayout title="EKARAJ BANK | First Login — Change Password">

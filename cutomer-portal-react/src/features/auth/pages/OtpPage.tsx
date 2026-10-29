@@ -1,4 +1,6 @@
 import {
+  useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -22,6 +24,7 @@ import {
 } from "../../../utils/tokenStorage";
 
 import { consumePendingPaymentRedirect } from "../utils/pendingPaymentRedirect";
+import { beginIndividualSetupWindow, captureIndividualSetupRequest, clearIndividualSetupWindow, isIndividualSetupRequestCurrent } from "../utils/individualSetupWindow";
 
 
 import { Clock3, ShieldCheck } from "lucide-react";
@@ -56,6 +59,8 @@ function IndividualOtpCodeField({ value, children }: { value: string; children: 
 }
 
 function OtpPage() {
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
 
   // =========================================
   // STATE
@@ -176,6 +181,7 @@ function OtpPage() {
       }
 
 
+      const setupRequest = captureIndividualSetupRequest(challengeGroupId);
       try {
 
         setVerifying(
@@ -183,6 +189,7 @@ function OtpPage() {
         );
 
 
+        const verificationStartedAt = Date.now();
         const response =
           await verifyOtp({
 
@@ -193,6 +200,8 @@ function OtpPage() {
           });
 
 
+        if (!active.current || !isIndividualSetupRequestCurrent(setupRequest)) return;
+
         // =====================================
         // FIRST LOGIN
         // =====================================
@@ -200,6 +209,8 @@ function OtpPage() {
         if (
           response.firstLoginSetupRequired
         ) {
+
+          beginIndividualSetupWindow(setupRequest, verificationStartedAt);
 
           if (
             response.passwordChangeRequired
@@ -246,6 +257,7 @@ function OtpPage() {
           response.refreshToken
         ) {
 
+          clearIndividualSetupWindow(setupRequest);
           saveTokens(
             response.accessToken,
             response.refreshToken
@@ -293,6 +305,8 @@ function OtpPage() {
       } catch (
         error: any
       ) {
+
+        if (!active.current || !isIndividualSetupRequestCurrent(setupRequest)) return;
 
         setError(
 
@@ -345,6 +359,7 @@ function OtpPage() {
       }
 
 
+      const resendRequest = captureIndividualSetupRequest(challengeGroupId);
       try {
 
         setResending(
@@ -359,6 +374,8 @@ function OtpPage() {
 
           });
 
+
+        if (!active.current || !isIndividualSetupRequestCurrent(resendRequest)) return;
 
         // Backend returns new challengeGroupId
 
@@ -389,6 +406,8 @@ function OtpPage() {
       } catch (
         error: any
       ) {
+
+        if (!active.current || !isIndividualSetupRequestCurrent(resendRequest)) return;
 
         setError(
 
