@@ -199,7 +199,7 @@
 //           <div className="setup-pin-brand-content">
 
 //             <h1>
-//               EKARARJ BANK
+//               EKARAJ BANK
 //             </h1>
 
 //             <h3>
@@ -945,7 +945,7 @@ function SetupPinPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 
@@ -1274,7 +1274,7 @@ function SetupPinPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 

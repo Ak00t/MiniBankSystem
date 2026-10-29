@@ -506,7 +506,7 @@ function PasswordResetOtpPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 
@@ -851,7 +851,7 @@ function PasswordResetOtpPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 

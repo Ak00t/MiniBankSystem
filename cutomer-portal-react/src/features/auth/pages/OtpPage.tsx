@@ -584,7 +584,7 @@ function OtpPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 
@@ -635,7 +635,7 @@ function OtpPage() {
 
                 Email verification adds an
                 additional security layer before
-                you access your EKARARJ BANK account.
+                you access your EKARAJ BANK account.
 
               </p>
 
@@ -925,7 +925,7 @@ function OtpPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 
@@ -1365,7 +1365,7 @@ function OtpPage() {
                   "
                 >
 
-                  EKARARJ BANK will never ask you to share
+                  EKARAJ BANK will never ask you to share
                   your OTP by phone, message, or email.
 
                 </p>

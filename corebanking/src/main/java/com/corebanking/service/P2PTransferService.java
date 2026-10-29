@@ -20,6 +20,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -40,6 +42,7 @@ public class P2PTransferService {
     private final TransferLimitService transferLimitService;
     private final MerchantSecurityValidationService merchantSecurityValidationService;
     private final TransferQueueProducer transferQueueProducer;
+    private final AuditTrailService auditTrailService;
 
     /**
      * Executes internal P2P fund transfer with authentication ownership verification,
@@ -203,6 +206,44 @@ public class P2PTransferService {
                 destAccount.getCustomer(),
                 bankTransaction
         );
+
+        // =========================================================================
+        // STEP 8: 5Ws AUDIT TRAIL LOGGING
+        // =========================================================================
+        try {
+            Map<String, Object> oldState = new LinkedHashMap<>();
+            oldState.put("sourceAccountNumber", sourceAccount.getAccountNumber());
+            oldState.put("sourceBalanceBefore", sourceBalanceBefore);
+            oldState.put("destinationAccountNumber", destAccount.getAccountNumber());
+            oldState.put("destinationBalanceBefore", destBalanceBefore);
+
+            Map<String, Object> newState = new LinkedHashMap<>();
+            newState.put("sourceAccountNumber", sourceAccount.getAccountNumber());
+            newState.put("sourceBalanceAfter", sourceAccount.getCurrentBalance());
+            newState.put("destinationAccountNumber", destAccount.getAccountNumber());
+            newState.put("destinationBalanceAfter", destAccount.getCurrentBalance());
+            newState.put("transferAmount", request.getAmount());
+            newState.put("serviceFee", serviceFee);
+            newState.put("totalDebited", totalDebitedAmount);
+            newState.put("currency", request.getCurrency() != null ? request.getCurrency() : "MMK");
+            newState.put("status", TransactionStatus.COMPLETED.name());
+
+            String memo = request.getDescription() != null ? request.getDescription() : "N/A";
+            String auditDesc = String.format("P2P fund transfer of %,.2f %s from %s to %s completed successfully. Fee: %,.2f. Memo: %s",
+                    request.getAmount(), (request.getCurrency() != null ? request.getCurrency() : "MMK"),
+                    sourceAccount.getAccountNumber(), destAccount.getAccountNumber(), serviceFee, memo);
+
+            auditTrailService.logDataChange(
+                    "P2P_TRANSFER_COMPLETED",
+                    "TRANSACTION",
+                    transactionRef,
+                    oldState,
+                    newState,
+                    auditDesc
+            );
+        } catch (Exception auditEx) {
+            log.warn("Non-blocking audit logging failed for P2P transfer Ref: {}", transactionRef, auditEx);
+        }
 
         log.info("P2P Transfer completed successfully. Ref: {}, Source: {}, Dest: {}, Amount: {}, Fee: {}", 
                 transactionRef, sourceAccount.getAccountNumber(), destAccount.getAccountNumber(), request.getAmount(), serviceFee);
@@ -453,6 +494,24 @@ public class P2PTransferService {
         }
 
         log.info("Enqueued P2P Transfer [{}] successfully for customer: {}", transactionRef, authenticatedUsername);
+
+        try {
+            String currency = request.getCurrency() != null ? request.getCurrency() : "MMK";
+            String memo = request.getDescription() != null ? request.getDescription() : "N/A";
+            String auditDesc = String.format("P2P fund transfer of %,.2f %s from %s to %s enqueued for asynchronous processing. Memo: %s",
+                    request.getAmount(), currency, request.getSourceAccountNumber(), request.getDestinationAccountNumber(), memo);
+
+            auditTrailService.logActivity(
+                    "TRANSACTION",
+                    "P2P_TRANSFER_ENQUEUED",
+                    "TRANSACTION",
+                    transactionRef,
+                    auditDesc
+            );
+        } catch (Exception auditEx) {
+            log.warn("Non-blocking audit logging failed for enqueued P2P transfer Ref: {}", transactionRef, auditEx);
+        }
+
         return mapToResponseDto(bankTransaction);
     }
 
@@ -545,6 +604,40 @@ public class P2PTransferService {
                 bankTransaction
         );
 
+        try {
+            Map<String, Object> oldState = new LinkedHashMap<>();
+            oldState.put("sourceAccountNumber", sourceAccount.getAccountNumber());
+            oldState.put("sourceBalanceBefore", sourceBalanceBefore);
+            oldState.put("destinationAccountNumber", destAccount.getAccountNumber());
+            oldState.put("destinationBalanceBefore", destBalanceBefore);
+
+            Map<String, Object> newState = new LinkedHashMap<>();
+            newState.put("sourceAccountNumber", sourceAccount.getAccountNumber());
+            newState.put("sourceBalanceAfter", sourceAccount.getCurrentBalance());
+            newState.put("destinationAccountNumber", destAccount.getAccountNumber());
+            newState.put("destinationBalanceAfter", destAccount.getCurrentBalance());
+            newState.put("transferAmount", request.getAmount());
+            newState.put("serviceFee", serviceFee);
+            newState.put("totalDebited", totalDebitedAmount);
+            newState.put("currency", reqCurrency);
+            newState.put("status", TransactionStatus.COMPLETED.name());
+
+            String memo = request.getDescription() != null ? request.getDescription() : "N/A";
+            String auditDesc = String.format("Queued P2P fund transfer of %,.2f %s from %s to %s completed asynchronously. Fee: %,.2f. Memo: %s",
+                    request.getAmount(), reqCurrency, sourceAccount.getAccountNumber(), destAccount.getAccountNumber(), serviceFee, memo);
+
+            auditTrailService.logDataChange(
+                    "P2P_TRANSFER_COMPLETED_ASYNC",
+                    "TRANSACTION",
+                    bankTransaction.getTransactionRef(),
+                    oldState,
+                    newState,
+                    auditDesc
+            );
+        } catch (Exception auditEx) {
+            log.warn("Non-blocking audit logging failed for queued transfer Ref: {}", bankTransaction.getTransactionRef(), auditEx);
+        }
+
         log.info("Queued P2P Transfer [{}] completed successfully.", message.getTransactionRef());
     }
 
@@ -574,6 +667,21 @@ public class P2PTransferService {
                                 failureReason
                         );
                     }
+
+                    try {
+                        String auditDesc = String.format("Queued P2P fund transfer [%s] failed. Reason: %s",
+                                transactionRef, failureReason != null ? failureReason : "Unknown error");
+                        auditTrailService.logActivity(
+                                "TRANSACTION",
+                                "P2P_TRANSFER_FAILED_ASYNC",
+                                "TRANSACTION",
+                                transactionRef,
+                                auditDesc
+                        );
+                    } catch (Exception auditEx) {
+                        log.warn("Non-blocking audit logging failed for failed queued transfer Ref: {}", transactionRef, auditEx);
+                    }
+
                     log.info("Marked queued transfer [{}] as FAILED: {}", transactionRef, failureReason);
                 }
             }

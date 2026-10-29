@@ -119,7 +119,7 @@ function SessionTimeoutModal({
         >
 
           Please login again to continue
-          using EKARARJ BANK securely.
+          using EKARAJ BANK securely.
 
         </p>
 

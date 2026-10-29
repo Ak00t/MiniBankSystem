@@ -283,7 +283,7 @@ function ForgotPasswordPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 
@@ -627,7 +627,7 @@ function ForgotPasswordPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 
@@ -998,7 +998,7 @@ function ForgotPasswordPage() {
 
                     The verification code will only be
                     sent to the email address registered
-                    with your EKARARJ BANK account.
+                    with your EKARAJ BANK account.
 
                   </p>
 

@@ -460,7 +460,7 @@ export default function AccountDetailPage({
               </div>
             </div>
 
-            {/* Action Buttons: Unified styling, changing to Ekararj Cyan/Blue on hover */}
+            {/* Action Buttons: Unified styling, changing to Ekaraj Cyan/Blue on hover */}
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 to="/transfer"

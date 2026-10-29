@@ -395,7 +395,7 @@ function ChangePasswordPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 
@@ -445,7 +445,7 @@ function ChangePasswordPage() {
               >
 
                 Complete your security setup before
-                accessing the EKARARJ BANK Customer Portal.
+                accessing the EKARAJ BANK Customer Portal.
 
               </p>
 
@@ -715,7 +715,7 @@ function ChangePasswordPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 

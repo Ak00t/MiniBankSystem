@@ -525,7 +525,7 @@ function ResetPasswordPage() {
                     "
                   >
 
-                    EKARARJ BANK
+                    EKARAJ BANK
 
                   </h1>
 
@@ -576,7 +576,7 @@ function ResetPasswordPage() {
 
                 Your email verification is complete.
                 Create a new password to securely
-                regain access to your EKARARJ BANK account.
+                regain access to your EKARAJ BANK account.
 
               </p>
 
@@ -930,7 +930,7 @@ function ResetPasswordPage() {
                     >
 
                       You can now login to your
-                      EKARARJ BANK account using your
+                      EKARAJ BANK account using your
                       new password.
 
                     </p>
@@ -1048,7 +1048,7 @@ function ResetPasswordPage() {
                           "
                         >
 
-                          EKARARJ BANK
+                          EKARAJ BANK
 
                         </h1>
 
@@ -1137,7 +1137,7 @@ function ResetPasswordPage() {
                       >
 
                         Create a secure new password
-                        for your EKARARJ BANK account.
+                        for your EKARAJ BANK account.
 
                       </p>
 

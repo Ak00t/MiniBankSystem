@@ -772,7 +772,7 @@ function ReviewStep({
         <div className="p-5 sm:p-6 divide-y divide-slate-100 dark:divide-slate-800/80 text-xs sm:text-[13px]">
           <div className="flex justify-between items-center py-2.5">
             <span className="text-slate-700 dark:text-slate-300 font-semibold">Payment Channel</span>
-            <span className="font-bold text-slate-900 dark:text-white tracking-wide">EKARARJ BANK</span>
+            <span className="font-bold text-slate-900 dark:text-white tracking-wide">EKARAJ BANK</span>
           </div>
 
           <div className="flex justify-between items-center py-2.5">
@@ -963,9 +963,9 @@ function ReceiptStep({
   // =========================================================================
   // Production URL Share Link (Preserved for future hosting deployment)
   // When the production domain is live, you can re-enable the link sharing:
-  // const productionDomain = "https://ekararjbank.com";
+  // const productionDomain = "https://ekarajbank.com";
   // const shareReceiptUrl = `${productionDomain}/receipt/${result.transactionRef}`;
-  // const shareSummaryText = `EKARARJ BANK Official Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}\nVerify: ${shareReceiptUrl}`;
+  // const shareSummaryText = `EKARAJ BANK Official Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}\nVerify: ${shareReceiptUrl}`;
   // =========================================================================
 
   const handleShareToTelegram = async () => {
@@ -1022,7 +1022,7 @@ function ReceiptStep({
       }
 
       const blob = await getReceiptBlob(receiptElement);
-      const filename = `ekararj-receipt-${result.transactionRef || Date.now()}.png`;
+      const filename = `ekaraj-receipt-${result.transactionRef || Date.now()}.png`;
       const file = new File([blob], filename, { type: "image/png" });
 
       // Mobile Flow: If on mobile, invoke native OS Share sheet with file
@@ -1036,8 +1036,8 @@ function ReceiptStep({
         try {
           await navigator.share({
             files: [file],
-            title: "EKARARJ BANK Transfer Receipt",
-            text: `Official EKARARJ BANK Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}`,
+            title: "EKARAJ BANK Transfer Receipt",
+            text: `Official EKARAJ BANK Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}`,
           });
           return;
         } catch (shareErr: unknown) {
@@ -1063,8 +1063,8 @@ function ReceiptStep({
       if (typeof navigator !== "undefined" && navigator.share) {
         try {
           await navigator.share({
-            title: "EKARARJ BANK Transfer Receipt",
-            text: `EKARARJ BANK Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}`,
+            title: "EKARAJ BANK Transfer Receipt",
+            text: `EKARAJ BANK Transfer Receipt\nRef: ${result.transactionRef}\nAmount: ${Number(result.amount).toLocaleString()} ${result.currency || "MMK"}`,
           });
         } catch {
           // User cancelled
@@ -1205,7 +1205,7 @@ function ReceiptStep({
                     Share Transfer Receipt
                   </h3>
                   <p className="text-[10px] font-medium text-slate-400">
-                    EKARARJ BANK Official Slip
+                    EKARAJ BANK Official Slip
                   </p>
                 </div>
               </div>

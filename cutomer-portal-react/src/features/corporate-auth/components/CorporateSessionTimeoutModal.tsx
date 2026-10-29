@@ -7,7 +7,7 @@ export default function CorporateSessionTimeoutModal({ message, onLoginAgain }: 
       <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600"><ShieldAlert size={14} />Security Timeout</div>
       <h2 id="corporate-timeout-title" className="text-2xl font-bold text-[#0A192F]">Session Timed Out</h2>
       <p id="corporate-timeout-message" className="mt-3 text-sm leading-6 text-slate-500">{message}</p>
-      <p className="mt-2 text-sm text-slate-500">Please login again to continue using EKARARJ BANK securely.</p>
+      <p className="mt-2 text-sm text-slate-500">Please login again to continue using EKARAJ BANK securely.</p>
       <button autoFocus type="button" onClick={onLoginAgain} className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A3C4] px-5 py-3.5 font-semibold text-white hover:bg-[#0891B2] focus:outline-none focus:ring-4 focus:ring-cyan-200"><LogIn size={18} />Login Again</button>
     </div>
   </div>;
