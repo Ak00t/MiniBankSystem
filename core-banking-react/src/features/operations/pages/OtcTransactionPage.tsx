@@ -7,7 +7,6 @@ import { otcApi, accountsApi } from '../../../services/apiClient';
 import type { OtcTransactionResponseDto, AccountResponse } from '../../../types/api.types';
 import { formatCurrency } from '../../../utils/formatCurrency';
 import type { AxiosError } from 'axios';
-import TellerDailyCashSummaryWidget from '../components/TellerDailyCashSummaryWidget';
 import { QRCodeSVG } from 'qrcode.react';
 
 type OtcOperationType = 'DEPOSIT' | 'WITHDRAW';
@@ -583,9 +582,7 @@ export default function OtcTransactionPage() {
             </div>
           </div>
 
-          {/* Top Teller Daily Cash Summary Widget */}
-          <TellerDailyCashSummaryWidget />
-
+          
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* Left 2 Cols: Operations Form */}
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 space-y-6">
