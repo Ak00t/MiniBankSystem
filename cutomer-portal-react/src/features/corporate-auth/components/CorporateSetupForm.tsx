@@ -8,7 +8,7 @@ import {
 } from "../utils/storage";
 import CorporateAuthCard from "./CorporateAuthCard";
 import { CorporateField, CorporateNotice, CorporateSubmit } from "./CorporateForm";
-import { ChartNoAxesCombined, CheckCircle2, ShieldCheck, UsersRound } from "lucide-react";
+import { ChartNoAxesCombined, CheckCircle2, KeyRound, ShieldCheck, UsersRound } from "lucide-react";
 import { EkarajAuthLayout } from "../../auth/components/EkarajAuthLayout";
 import { AuthPinRules, AuthSecurityNote } from "../../auth/components/IndividualAuthUI";
 import { authLinkButtonClass } from "../../auth/components/IndividualAuthStyles";
@@ -32,7 +32,7 @@ export default function CorporateSetupForm({ mode }: { mode: "password" | "pin" 
   }, [deadline]);
 
   if (hasCorporateSession()) return <Navigate to="/corporate/auth-success" replace />;
-  if (expired) return <CorporateAuthCard variant="setup" title="Setup session expired" description="Your 10-minute Corporate first-login setup window has ended."><Link to="/corporate/login" replace className="font-semibold text-blue-600">Return to Corporate Login</Link></CorporateAuthCard>;
+  if (expired) return <CorporateSetupExpiredCard />;
   const step = getCorporateSetupStep();
   if (!getCorporateChallenge() || !deadline || !step) return <Navigate to="/corporate/login" replace />;
   if (step !== "complete" && step !== mode) return <Navigate to={corporateSetupRoute()} replace />;
@@ -76,6 +76,55 @@ export default function CorporateSetupForm({ mode }: { mode: "password" | "pin" 
     <Link to="/corporate/login" replace className={`mt-3 w-full ${authLinkButtonClass}`}>Return to Corporate Login</Link>
     {!password && <AuthSecurityNote title="Keep your PIN private">Never share your Corporate password or transaction PIN with anyone.</AuthSecurityNote>}
   </SetupCard>;
+}
+
+// Expiry presentation only: the existing state, timer and cleanup stay above.
+function CorporateSetupExpiredCard() {
+  return (
+    <EkarajAuthLayout title="EKARAJ BANK | Setup session expired" portalLabel="EKARAJ BANK | Corporate Portal" securityLabel="Secure Corporate Banking">
+      <section aria-label="Corporate setup session expired card" className="grid w-full max-w-[976px] rounded-3xl border border-[#CDC0A8] bg-[#F5F3EF] shadow-[0_18px_50px_-26px_rgba(18,46,82,0.3)] md:grid-cols-[0.92fr_1.08fr]">
+        <aside className="relative hidden flex-col justify-between overflow-hidden rounded-l-[23px] bg-[#E5EAF0] text-[#1A365D] md:flex">
+          <img data-corporate-building src="/assets/ekaraj-building-reference.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 right-0 h-[85%] w-[85%] object-cover object-[60%_70%] opacity-[0.1] [mask-image:radial-gradient(ellipse_at_75%_65%,#000_10%,transparent_80%)]" />
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 450 470" preserveAspectRatio="none" fill="none" className="pointer-events-none absolute inset-0 h-full w-full">
+            <path d="M-70 85C95 35 120 300 330 285S500 215 520 150" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.35" />
+            <path d="M-80 105C80 55 135 325 340 305S510 235 530 175" stroke="#C6A15B" strokeWidth="0.8" strokeOpacity="0.2" />
+          </svg>
+          <div className="relative px-6 pt-4 lg:px-7">
+            <h2 className="font-serif text-2xl font-medium leading-8 tracking-tight">Your Business,<br />Our Secure Partnership.</h2>
+            <p className="mt-2 text-sm leading-5 text-[#59697D]">Securely manage your company's banking services with confidence and peace of mind.</p>
+          </div>
+          <div aria-hidden="true" className="relative flex min-h-0 flex-1 items-center justify-center px-6 py-2">
+            <img src="/assets/ekaraj-crown-transparent.png" alt="" width={375} height={340} className="h-auto w-40 max-w-full object-contain" />
+          </div>
+          <div className="relative space-y-2.5 px-6 pb-4 pt-2 lg:px-7">
+            {[
+              { icon: ShieldCheck, title: "Enhanced Security", description: "Your business data is always protected." },
+              { icon: UsersRound, title: "Efficient Multi-User Access", description: "Manage permissions with ease." },
+              { icon: ChartNoAxesCombined, title: "Reliable Corporate Banking", description: "Supporting your business growth." },
+            ].map(({ icon: Icon, title, description }) => (
+              <div key={title} className="flex items-start gap-3">
+                <Icon aria-hidden="true" size={20} className="mt-0.5 shrink-0 text-[#C6A15B]" />
+                <div>
+                  <p className="text-xs font-semibold leading-4 text-[#1A365D]">{title}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-[#59697D]">{description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+        <section aria-labelledby="corporate-setup-expired-title" className="flex min-w-0 items-center justify-center px-5 py-10 text-center sm:px-8 md:px-7 lg:px-9">
+          <div className="w-full max-w-[392px]">
+            <span aria-hidden="true" className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-[#C6A15B]/40 bg-[#C6A15B]/10 text-[#C6A15B]">
+              <KeyRound size={28} strokeWidth={1.8} />
+            </span>
+            <h1 id="corporate-setup-expired-title" className="font-serif text-2xl font-medium leading-8 tracking-tight text-[#1A365D]">Setup session expired</h1>
+            <p className="mt-3 text-sm leading-5 text-[#59697D]">Your 10-minute Corporate first-login setup window has ended.</p>
+            <Link to="/corporate/login" replace className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md px-2 text-sm font-semibold text-[#122E52] underline decoration-[#C6A15B] underline-offset-4 transition-colors hover:text-[#1A365D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#113E65] motion-reduce:transition-none">Return to Corporate Login</Link>
+          </div>
+        </section>
+      </section>
+    </EkarajAuthLayout>
+  );
 }
 
 // Presentation is local to first-login setup. Shared fields retain their native
