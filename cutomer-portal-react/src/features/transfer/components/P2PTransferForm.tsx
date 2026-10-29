@@ -9,6 +9,7 @@ import type { Beneficiary } from "../../beneficiaries/types/beneficiaryTypes";
 import type { P2PTransferRequest } from "../types/transferTypes";
 import { getAccountTransferLimits } from "../../customer-account/accounts/api/customerAccountApi";
 import type { TransferLimitInfo } from "../../customer-account/accounts/types/accountTypes";
+import { getCurrentCustomerSubject } from "../../../utils/tokenStorage";
 import TransferReceiptView from "./TransferReceiptView";
 import TransferFailedSlip from "./TransferFailedSlip";
 import { mapP2PResponseToReceiptData } from "../types/transferReceiptTypes";
@@ -1360,6 +1361,8 @@ export const P2PTransferForm = () => {
   const dispatch = useAppDispatch();
   const { loading, error, success, transactionResult } = useAppSelector((s) => s.transfer);
   const { accounts, loading: accountsLoading } = useAppSelector((s) => s.accounts);
+  const { profile } = useAppSelector((s) => s.profile);
+  const currentCustomerId = profile?.customerCode || getCurrentCustomerSubject();
 
   const [step, setStep] = useState<Step>("form");
   const [showPinModal, setShowPinModal] = useState(false);
@@ -1474,12 +1477,27 @@ export const P2PTransferForm = () => {
   // Load recent accounts & reset transfer state
   useEffect(() => {
     dispatch(fetchMyAccounts());
-    const saved = localStorage.getItem("recentDestinations");
-    if (saved) setRecentAccounts(JSON.parse(saved));
+    const storageKey = currentCustomerId ? `recentDestinations_${currentCustomerId}` : "recentDestinations";
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        setRecentAccounts(JSON.parse(saved));
+      } catch {
+        setRecentAccounts([]);
+      }
+    } else {
+      setRecentAccounts([]);
+    }
+
+    // Clean up legacy global key if user-scoped key is active
+    if (currentCustomerId) {
+      localStorage.removeItem("recentDestinations");
+    }
+
     return () => {
       dispatch(resetTransferState());
     };
-  }, [dispatch]);
+  }, [dispatch, currentCustomerId]);
 
   // Debounced recipient account lookup
   useEffect(() => {
@@ -1546,7 +1564,8 @@ export const P2PTransferForm = () => {
   const saveDestination = (accNo: string) => {
     const updated = [accNo, ...recentAccounts.filter((a) => a !== accNo)].slice(0, 5);
     setRecentAccounts(updated);
-    localStorage.setItem("recentDestinations", JSON.stringify(updated));
+    const storageKey = currentCustomerId ? `recentDestinations_${currentCustomerId}` : "recentDestinations";
+    localStorage.setItem(storageKey, JSON.stringify(updated));
   };
 
   /* Validation */
