@@ -21,7 +21,7 @@ export default function CorporateAuthCard({ title, description, variant = "verif
       <IndividualAuthCard
         variant={visualVariant}
         panelContent={{
-          title: login ? "WELCOME TO ACE BANK" : variant === "success" ? "Your business.\nSecurely connected." : "Protecting your business,\nevery step of the way.",
+          title: login ? "WELCOME TO EKARAJ BANK" : variant === "success" ? "Your business.\nSecurely connected." : "Protecting your business,\nevery step of the way.",
           description: login
             ? "Securely access your company’s banking services and stay connected with ACE Bank."
             : "Dedicated security for your Corporate Banking account. Keep your credentials, OTP and transaction PIN private.",
