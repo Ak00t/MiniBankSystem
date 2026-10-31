@@ -7,7 +7,6 @@ import { otcApi, accountsApi } from '../../../services/apiClient';
 import type { OtcTransactionResponseDto, AccountResponse, OtcParametersResponse } from '../../../types/api.types';
 import { formatCurrency } from '../../../utils/formatCurrency';
 import type { AxiosError } from 'axios';
-
 import { QRCodeSVG } from 'qrcode.react';
 import ekarajCrown from '../../../assets/ekaraj-crown-transparent.png';
 
